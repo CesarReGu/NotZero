@@ -1,0 +1,28 @@
+# Dependencies and build output
+node_modules/
+.next/
+.vinext/
+dist/
+coverage/
+.wrangler/
+next-env.d.ts
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env*
+!.env.example
+
+# User uploads, private fixtures, and generated analysis data
+uploads/
+data/private/
+analysis-cache/
+.notzero/
+
+# Local planning and agent guidance
+AGENTS.md
+OPENAI_BUILD_WEEK_REQUIREMENTS.md
+
+# Logs and local tooling
+*.log
+.DS_Store
+Thumbs.db
