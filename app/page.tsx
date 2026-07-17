@@ -4,80 +4,134 @@ import { BridgePreview } from "@/components/bridge-preview";
 export default function Home() {
   return (
     <main id="main-content">
-      <section className="hero page-shell">
-        <div className="hero-copy">
-          <p className="eyebrow">Education <span aria-hidden="true">→</span> current practice</p>
-          <h1>The job post looks unfamiliar. Your knowledge doesn&apos;t.</h1>
-          <p className="hero-lede">
-            NotZero reads what you studied and built, connects it to the tools
-            employers ask for now, and shows the smallest useful next step.
-          </p>
-          <div className="button-row">
-            <Link className="button button-primary" href="/demo">Try the graduate demo</Link>
-            <Link className="button button-secondary" href="/method">See how conclusions are made</Link>
-          </div>
-          <p className="hero-note">No account or upload is needed for the prepared demo.</p>
-        </div>
-        <div className="hero-preview" aria-label="Example knowledge bridge">
-          <BridgePreview compact />
-        </div>
-      </section>
-
-      <section className="statement-section">
-        <div className="page-shell statement-grid">
-          <p className="section-kicker">You are not starting from zero.</p>
-          <div>
-            <h2>Tools often package work you already understand.</h2>
-            <p>
-              A new name can hide a familiar problem. NotZero separates the
-              foundation that transfers from the modern layer you still need to learn.
+      <section className="home-hero">
+        <div className="page-shell home-hero-grid">
+          <div className="hero-copy">
+            <p className="hero-category">For software graduates facing the first job search</p>
+            <h1>You learned the foundation. <span>The job post changed the vocabulary.</span></h1>
+            <p className="hero-lede">
+              NotZero reads your curriculum and projects, then maps them to the
+              tools entry-level roles ask for now. See what already transfers,
+              what needs a small bridge, and what is genuinely new.
             </p>
+            <div className="button-row">
+              <Link className="button button-primary" href="/demo">See Alex&apos;s knowledge bridge</Link>
+              <Link className="button button-secondary" href="#how-it-works">How NotZero works</Link>
+            </div>
+            <p className="hero-note">Prepared fictional example. No account or upload required.</p>
+          </div>
+
+          <article className="job-story" aria-label="A recent graduate reads a junior backend job post">
+            <div className="job-story-meta"><span>Monday, 9:14 AM</span><span>Alex&apos;s job search</span></div>
+            <div className="job-post-heading">
+              <div className="company-mark" aria-hidden="true">B</div>
+              <div><p>Junior Backend Developer</p><span>Entry level · Posted today</span></div>
+            </div>
+            <p className="requirements-label">The job post asks for</p>
+            <div className="requirement-chips" aria-label="Example job requirements">
+              <span>REST APIs</span><span>Docker</span><span>CI/CD</span><span>Cloud</span>
+            </div>
+            <blockquote>“I spent four years studying software. Why does this still feel like a list of things I don&apos;t know?”</blockquote>
+            <div className="story-result">
+              <span className="story-result-label">NotZero translates the list</span>
+              <div><strong>2</strong><span>foundations<br />already there</span></div>
+              <div><strong>1</strong><span>small bridge<br />to build</span></div>
+              <div><strong>1</strong><span>honest gap<br />to explore</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="recognition-section">
+        <div className="page-shell recognition-grid">
+          <div className="overheard-card">
+            <p>What graduates hear</p>
+            <blockquote>“Almost everything I use at work, I learned on the job.”</blockquote>
+          </div>
+          <div className="recognition-copy">
+            <p className="eyebrow">The thought that follows</p>
+            <h2>Then what were those years at university for?</h2>
+            <p>
+              For the concepts underneath the tools: data structures, systems,
+              APIs, testing, databases, and the practice of solving unfamiliar
+              problems. The market keeps adding new layers. Your foundation did
+              not disappear when the vocabulary changed.
+            </p>
+            <p className="recognition-answer">You are not starting from zero.</p>
           </div>
         </div>
       </section>
 
-      <section className="page-shell section" id="how-it-works">
-        <div className="section-heading">
-          <p className="eyebrow">A short, inspectable path</p>
-          <h2>From academic evidence to a practical next step</h2>
+      <section className="page-shell translation-section" id="how-it-works">
+        <div className="section-heading translation-heading">
+          <p className="eyebrow">What the product actually does</p>
+          <h2>It translates your education into the language of the role.</h2>
+          <p>One evidence trail connects what you learned, what employers name, and the smallest useful next step.</p>
+        </div>
+        <div className="translation-map">
+          <div className="translation-column source-column">
+            <p className="column-label">01 · Your evidence</p>
+            <div className="artifact-row"><span>Course</span><strong>Web application development</strong></div>
+            <div className="artifact-row"><span>Project</span><strong>API with environment config</strong></div>
+            <div className="artifact-row"><span>Project</span><strong>Automated test suite</strong></div>
+          </div>
+          <div className="translation-core">
+            <span className="translation-pulse" aria-hidden="true">NZ</span>
+            <p>Evidence-backed<br />relationship map</p>
+          </div>
+          <div className="translation-column outcome-column">
+            <p className="column-label">02 · The role, decoded</p>
+            <div className="outcome-row current"><span>Transfers</span><strong>REST APIs</strong><small>demonstrated</small></div>
+            <div className="outcome-row bridge"><span>Small bridge</span><strong>Docker</strong><small>high confidence</small></div>
+            <div className="outcome-row unknown"><span>No evidence yet</span><strong>Cloud deployment</strong><small>unknown</small></div>
+          </div>
         </div>
         <ol className="process-list">
-          <li><span>01</span><h3>Bring the evidence</h3><p>Use a curriculum, supporting work, and a bounded project artifact.</p></li>
-          <li><span>02</span><h3>Choose the role</h3><p>Compare it with a controlled, dated set of current requirements.</p></li>
-          <li><span>03</span><h3>Inspect the bridge</h3><p>See what transfers, what is new, and the evidence behind each conclusion.</p></li>
+          <li><span>01</span><h3>Bring what you studied</h3><p>A curriculum, a few supporting documents, and one project are enough for the focused flow.</p></li>
+          <li><span>02</span><h3>Choose a target role</h3><p>NotZero compares your evidence with a bounded, dated set of current job requirements.</p></li>
+          <li><span>03</span><h3>Build the smallest bridge</h3><p>Get three priorities and one project upgrade that reuses what you already know.</p></li>
         </ol>
       </section>
 
+      <section className="evidence-section">
+        <div className="page-shell evidence-grid">
+          <div className="evidence-heading">
+            <p className="eyebrow">A transition problem, not a wasted degree</p>
+            <h2>Employers still value higher education. They also expect a learning curve.</h2>
+          </div>
+          <div className="stat-grid">
+            <div><strong>75%</strong><p>say a college degree will be as or more important in five years.</p></div>
+            <div><strong>69%</strong><p>say recent graduates need moderate or substantial additional training.</p></div>
+          </div>
+          <p className="evidence-source">
+            U.S. employers, 2026. Source: <a href="https://www.gallup.com/file/analytics/702833/Lumina-Foundation-Gallup-SOHE_Employer-Report.pdf" target="_blank" rel="noreferrer">Gallup and Lumina Foundation, Aligning Education and Work</a>.
+          </p>
+        </div>
+      </section>
+
       <section className="page-shell section bridge-section">
-        <div className="section-heading narrow-heading">
-          <p className="eyebrow">One complete example</p>
-          <h2>A vocabulary gap becomes a bounded learning task.</h2>
+        <div className="section-heading bridge-heading">
+          <div><p className="eyebrow">See one real translation</p><h2>“Docker” becomes a bounded learning task.</h2></div>
+          <p>NotZero does not call two tools equivalent. It shows the relationship, the source evidence, what transfers, and what remains new.</p>
         </div>
         <BridgePreview />
       </section>
 
       <section className="method-band">
         <div className="page-shell method-band-grid">
+          <div><p className="eyebrow">Confidence needs receipts</p><h2>No readiness score pulled from thin air.</h2></div>
           <div>
-            <p className="eyebrow">Evidence before claims</p>
-            <h2>Every conclusion should show its work.</h2>
-          </div>
-          <div>
-            <p>
-              NotZero distinguishes expected exposure, demonstrated work,
-              self-reported experience, careful inference, and unknowns. It does
-              not certify mastery or turn missing evidence into a personal judgment.
-            </p>
+            <p>Every conclusion is labeled as demonstrated, expected exposure, self-reported, inferred, or unknown. Project claims point back to a file, symbol, line, or configuration key when the evidence supports it.</p>
             <div className="text-link-row">
-              <Link className="text-link" href="/method">Read the method <span aria-hidden="true">→</span></Link>
-              <Link className="text-link" href="/privacy">Read the privacy approach <span aria-hidden="true">→</span></Link>
+              <Link className="text-link" href="/method">Read the method <span aria-hidden="true">&rarr;</span></Link>
+              <Link className="text-link" href="/privacy">Read the privacy approach <span aria-hidden="true">&rarr;</span></Link>
             </div>
           </div>
         </div>
       </section>
 
       <section className="page-shell final-cta">
-        <p className="eyebrow">Prepared fictional scenario</p>
+        <p className="eyebrow">The job post looks unfamiliar. Your knowledge doesn&apos;t.</p>
         <h2>See what Alex&apos;s 2022 software degree still carries forward.</h2>
         <Link className="button button-primary" href="/demo">Start the prepared demo</Link>
       </section>

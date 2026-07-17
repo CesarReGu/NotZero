@@ -174,17 +174,17 @@ Proposed starting palette:
 
 | Token | Value | Use |
 |---|---:|---|
-| Paper | `#F5F1E8` | Main background |
-| Paper raised | `#FFFDF8` | Cards and dialogs |
-| Ink | `#202823` | Primary text |
-| Muted ink | `#657068` | Secondary text |
-| Rule | `#D8D2C5` | Borders and connectors |
-| Evergreen | `#245849` | Primary actions and current strengths |
-| Evergreen dark | `#173B31` | Hover/pressed primary state |
-| Bridge amber | `#C47A32` | Transfer and bridge labels |
-| Gap rust | `#9A4D3F` | Genuine-gap emphasis, used sparingly |
-| Unknown slate | `#64748B` | Insufficient-evidence state |
-| Focus | `#176B87` | Keyboard focus ring |
+| Surface | `#F6F7FB` | Main background |
+| Surface raised | `#FFFFFF` | Cards and dialogs |
+| Ink | `#11162A` | Primary text and high-contrast bands |
+| Muted ink | `#5B6278` | Secondary text |
+| Rule | `#D9DDEA` | Borders and connectors |
+| Cobalt | `#3347E8` | Primary actions and translation layer |
+| Cobalt dark | `#1727B4` | Hover and pressed primary state |
+| Bridge coral | `#EF654E` | Transfer and bridge labels |
+| Bridge soft | `#FFF0ED` | Bridge callouts |
+| Unknown slate | `#697085` | Insufficient-evidence state |
+| Focus | `#147FC4` | Keyboard focus ring |
 
 Verify all text/background combinations against WCAG contrast before freezing the palette. Never rely on color alone; pair state colors with labels and icons.
 
@@ -192,11 +192,11 @@ Verify all text/background combinations against WCAG contrast before freezing th
 
 Recommended open-source direction:
 
-- **Display:** Source Serif 4 or another licensed, readable editorial serif.
-- **Interface/body:** IBM Plex Sans.
+- **Display and interface:** Inter or a clear system sans stack with a wide weight range.
+- **Body:** Inter or the system sans stack.
 - **Evidence metadata/code:** IBM Plex Mono.
 
-Self-host only properly licensed font files and record their licenses. If font setup threatens the deadline, use `Georgia` for display and the system sans stack for interface text rather than introducing an unverified dependency.
+Self-host only properly licensed font files and record their licenses. If font setup threatens the deadline, use the system sans stack rather than introducing an unverified dependency.
 
 Type scale at desktop:
 

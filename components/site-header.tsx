@@ -5,7 +5,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="page-shell header-inner">
         <Link className="wordmark" href="/" aria-label="NotZero home">
-          Not<span>Zero</span>
+          Not<span>Zero</span><small>career bridge</small>
         </Link>
         <nav aria-label="Primary navigation">
           <Link href="/#how-it-works">How it works</Link>

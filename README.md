@@ -125,8 +125,8 @@ The primary Codex task should be preserved for the required `/feedback` Session 
 
 - The prepared demo works without authentication, uploads, or external services.
 - Phase 1 does not simulate a live model call. It exposes a labeled deterministic result.
-- The design uses a warm paper surface, editorial type, evergreen actions, amber bridge states, restrained geometry, and evidence metadata.
-- Georgia and system fonts avoid an unnecessary font dependency during the hackathon.
+- The marketing site uses a cool white surface, high-contrast sans typography, cobalt actions, coral bridge states, and structured evidence graphics. The direction is meant to read as an education-to-career product rather than an organic retail brand.
+- System sans and monospaced stacks avoid an unnecessary font dependency during the hackathon.
 - User uploads remain outside Phase 1 until server-enforced validation, limits, deletion, and retention behavior are ready.
 
 ## Privacy and data handling
