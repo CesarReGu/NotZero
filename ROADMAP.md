@@ -37,7 +37,7 @@ The result must be specific, evidenced, understandable to a recent graduate, vis
 - [ ] **P0:** Confirm the project will be submitted to the Education track.
 - [ ] **P0:** Confirm access to GPT-5.6 through the product's server-side integration.
 - [ ] **P0:** Preserve the primary Codex build thread for the required `/feedback` Session ID.
-- [ ] **P0:** Record the first repository commit within the submission period.
+- [x] **P0:** Record the first repository commit within the submission period.
 
 **Exit criterion:** The scope is frozen, compliance risks are known, and implementation can begin without reopening the product definition.
 
