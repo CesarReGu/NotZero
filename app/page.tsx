@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BridgePreview } from "@/components/bridge-preview";
+import { EvidenceTransform } from "@/components/evidence-transform";
 
 export default function Home() {
   return (
@@ -21,24 +22,7 @@ export default function Home() {
             <p className="hero-note">Prepared fictional example. No account or upload required.</p>
           </div>
 
-          <article className="job-story" aria-label="A recent graduate reads a junior backend job post">
-            <div className="job-story-meta"><span>Monday, 9:14 AM</span><span>Alex&apos;s job search</span></div>
-            <div className="job-post-heading">
-              <div className="company-mark" aria-hidden="true">B</div>
-              <div><p>Junior Backend Developer</p><span>Entry level · Posted today</span></div>
-            </div>
-            <p className="requirements-label">The job post asks for</p>
-            <div className="requirement-chips" aria-label="Example job requirements">
-              <span>REST APIs</span><span>Docker</span><span>CI/CD</span><span>Cloud</span>
-            </div>
-            <blockquote>“I spent four years studying software. Why does this still feel like a list of things I don&apos;t know?”</blockquote>
-            <div className="story-result">
-              <span className="story-result-label">NotZero translates the list</span>
-              <div><strong>2</strong><span>foundations<br />already there</span></div>
-              <div><strong>1</strong><span>small bridge<br />to build</span></div>
-              <div><strong>1</strong><span>honest gap<br />to explore</span></div>
-            </div>
-          </article>
+          <EvidenceTransform />
         </div>
       </section>
 

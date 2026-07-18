@@ -126,6 +126,7 @@ The primary Codex task should be preserved for the required `/feedback` Session 
 - The prepared demo works without authentication, uploads, or external services.
 - Phase 1 does not simulate a live model call. It exposes a labeled deterministic result.
 - The marketing site uses a cool white surface, high-contrast sans typography, cobalt actions, coral bridge states, and structured evidence graphics. The direction is meant to read as an education-to-career product rather than an organic retail brand.
+- The hero includes a replayable evidence transformation that maps a fictional 2022 final project into demonstrated knowledge, a small modernization bridge, and an explicit unknown. It uses CSS motion, lightweight React controls, and a static reduced-motion state.
 - System sans and monospaced stacks avoid an unnecessary font dependency during the hackathon.
 - User uploads remain outside Phase 1 until server-enforced validation, limits, deletion, and retention behavior are ready.
 

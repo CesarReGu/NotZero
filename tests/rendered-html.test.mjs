@@ -26,6 +26,9 @@ test("server-renders the NotZero landing page and persistent judge path", async 
   assert.match(html, /The job post looks unfamiliar\. Your knowledge doesn/);
   assert.match(html, /You are not starting from zero\./);
   assert.match(html, /See Alex(?:&#x27;|')s knowledge bridge/);
+  assert.match(html, /Final Project/);
+  assert.match(html, /Already demonstrated/);
+  assert.match(html, /No evidence found yet/);
   assert.match(html, /Gallup and Lumina Foundation/);
   assert.match(html, /href="\/method"/);
   assert.match(html, /href="\/privacy"/);
