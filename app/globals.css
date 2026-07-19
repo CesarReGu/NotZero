@@ -429,6 +429,7 @@ code { font-family: var(--font-mono); font-size: .88em; }
 .reset-evidence { display: block; margin: 1.5rem auto 0; }
 
 .bridge-report { margin-top: 4rem; border-top: 4px solid var(--ink); padding-top: 2.5rem; }
+.decision-brief { min-height: min(760px, 92vh); }
 .bridge-report-header { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 2rem; }
 .bridge-report-header h3 { max-width: 760px; margin: 0; font-family: var(--font-display); font-size: clamp(2.3rem, 5vw, 4.2rem); letter-spacing: -.055em; line-height: 1; }
 .bridge-report-header > div > p:last-child { max-width: 720px; margin: 1rem 0 0; color: var(--muted-ink); font-size: 1rem; line-height: 1.6; }
@@ -437,6 +438,11 @@ code { font-family: var(--font-mono); font-size: .88em; }
 .report-trust-strip { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: 1.4rem; border-block: 1px solid var(--rule); padding: .75rem 0; color: var(--muted-ink); font-size: .72rem; }
 .report-trust-strip span { position: relative; padding-left: .8rem; }
 .report-trust-strip span::before { content: ""; position: absolute; left: 0; top: .45em; width: 5px; height: 5px; border-radius: 50%; background: var(--evergreen); }
+.decision-answers { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 1.25rem; border: 1px solid var(--ink); background: var(--ink); gap: 1px; }
+.decision-answers article { min-width: 0; background: #fff; padding: 1.15rem; }
+.decision-answers article > span { color: var(--evergreen-dark); font-family: var(--font-mono); font-size: .62rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.decision-answers article > strong { display: block; margin-top: .45rem; font-size: 1rem; line-height: 1.35; }
+.decision-answers article > p { margin: .45rem 0 0; color: var(--muted-ink); font-size: .84rem; line-height: 1.5; }
 .report-actions { display: flex; align-items: center; gap: 1rem; margin: 1rem 0 2rem; }
 .report-actions span { max-width: 520px; color: var(--muted-ink); font-size: .78rem; line-height: 1.5; }
 .report-print-footer { display: none; }
@@ -519,6 +525,16 @@ code { font-family: var(--font-mono); font-size: .88em; }
 .confidence-label i { width: 7px; height: 7px; border: 1px solid var(--unknown-slate); border-radius: 50%; background: #fff; }
 .confidence-label i[data-filled="true"] { background: var(--unknown-slate); }
 .finding-body { border-top: 1px solid var(--rule); background: #f8f9fc; padding: 1.4rem 1.4rem 1.5rem 4.7rem; }
+.uncertainty-chip { width: fit-content; display: inline-flex; align-items: center; min-height: 24px; margin-top: .45rem; border: 1px solid #aeb4c6; border-radius: 3px; background: #fff; padding: .18rem .42rem; color: #555c70 !important; font-family: var(--font-sans) !important; font-size: .66rem !important; font-weight: 750 !important; letter-spacing: 0 !important; text-transform: none !important; }
+.uncertainty-insufficient_evidence { border-color: #697085; }
+.uncertainty-small_bridge { border-color: #db533d; color: #9b402f !important; }
+.finding-summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+.finding-summary-grid > div { min-width: 0; min-height: 150px; background: #fff; padding: 1rem; }
+.finding-summary-grid span { color: var(--muted-ink); font-family: var(--font-mono); font-size: .64rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.finding-summary-grid p { margin: .5rem 0 0; font-size: 1rem; line-height: 1.55; }
+.finding-summary-grid small { display: block; margin-top: .65rem; color: var(--evergreen-dark); font-size: .74rem; line-height: 1.45; }
+.finding-summary-grid ul { margin: .5rem 0 0; padding-left: 1.1rem; color: var(--muted-ink); font-size: 1rem; line-height: 1.55; }
+.finding-summary-grid .finding-action { margin: 0; border: 0; border-top: 3px solid var(--finding-color); background: var(--evergreen-soft); }
 .finding-connection { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
 .finding-connection > div { min-height: 110px; border: 1px solid var(--rule); background: #fff; padding: 1rem; }
 .finding-connection span, .learning-delta span, .finding-action span, .walkthrough-grid span { color: var(--muted-ink); font-family: var(--font-mono); font-size: .58rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
@@ -576,6 +592,7 @@ code { font-family: var(--font-mono); font-size: .88em; }
 .next-steps li strong { font-size: 1rem; }
 .next-steps li p { max-width: 70ch; margin: .3rem 0; color: var(--muted-ink); font-size: 1rem; line-height: 1.55; }
 .next-steps li small { color: var(--evergreen-dark); font-size: .78rem; }
+.next-steps li .step-foundation { display: block; margin-top: .35rem; color: var(--ink); font-weight: 750; }
 .upgrade-challenge { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; background: var(--ink); padding: 1.5rem; color: #fff; }
 .upgrade-challenge .eyebrow { color: #aeb8ff; }
 .upgrade-challenge h4 { color: #fff; }
@@ -740,6 +757,8 @@ code { font-family: var(--font-mono); font-size: .88em; }
   .ledger-claim summary { grid-template-columns: 1fr; gap: .35rem; }
   .ledger-sources li { align-items: flex-start; flex-direction: column; gap: .2rem; }
   .bridge-report-header { grid-template-columns: 1fr; }
+  .decision-brief { min-height: 0; }
+  .decision-answers { grid-template-columns: 1fr; }
   .report-counts { grid-template-columns: repeat(2, 1fr); }
   .report-counts > div + div { border-left: 0; }
   .report-counts > div:nth-child(even) { border-left: 1px solid var(--rule); }
@@ -748,7 +767,7 @@ code { font-family: var(--font-mono); font-size: .88em; }
   .bridge-finding summary { grid-template-columns: 34px 1fr; padding-inline: .8rem; }
   .bridge-finding summary > small { grid-column: 2; }
   .finding-body { padding: 1rem; }
-  .learning-delta, .walkthrough-grid, .walkthrough-delta, .upgrade-challenge { grid-template-columns: 1fr; }
+  .learning-delta, .finding-summary-grid, .walkthrough-grid, .walkthrough-delta, .upgrade-challenge { grid-template-columns: 1fr; }
   .finding-provenance { align-items: flex-start; flex-direction: column; }
   .walkthrough { box-shadow: 6px 7px 0 var(--evergreen-soft); }
   .review-list > div { grid-template-columns: 1fr; gap: .2rem; }

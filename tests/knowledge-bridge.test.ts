@@ -3,7 +3,7 @@ import test from "node:test";
 import { alexBridgeReport, buildPreparedBridgeReport } from "../lib/bridge/prepared-report";
 import { alexEvidenceLedger } from "../lib/fixtures/alex-ledger";
 import { softwareBackendPracticePack } from "../lib/market/current-practice";
-import { buildCitationLedger } from "../components/knowledge-bridge-report";
+import { buildCitationLedger, buildDecisionHeadline } from "../components/knowledge-bridge-report";
 import { deriveRequirementCoverage } from "../lib/bridge/coverage";
 import { knowledgeBridgeReportSchema } from "../lib/domain/schemas";
 
@@ -33,6 +33,10 @@ test("the prepared report exercises every result group and exactly three next st
   assert.equal(report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
   assert.equal(report.walkthrough.comparisonState, "illustrative");
   assert.ok(report.findings.every((finding) => finding.whyItIsUsed.length > 0));
+});
+
+test("the decision headline is derived from validated coverage and the selected requirement", () => {
+  assert.equal(buildDecisionHeadline(alexBridgeReport, softwareBackendPracticePack, "Alex"), "Alex's evidence already connects to 3 of 8 reviewed requirements. The shortest bridge is containerization.");
 });
 
 test("the prepared report rejects a missing evidence claim", () => {

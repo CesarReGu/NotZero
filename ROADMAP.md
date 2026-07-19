@@ -208,17 +208,17 @@ Readers scan a result; they do not study it line by line. The report is restruct
 2. **Role map:** every finding as a scannable row. One click opens one finding.
 3. **Evidence appendix:** numbered receipts, methodology, and limits. Opened from citations.
 
-- [ ] **P0:** Put the decision brief before everything else. At a 1280 px viewport the first screen must answer, without scrolling:
+- [x] **P0:** Put the decision brief before everything else. At a 1280 px viewport the first screen must answer, without scrolling:
   1. What useful foundation do I already have?
   2. What is the highest-leverage bridge for my target?
   3. What should I do next with work I have already completed?
-- [ ] **P0:** Build the headline conclusion from validated fields only, phrased around the person's evidence, for example: “Your 2022 evidence already supports 5 of 8 reviewed requirements for this role. The shortest bridge is containerization.” When evidence is weak the headline states that honestly instead of reassuring by default.
+- [x] **P0:** Build the headline conclusion from validated fields only, phrased around the person's evidence, for example: “Your 2022 evidence already supports 5 of 8 reviewed requirements for this role. The shortest bridge is containerization.” When evidence is weak the headline states that honestly instead of reassuring by default.
 - [x] **P0:** Create a compact `Your shortest bridge` section with three plain-language parts: **Keep**, **Add**, and **Prove**. Do not add a readiness percentage.
-- [ ] **P0:** Place the three prioritized next moves and the existing-project challenge immediately after the decision brief, rendered as a numbered path where each step names the existing claim it builds on.
+- [x] **P0:** Place the three prioritized next moves and the existing-project challenge immediately after the decision brief, rendered as a numbered path where each step names the existing claim it builds on.
 - [x] **P0:** Present the broader role map as collapsed one-line rows grouped into strengths, bridges, gaps, and unknowns. A collapsed row shows the title, group chip, relationship label, confidence dots, and citation markers. Nothing opens by default, including bridges.
-- [ ] **P0:** Cap an expanded row at four always-visible blocks: what you already have, what the current practice changes, what is actually new, and the proof task. Excerpts, paths, market counts, confidence rationale, and methodology move into the citation layer.
+- [x] **P0:** Cap an expanded row at four always-visible blocks: what you already have, what the current practice changes, what is actually new, and the proof task. Excerpts, paths, market counts, confidence rationale, and methodology move into the citation layer.
 - [x] **P0:** Move the evidence ledger out of its position above the report. It becomes the numbered evidence appendix at the end of the result, and the report cites into it.
-- [ ] **P0:** Keep uncertainty visible in the collapsed state through a short plain-language chip, without showing every limitation and source receipt at once.
+- [x] **P0:** Keep uncertainty visible in the collapsed state through a short plain-language chip, without showing every limitation and source receipt at once.
 - [x] **P0:** Preserve the distinct loading, empty, partial, error, limit-reached, and completed states through the redesign, including the honest ledger-only states for unsupported fields.
 - [x] **P0:** On mobile, keep a single-column order of brief, next moves, role map, then appendix, with no interaction that requires horizontal precision.
 

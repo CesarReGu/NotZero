@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { compareWithGpt56 } from "../lib/bridge/openai-adapter";
+import { buildDecisionHeadline } from "../components/knowledge-bridge-report";
 import { extractWithGpt56 } from "../lib/evidence/openai-adapter";
 import { softwareBackendPracticePack } from "../lib/market/current-practice";
 import { customSoftwareSources, modelResponse, successfulBridgeOutput, successfulEvidenceOutput, weakBridgeOutput, weakEvidenceOutput, weakSummarySource } from "./fixtures/model-scenarios";
@@ -23,6 +24,7 @@ test("weak evidence stays low-confidence and becomes insufficient evidence", asy
   assert.equal(ledger.claims[0].confidence, "low");
   assert.equal(report.findings[0].group, "insufficient_evidence");
   assert.match(report.findings[0].recommendedAction, /provide/i);
+  assert.match(buildDecisionHeadline(report, softwareBackendPracticePack), /does not yet support a reliable bridge/i);
 });
 
 test("summary-only evidence produces no invented code location or walkthrough", async () => {

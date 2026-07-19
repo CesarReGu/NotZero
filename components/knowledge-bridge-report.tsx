@@ -14,6 +14,16 @@ const groupLabel: Record<BridgeFinding["group"], string> = {
 
 const coverageLabel = { ...groupLabel, not_assessed: "Not assessed" } as const;
 
+export function buildDecisionHeadline(report: KnowledgeBridgeReport, pack: CurrentPracticePack, subjectLabel?: string) {
+  const coverage = report.requirementCoverage ?? [];
+  const connectedCount = coverage.filter((item) => ["current", "transferable", "small_bridge"].includes(item.group)).length;
+  const bridge = report.findings.find((finding) => finding.group === "small_bridge") ?? report.findings.find((finding) => finding.group === "transferable");
+  const requirement = bridge ? pack.requirements.find((item) => item.id === bridge.currentRequirementId) : undefined;
+  const owner = subjectLabel ? `${subjectLabel}'s` : "Your";
+  if (connectedCount === 0 || !requirement) return `${owner} evidence does not yet support a reliable bridge across the reviewed requirements.`;
+  return `${owner} evidence already connects to ${connectedCount} of ${coverage.length} reviewed requirements. The shortest bridge is ${requirement.name.toLowerCase()}.`;
+}
+
 function humanize(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -205,8 +215,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
   if (!pack || pack.datasetVersion !== report.datasetVersion) return <section className="analysis-state analysis-error" role="alert"><strong>This report&apos;s dated market pack is unavailable.</strong><p>NotZero will not render conclusions against a different dataset version.</p></section>;
   const citationLedger = buildCitationLedger(report, ledger, pack);
   const supportedStrengths = report.counts.current + report.counts.transferable;
-  const possessive = subjectLabel ? `${subjectLabel}'s` : "Your";
   const shortestBridge = report.findings.find((finding) => finding.group === "small_bridge") ?? report.findings.find((finding) => finding.group === "transferable") ?? report.findings[0];
+  const strongestFoundation = report.findings.find((finding) => finding.group === "current") ?? report.findings.find((finding) => finding.group === "transferable") ?? shortestBridge;
+  const hasSupportedBridge = shortestBridge.group === "small_bridge" || shortestBridge.group === "transferable";
+  const hasSupportedFoundation = ["current", "transferable", "small_bridge"].includes(strongestFoundation.group);
   const requirementCoverage = report.requirementCoverage ?? [];
   const supportedRequirementCount = requirementCoverage.filter((item) => item.group === "current" || item.group === "transferable").length;
   const notAssessedCount = requirementCoverage.filter((item) => item.group === "not_assessed").length;
@@ -221,6 +233,8 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
     { id: "gaps", label: "Genuine gaps", count: report.counts.genuineGap },
     { id: "unknowns", label: "Unknowns", count: report.counts.insufficientEvidence },
   ];
+  const decisionHeadline = buildDecisionHeadline(report, pack, subjectLabel);
+  const firstStepClaims = report.nextSteps[0].buildsOn.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
 
   function openReceipt(receipt: CitationReceipt, trigger: HTMLButtonElement) {
     receiptTriggerRef.current = trigger;
@@ -262,11 +276,12 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
 
   return (
     <section className="bridge-report" aria-labelledby="bridge-report-title">
+      <section className="decision-brief" aria-label="Your decision brief">
       <header className="bridge-report-header">
         <div>
-          <p className="eyebrow">Knowledge Bridge Graph</p>
-          <h3 id="bridge-report-title">{possessive} evidence supports {supportedStrengths} foundations and a practical bridge into this role.</h3>
-          <p>NotZero compared the submitted evidence with {pack.sources.length} reviewed roles in {pack.locationScope}. The result separates supported foundations from genuine new learning and areas where more evidence would help.</p>
+          <p className="eyebrow">Your decision brief</p>
+          <h3 id="bridge-report-title">{decisionHeadline}</h3>
+          <p>This conclusion comes only from the validated evidence and the dated practice pack. Open any citation when you want to inspect the proof.</p>
         </div>
         <span className="report-date">Market pack<br /><strong>{pack.observedThrough}</strong></span>
       </header>
@@ -278,9 +293,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
         <span>{report.analysisMode === "live_gpt_5_6" ? "GPT-5.6 plus server validation" : "Prepared fixture plus server validation"}</span>
       </div>
 
-      <div className="report-actions screen-only">
-        <button type="button" className="button button-secondary" onClick={() => window.print()}>Download report (PDF)</button>
-        <span>Choose Save as PDF in the print dialog. The downloaded report uses this validated result.</span>
+      <div className="decision-answers" aria-label="Decision brief answers">
+        <article><span>{hasSupportedFoundation ? "What you already have" : "What the evidence shows"}</span><strong>{strongestFoundation.title}</strong><p>{strongestFoundation.existingCapability}</p></article>
+        <article><span>{hasSupportedBridge ? "Highest-leverage bridge" : "Before choosing a bridge"}</span><strong>{hasSupportedBridge ? shortestBridge.title : "More specific evidence is needed"}</strong><p>{hasSupportedBridge ? `Add ${shortestBridge.newConcepts.slice(0, 2).join(" and ") || shortestBridge.modernCounterpart}.` : shortestBridge.recommendedAction}</p></article>
+        <article><span>What to do next</span><strong>{report.nextSteps[0].title}</strong><p>Builds on {firstStepClaims.map((claim) => claim.title).join(" and ")}. Proof: {report.nextSteps[0].proof}</p></article>
       </div>
 
       <div className="report-counts" aria-label="Knowledge Bridge result counts">
@@ -310,17 +326,26 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
           <div><span>Prove</span><p>{shortestBridge.recommendedAction}</p></div>
         </div>
       </section>
+      </section>
 
       <section className="next-steps" aria-labelledby="next-steps-title">
         <p className="eyebrow">Your next moves</p>
         <h4 id="next-steps-title">Three steps, ordered by learning delta</h4>
-        <ol>{report.nextSteps.map((step) => <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><p>{step.whyNow}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></p><small>Proof: {step.proof}</small></div></li>)}</ol>
+        <ol>{report.nextSteps.map((step) => {
+          const buildsOnClaims = step.buildsOn.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
+          return <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><small className="step-foundation">Builds on: {buildsOnClaims.map((claim) => claim.title).join(" and ")}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></small><p>{step.whyNow}</p><small>Proof: {step.proof}</small></div></li>;
+        })}</ol>
       </section>
 
       <section className="upgrade-challenge" aria-labelledby="challenge-title">
         <div><p className="eyebrow">Use work you already have</p><h4 id="challenge-title">{report.upgradeChallenge.title}</h4><p>{report.upgradeChallenge.objective}</p></div>
         <ol>{report.upgradeChallenge.acceptanceCriteria.map((item) => <li key={item}>{item}</li>)}</ol>
       </section>
+
+      <div className="report-actions screen-only">
+        <button type="button" className="button button-secondary" onClick={() => window.print()}>Download report (PDF)</button>
+        <span>Choose Save as PDF in the print dialog. The downloaded report uses this validated result.</span>
+      </div>
 
       <div className="bridge-findings">
         <p className="eyebrow">Role map</p>
@@ -357,22 +382,16 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
             <details className="bridge-finding" id={`role-map-${finding.id}`} tabIndex={-1} data-group={finding.group} key={finding.id}>
               <summary>
                 <span className="finding-index" aria-hidden="true">{String(report.findings.indexOf(finding) + 1).padStart(2, "0")}</span>
-                <div><span>{groupLabel[finding.group]}{finding.relationshipType ? ` · ${humanize(finding.relationshipType)}` : ""}</span><strong>{finding.title}</strong><span className="summary-citations">{markers(findingReceipts)}</span></div>
+                <div><span>{groupLabel[finding.group]}{finding.relationshipType ? ` · ${humanize(finding.relationshipType)}` : ""}</span><strong>{finding.title}</strong><span className={`uncertainty-chip uncertainty-${finding.group}`}>{finding.group === "insufficient_evidence" || finding.confidence === "low" ? "Needs more evidence" : finding.confidence === "medium" ? "Context-dependent" : "Evidence-backed"}</span><span className="summary-citations">{markers(findingReceipts)}</span></div>
                 <small className="confidence-label" aria-label={`${finding.confidence} confidence`}><span aria-hidden="true">{[0, 1, 2].map((dot) => <i data-filled={dot < ({ low: 1, medium: 2, high: 3 }[finding.confidence])} key={dot} />)}</span>{finding.confidence}</small>
               </summary>
               <div className="finding-body">
-                <div className="finding-connection">
-                  <div><span>{subjectLabel ? `What ${subjectLabel} already knows` : "Your existing foundation"}</span><p>{finding.existingCapability}</p></div>
-                  <strong>{finding.relationshipType ? humanize(finding.relationshipType) : "compare with"}</strong>
-                  <div><span>Modern counterpart</span><p>{finding.modernCounterpart}</p></div>
+                <div className="finding-summary-grid">
+                  <div><span>What you already have</span><p>{finding.existingCapability}</p>{finding.transferableConcepts.length > 0 && <small>Transfers: {finding.transferableConcepts.join(", ")}</small>}</div>
+                  <div><span>What current practice changes</span><p>{finding.modernCounterpart}</p>{finding.relationshipType && <small>Relationship: {humanize(finding.relationshipType)}</small>}{finding.manualStepsChanged.length > 0 && <small>Changes: {finding.manualStepsChanged.join(", ")}</small>}</div>
+                  <div><span>What is actually new</span>{finding.newConcepts.length > 0 ? <ul>{finding.newConcepts.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No distinct new concept was established.</p>}</div>
+                  <div className="finding-action"><span>Smallest useful proof</span><p>{finding.recommendedAction}</p></div>
                 </div>
-
-                <div className="learning-delta">
-                  <div><span>What transfers</span><ul>{finding.transferableConcepts.map((item) => <li key={item}>{item}</li>)}</ul></div>
-                  <div><span>What is actually new</span><ul>{finding.newConcepts.map((item) => <li key={item}>{item}</li>)}</ul></div>
-                </div>
-
-                <div className="finding-action"><span>Smallest useful proof</span><p>{finding.recommendedAction}</p></div>
                 <details className="finding-receipts">
                   <summary>{evidenceCount} evidence items · Why this conclusion?</summary>
                   <div className="finding-receipts-body">
