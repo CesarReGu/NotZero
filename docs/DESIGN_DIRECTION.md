@@ -231,12 +231,12 @@ Navigation:
 
 Hero:
 
-- eyebrow: `Education → current practice`
-- headline: `The job post looks unfamiliar. Your knowledge isn't.`
-- supporting line: `NotZero reads what you studied and built, connects it to the tools employers ask for now, and shows the smallest next step.`
-- primary action: `Try the graduate demo`
+- eyebrow: `For students, recent graduates, and people returning to their field`
+- headline: `Your field moved forward. Your education still carries.`
+- supporting line: `NotZero reads what you studied and built, connects it to current practice in your field, and shows the smallest useful next step.`
+- primary action: `See Alex's knowledge bridge`
 - secondary action: `See how conclusions are made`
-- visible product fragment: one real Knowledge Bridge, not a decorative dashboard collage.
+- visible product fragment: one real evidence transformation with software selected by default and short law and accounting examples that demonstrate multidisciplinary scope without claiming those field packs are complete.
 
 Narrative sequence:
 
@@ -254,7 +254,7 @@ Do not add pricing, testimonials, recruiter messaging, or invented institution l
 Use a three-step horizontal stepper on desktop and a compact progress header on mobile:
 
 1. Evidence
-2. Target
+2. Target context
 3. Review
 
 The first choice should be visible immediately:
@@ -263,6 +263,8 @@ The first choice should be visible immediately:
 - `Use my own documents`
 
 Uploads should show supported types, limits, privacy behavior, dates, and removable file rows. Missing documents should be accepted and explained rather than treated as failure.
+
+For custom evidence, capture field, target role or practice, location, and jurisdiction where relevant. Do not force every profession into software-role terminology.
 
 ### Analysis progress
 

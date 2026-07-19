@@ -7,7 +7,7 @@
 
 ## Definition of success
 
-By the submission deadline, a judge can open NotZero, choose a prepared academic scenario or submit supported evidence, choose a target software role, and receive a trustworthy report that answers:
+By the submission deadline, a judge can open NotZero, choose the prepared software-graduate scenario or submit supported evidence from another field, describe a bounded target context, and receive a trustworthy report that answers:
 
 1. What knowledge is supported by the evidence?
 2. Which foundations remain relevant?
@@ -15,7 +15,7 @@ By the submission deadline, a judge can open NotZero, choose a prepared academic
 4. What small additions would create the most progress?
 5. What is genuinely missing or cannot yet be determined?
 
-The result must be specific, evidenced, understandable to a recent graduate, visually coherent, and easy to demonstrate in under three minutes.
+The submitted judge path remains the software scenario. The underlying evidence model records field, target, location, and jurisdiction so the product does not confuse one profession's tools, rules, or sources with another's. The result must be specific, evidenced, understandable to a recent graduate, visually coherent, and easy to demonstrate in under three minutes.
 
 ## Priority system
 
@@ -65,18 +65,18 @@ The result must be specific, evidenced, understandable to a recent graduate, vis
 
 **Target:** July 18
 
-- [ ] **P0:** Support one curriculum/study-plan document and up to three supporting documents within explicit size/type limits.
-- [ ] **P0:** Support one bounded final-project artifact, repository-derived description, or selected set of source and configuration files.
-- [ ] **P0:** Apply an explicit source-file allowlist and ignore dependencies, build output, binaries, generated files, and obvious secret-bearing files.
-- [ ] **P0:** Capture dates and evidence type for each item.
-- [ ] **P0:** Extract and normalize text server-side.
-- [ ] **P0:** Detect duplicate inputs using a normalized content hash.
-- [ ] **P0:** Use GPT-5.6 to return schema-constrained evidence claims.
-- [ ] **P0:** Validate every model response before use.
-- [ ] **P0:** Store provenance spans or source references for each claim, including repository-relative paths and symbols or lines when available.
-- [ ] **P0:** Label evidence as expected exposure, demonstrated, self-reported, inferred, or unknown.
-- [ ] **P0:** Implement incomplete-information and unsupported-file states.
-- [ ] **P1:** Redact or warn about obvious secrets and sensitive content before analysis.
+- [x] **P0:** Support one curriculum/study-plan document and up to three supporting documents within explicit size/type limits.
+- [x] **P0:** Support one bounded final-project artifact, professional-task description, or selected set of readable source and configuration files.
+- [x] **P0:** Apply an explicit source-file allowlist and ignore dependencies, build output, binaries, generated files, and obvious secret-bearing files.
+- [x] **P0:** Capture dates and evidence type for each item.
+- [x] **P0:** Extract and normalize text server-side, including text-based PDFs.
+- [x] **P0:** Detect duplicate inputs using a normalized content hash.
+- [x] **P0:** Implement a GPT-5.6 Responses API adapter for schema-constrained evidence claims. Live use requires the deployment secret and feature flag.
+- [x] **P0:** Validate every model response before use and reject unresolved excerpts.
+- [x] **P0:** Store provenance spans or source references for each claim, including repository-relative paths and symbols or lines when available.
+- [x] **P0:** Label evidence as expected exposure, demonstrated, self-reported, inferred, or unknown.
+- [x] **P0:** Implement incomplete-information and unsupported-file states.
+- [x] **P1:** Reject obvious secrets and warn about likely personal contact information before analysis.
 
 **Exit criterion:** The prepared fixture reliably becomes a structured, inspectable knowledge ledger with no unsupported mastery claims.
 
@@ -84,7 +84,7 @@ The result must be specific, evidenced, understandable to a recent graduate, vis
 
 **Target:** July 18–19
 
-- [ ] **P0:** Define one supported target scenario, preferably junior backend/DevOps-adjacent development.
+- [ ] **P0:** Define one supported current-practice pack for the judge scenario: junior backend/DevOps-adjacent development in its dated market context.
 - [ ] **P0:** Create a controlled, dated job-requirement dataset with licenses or permitted sources recorded.
 - [ ] **P0:** Normalize job requirements into concepts, practices, and tools.
 - [ ] **P0:** Build the relationship taxonomy:
@@ -195,7 +195,7 @@ The result must be specific, evidenced, understandable to a recent graduate, vis
 
 Only begin after every P0 item above is stable:
 
-- more professions and geographic markets;
+- expert-reviewed current-practice packs for more professions and geographic markets;
 - eight-to-twelve-document academic histories;
 - historical curriculum discovery;
 - live licensed labor-market feeds;

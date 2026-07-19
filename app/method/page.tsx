@@ -12,7 +12,12 @@ export default function MethodPage() {
       <div className="page-shell prose-shell">
         <p className="eyebrow">Method</p>
         <h1>Conclusions should be inspectable.</h1>
-        <p className="page-lede">NotZero connects academic evidence with current professional practice. It keeps the source, inference, relationship, and uncertainty visible.</p>
+        <p className="page-lede">NotZero connects academic and prior-work evidence with current professional practice. It keeps the field context, source, inference, relationship, and uncertainty visible.</p>
+
+        <section>
+          <h2>Field context comes before comparison</h2>
+          <p>The evidence ledger records a field, target, location, and jurisdiction where relevant. A software tool, accounting standard, nursing guideline, and legal authority cannot be updated from the same source set. Phase 2 extracts prior evidence first. Later comparison uses a profession-specific source hierarchy.</p>
+        </section>
 
         <section>
           <h2>Evidence classes</h2>

@@ -12,16 +12,17 @@ export default function PrivacyPage() {
       <div className="page-shell prose-shell">
         <p className="eyebrow">Privacy</p>
         <h1>Bring only material you can safely share.</h1>
-        <p className="page-lede">The prepared demo uses fictional files and requires no account or upload. Personal document upload is not enabled in Phase 1.</p>
+        <p className="page-lede">The prepared demo uses fictional files. Phase 2 can validate a bounded evidence set without an account and processes it only for the current request.</p>
 
         <section>
-          <h2>Before any future upload</h2>
-          <ul className="plain-list"><li>Remove credentials, tokens, private keys, and connection strings.</li><li>Do not submit confidential employer code or personal identifiers.</li><li>Use only work you own or have permission to analyze.</li><li>Prefer the smallest artifact that can support the intended conclusion.</li></ul>
+          <h2>Before any upload</h2>
+          <ul className="plain-list"><li>Remove credentials, tokens, private keys, and connection strings.</li><li>Do not submit confidential employer material, patient or client information, or personal identifiers.</li><li>Use only work you own or have permission to analyze.</li><li>Prefer the smallest artifact that can support the intended conclusion.</li></ul>
         </section>
 
         <section>
           <h2>Prototype boundary</h2>
-          <p>Phase 1 does not accept or retain user files. When uploads are added, the service will enforce file-count, type, size, and retention limits on the server, warn about obvious secrets, and provide a reset action.</p>
+          <p>Phase 2 enforces file-count, type, size, extracted-text, duplicate, and obvious-secret checks on the server. Uploaded bytes and extracted text are not written to application storage. The browser offers a reset action that clears its selected files and result.</p>
+          <p>When live analysis is enabled, extracted text is sent to OpenAI for the requested evidence analysis. The prepared judge path remains deterministic and sends no fixture documents to an external model.</p>
         </section>
 
         <section>

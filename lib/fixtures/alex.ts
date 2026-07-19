@@ -2,6 +2,12 @@ import { preparedScenarioSchema } from "@/lib/domain/schemas";
 
 export const alexScenario = preparedScenarioSchema.parse({
   id: "alex-2022-software-graduate",
+  fieldContext: {
+    field: "Software development",
+    targetTitle: "Junior backend engineer",
+    location: "Mexico · Remote-friendly",
+    jurisdiction: "Mexico",
+  },
   person: {
     name: "Alex Rivera",
     graduationYear: 2022,
@@ -49,7 +55,9 @@ export const alexScenario = preparedScenarioSchema.parse({
     {
       id: "junior-backend-devops",
       title: "Junior backend engineer",
+      field: "Software development",
       location: "Mexico · Remote-friendly",
+      jurisdiction: "Mexico",
       scope: "Entry-level backend work with deployment and operations responsibilities.",
     },
   ],

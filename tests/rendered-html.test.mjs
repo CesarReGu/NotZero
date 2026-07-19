@@ -15,6 +15,13 @@ async function render(pathname = "/") {
   );
 }
 
+async function request(pathname, init) {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${pathname}-${Math.random()}`);
+  const { default: worker } = await import(workerUrl.href);
+  return worker.fetch(new Request(`http://localhost${pathname}`, init), { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } }, { waitUntil() {}, passThroughOnException() {} });
+}
+
 test("server-renders the NotZero landing page and persistent judge path", async () => {
   const response = await render();
   assert.equal(response.status, 200);
@@ -44,13 +51,13 @@ test("server-renders the complete prepared-demo intake shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /Prepared graduate demo/);
+  assert.match(html, /Phase 2 · Evidence ledger/);
   assert.match(html, /Evidence/);
-  assert.match(html, /Target role/);
+  assert.match(html, /Target context/);
   assert.match(html, /Review and analyze/);
   assert.match(html, /Alex Rivera/);
   assert.match(html, /Before using your own materials/);
-  assert.match(html, /fictional data only/);
+  assert.match(html, /Use my own documents/);
 });
 
 test("server-renders method and privacy explanations", async () => {
@@ -59,7 +66,7 @@ test("server-renders method and privacy explanations", async () => {
   assert.equal(privacy.status, 200);
 
   assert.match(await method.text(), /Unknown is not converted into a gap/);
-  assert.match(await privacy.text(), /Personal document upload is not enabled in Phase 1/);
+  assert.match(await privacy.text(), /Phase 2 can validate a bounded evidence set/);
 });
 
 test("health route exposes safe configuration state without secrets", async () => {
@@ -68,8 +75,64 @@ test("health route exposes safe configuration state without secrets", async () =
   const body = await response.json();
   assert.deepEqual(body, {
     status: "ok",
-    analysisVersion: "phase-1",
+    analysisVersion: "phase-2",
     liveAnalysisEnabled: false,
   });
   assert.equal("hasOpenAIKey" in body, false);
+});
+
+test("prepared fixture becomes a provenance-aware evidence ledger", async () => {
+  const form = new FormData();
+  form.set("mode", "prepared");
+  const response = await request("/api/evidence-ledger", { method: "POST", body: form });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.status, "completed");
+  assert.equal(body.ledger.analysisMode, "prepared_fixture");
+  assert.equal(body.ledger.sources.length, 4);
+  assert.equal(body.ledger.claims.length, 4);
+  assert.equal(body.ledger.claims[2].references[0].locator.path, "alex-api/src/config.ts");
+});
+
+function customEvidenceForm() {
+  const form = new FormData();
+  form.set("mode", "custom");
+  form.set("field", "Business administration");
+  form.set("targetTitle", "Operations analyst");
+  form.set("location", "Mexico");
+  form.set("jurisdiction", "Mexico");
+  form.set("projectType", "project_artifact");
+  form.append("curriculum", new File(["Operations management, accounting, statistics, and organizational behavior."], "study-plan.md", { type: "text/markdown" }));
+  form.append("project", new File(["Mapped a purchasing workflow and documented approval controls and cycle times."], "process-project.md", { type: "text/markdown" }));
+  form.set("curriculumDates", JSON.stringify(["2023-05-20"]));
+  form.set("supportingDates", JSON.stringify([]));
+  form.set("projectDates", JSON.stringify(["2023-04-10"]));
+  return form;
+}
+
+test("custom evidence is validated without inventing claims when live analysis is disabled", async () => {
+  const response = await request("/api/evidence-ledger", { method: "POST", body: customEvidenceForm() });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.status, "validated");
+  assert.equal(body.ledger.analysisMode, "preflight_only");
+  assert.equal(body.ledger.fieldContext.field, "Business administration");
+  assert.equal(body.ledger.sources.length, 2);
+  assert.equal(body.ledger.claims.length, 0);
+});
+
+test("duplicate and unsupported evidence are rejected before model analysis", async () => {
+  const duplicate = customEvidenceForm();
+  const same = "Repeated content that is long enough for safe deterministic text extraction.";
+  duplicate.set("curriculum", new File([same], "study-plan.md", { type: "text/markdown" }));
+  duplicate.set("project", new File([same], "project.md", { type: "text/markdown" }));
+  const duplicateResponse = await request("/api/evidence-ledger", { method: "POST", body: duplicate });
+  assert.equal(duplicateResponse.status, 409);
+  assert.equal((await duplicateResponse.json()).error, "duplicate_input");
+
+  const unsupported = customEvidenceForm();
+  unsupported.set("project", new File(["This executable-like file should be rejected before any analysis call."], "project.exe", { type: "application/octet-stream" }));
+  const unsupportedResponse = await request("/api/evidence-ledger", { method: "POST", body: unsupported });
+  assert.equal(unsupportedResponse.status, 400);
+  assert.equal((await unsupportedResponse.json()).error, "unsupported_file");
 });

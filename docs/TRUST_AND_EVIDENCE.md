@@ -123,6 +123,10 @@ Never imply that illustrative or conceptual output compiles, runs, preserves beh
 
 ## Market evidence
 
+### Profession-specific source hierarchy
+
+The evidence ledger is shared across fields. Current-practice comparison is not. Each supported field needs a reviewed source hierarchy and safety policy. Software may emphasize dated job requirements and official technical documentation. Accounting, nursing, law, and other regulated fields must prioritize applicable standards, regulators, professional bodies, clinical or legal authorities, and jurisdiction before job-posting frequency. A field label alone is never permission to generate regulated professional advice.
+
 For the MVP:
 
 - use a controlled and dated set of job descriptions or a properly licensed API;

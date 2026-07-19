@@ -3,8 +3,8 @@ import { DemoStepper } from "@/components/demo-stepper";
 import { alexScenario } from "@/lib/fixtures/alex";
 
 export const metadata: Metadata = {
-  title: "Prepared graduate demo",
-  description: "Walk through a fictional software graduate's evidence and target role.",
+  title: "Evidence ledger demo",
+  description: "Build a provenance-aware evidence ledger from a prepared software scenario or your own bounded materials.",
 };
 
 export default function DemoPage() {
@@ -12,11 +12,11 @@ export default function DemoPage() {
     <main id="main-content" className="demo-main">
       <div className="page-shell demo-shell">
         <div className="demo-intro">
-          <p className="eyebrow">Prepared graduate demo</p>
+          <p className="eyebrow">Phase 2 · Evidence ledger</p>
           <h1>See what the evidence already supports.</h1>
           <p>
-            This fictional scenario exercises the intake path without an account,
-            upload, or live external dependency.
+            Use the fictional software scenario for the complete judge path, or
+            validate your own dated evidence from another field.
           </p>
         </div>
         <DemoStepper scenario={alexScenario} />

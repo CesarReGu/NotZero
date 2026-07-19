@@ -36,6 +36,12 @@ NotZero makes the transfer visible. It respects foundational education, identifi
 
 ## Primary user and job to be done
 
+### Product audience
+
+NotZero is designed for students, recent graduates, and people returning to a field whose earlier education or work can be compared with dated current practice. The shared mechanism is multidisciplinary: extract what the evidence supports, preserve its provenance, then compare it through a field-specific source and safety layer.
+
+The hackathon MVP does not claim validated current-practice coverage for every profession. Its complete judge path remains software development. Law, accounting, nursing, business, and other fields require their own authoritative sources, jurisdiction rules, forbidden claims, and expert-reviewed evaluation fixtures before their comparisons can be presented as product results.
+
 ### Primary user
 
 A recent computer-science, software-engineering, or related graduate applying for a junior backend, full-stack, or DevOps-adjacent role.
@@ -120,9 +126,9 @@ Areas where the product cannot responsibly reach a conclusion.
 
 - one curriculum or study-plan document;
 - up to three supporting course, assignment, or project documents;
-- one bounded final-project artifact, selected source files, or repository-derived description;
+- one bounded final-project artifact, professional-task description, selected source files, or repository-derived description;
 - dates for each item;
-- one target role and location; and
+- a field, target role or practice, location, and jurisdiction when relevant; and
 - a controlled collection of recent job requirements.
 
 The prepared judge scenario must be available without an upload, account, or live external-data dependency.
@@ -150,6 +156,8 @@ The MVP is not:
 - a formal skill assessment;
 - a replacement for an instructor or career adviser; or
 - a guarantee that a user meets an employer's expectations.
+
+It is also not a single generic model that applies software-market logic to every profession. Cross-field expansion happens through reviewed current-practice packs, not through renamed software keywords.
 
 ## Differentiation
 
