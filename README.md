@@ -29,6 +29,7 @@ Phases 1 through 5 are complete as technical foundations for the deterministic s
 - a decision-first report with a validated conclusion, four large count tiles, the shortest bridge, and the next actions before the detailed role map;
 - collapsed conclusions that reveal the connection and learning delta first, with evidence receipts, exact locators, counts, sources, and limits on demand;
 - an end-of-report evidence appendix instead of a permanent wall of provenance text;
+- a print-to-PDF action that renders the same validated result with a report cover, expanded evidence, and version footer;
 - result filters that preserve the complete narrative as the default view;
 - distinct loading, empty, partial, error, limit-reached, and completed states;
 - keyboard focus management, visible focus indicators, responsive report layouts, and a clear reset action;

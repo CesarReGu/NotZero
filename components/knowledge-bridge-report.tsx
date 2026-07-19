@@ -59,6 +59,11 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
         <span>{report.analysisMode === "live_gpt_5_6" ? "GPT-5.6 plus server validation" : "Prepared fixture plus server validation"}</span>
       </div>
 
+      <div className="report-actions screen-only">
+        <button type="button" className="button button-secondary" onClick={() => window.print()}>Download report (PDF)</button>
+        <span>Choose Save as PDF in the print dialog. The downloaded report uses this validated result.</span>
+      </div>
+
       <div className="report-counts" aria-label="Knowledge Bridge result counts">
         <div data-group="strengths"><strong>{supportedStrengths}</strong><span>Supported strengths</span><small>Useful foundations already visible</small></div>
         <div data-group="small_bridge"><strong>{report.counts.smallBridge}</strong><span>Practical bridges</span><small>Small additions with high leverage</small></div>
@@ -159,6 +164,13 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
           <div><h5>Limits</h5><ul>{[...pack.limitations, ...report.limitations].map((item) => <li key={item}>{item}</li>)}</ul></div>
         </div>
       </details>
+
+      <footer className="report-print-footer">
+        <span>Analysis {report.analysisVersion}</span>
+        <span>Generated {report.generatedAt.slice(0, 10)}</span>
+        <span>Market pack {pack.datasetVersion}</span>
+        <p>NotZero interprets the evidence and dated sources available to it. It does not certify mastery or guarantee job eligibility.</p>
+      </footer>
     </section>
   );
 }
