@@ -121,6 +121,22 @@ export async function getCachedResult(cacheKey: string, now: number): Promise<Ca
   return entry ?? null;
 }
 
+export async function getSessionCachedResult(cacheKey: string, sessionHash: string, now: number): Promise<CachedResult | null> {
+  const database = getOperationalDatabase();
+  if (!database) {
+    const entry = memoryState().cache.get(cacheKey);
+    if (!entry || entry.sessionHash !== sessionHash || entry.expiresAt <= now) {
+      if (entry?.expiresAt && entry.expiresAt <= now) memoryState().cache.delete(cacheKey);
+      return null;
+    }
+    return { responseJson: entry.responseJson, expiresAt: entry.expiresAt };
+  }
+  await ensureDatabase(database);
+  await database.prepare("DELETE FROM analysis_cache WHERE expires_at <= ?").bind(now).run();
+  return await database.prepare("SELECT response_json AS responseJson, expires_at AS expiresAt FROM analysis_cache WHERE cache_key = ? AND session_hash = ?")
+    .bind(cacheKey, sessionHash).first<CachedResult>() ?? null;
+}
+
 export async function putCachedResult(cacheKey: string, sessionHash: string, responseJson: string, now: number, ttlSeconds: number) {
   const expiresAt = now + ttlSeconds * 1000;
   const database = getOperationalDatabase();

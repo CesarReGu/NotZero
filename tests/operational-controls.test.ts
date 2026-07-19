@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   deleteSessionCache,
   getCachedResult,
+  getSessionCachedResult,
   putCachedResult,
   recordSessionRequest,
   reserveLiveAnalysis,
@@ -38,4 +39,12 @@ test("cached results expire and can be deleted by anonymous session", async () =
   assert.equal(await getCachedResult("cache-a", now + 2_000), null);
   await putCachedResult("cache-b", "session-b", "{}", now, 60);
   assert.equal(await getCachedResult("cache-b", now + 61_000), null);
+});
+
+test("review cache reads remain bound to the anonymous session", async () => {
+  resetOperationalMemoryForTests();
+  const now = Date.now();
+  await putCachedResult("review-a", "session-a", "{\"ledger\":true}", now, 60);
+  assert.equal((await getSessionCachedResult("review-a", "session-a", now + 1_000))?.responseJson, "{\"ledger\":true}");
+  assert.equal(await getSessionCachedResult("review-a", "session-b", now + 1_000), null);
 });

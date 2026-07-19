@@ -183,7 +183,7 @@ function CitationMarker({ receipt, onOpen }: { receipt: CitationReceipt; onOpen:
   return <button className="citation-marker" type="button" aria-label={`Evidence ${receipt.number}: ${receipt.sourceName}, ${receipt.date}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpen(receipt, event.currentTarget); }}><sup>[{receipt.number}]</sup><span className="citation-preview" aria-hidden="true"><strong>{receipt.sourceName}</strong><small>{receipt.date}{receipt.evidenceClass ? ` · ${receipt.evidenceClass}` : ""}</small><span>{receipt.excerpt}</span></span></button>;
 }
 
-export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, revealStep = 5 }: { report: KnowledgeBridgeReport; ledger: EvidenceLedger; subjectLabel?: string; revealStep?: number }) {
+export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, revealStep = 5, onPriorityChange }: { report: KnowledgeBridgeReport; ledger: EvidenceLedger; subjectLabel?: string; revealStep?: number; onPriorityChange?: (requirementId: string) => void }) {
   const pack = currentPracticePackById(report.currentPracticePackId);
   const [filter, setFilter] = useState<FindingFilter>("all");
   const [activeReceipt, setActiveReceipt] = useState<CitationReceipt | null>(null);
@@ -236,6 +236,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
   ];
   const decisionHeadline = buildDecisionHeadline(report, pack, subjectLabel);
   const firstStepClaims = report.nextSteps[0].buildsOn.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
+  const supportedPriorities = report.findings.filter((finding) => finding.evidenceClaimIds.length > 0 && ["current", "transferable", "small_bridge"].includes(finding.group));
 
   function openReceipt(receipt: CitationReceipt, trigger: HTMLButtonElement) {
     receiptTriggerRef.current = trigger;
@@ -290,6 +291,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
           <p className="eyebrow">Your decision brief</p>
           <h3 id="bridge-report-title">{decisionHeadline}</h3>
           <p>This conclusion comes only from the validated evidence and the dated practice pack. Open any citation when you want to inspect the proof.</p>
+          <details className="reasoning-receipt"><summary>Why this conclusion?</summary><div><strong>Evidence connection</strong><p>{strongestFoundation.existingCapability}</p><strong>Current-practice connection</strong><p>{shortestBridge.explanation}</p><span className="inline-citations">{markers(uniqueReceipts([...claimReceipts(strongestFoundation.evidenceClaimIds), ...shortestClaimReceipts, ...shortestRelationshipReceipts]))}</span></div></details>
         </div>
         <span className="report-date">Market pack<br /><strong>{pack.observedThrough}</strong></span>
       </header>
@@ -339,9 +341,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
       <section className="next-steps" aria-labelledby="next-steps-title">
         <p className="eyebrow">Your next moves</p>
         <h4 id="next-steps-title">Three steps, ordered by learning delta</h4>
+        {onPriorityChange && supportedPriorities.length > 1 && <div className="priority-control"><label htmlFor="bridge-priority">Choose a different supported priority</label><select id="bridge-priority" value={report.findings.find((finding) => finding.title === report.nextSteps[0].title.replace(/^Prioritize /, ""))?.currentRequirementId ?? shortestBridge.currentRequirementId} onChange={(event) => onPriorityChange(event.target.value)}>{supportedPriorities.map((finding) => <option value={finding.currentRequirementId} key={finding.id}>{finding.title}</option>)}</select><small>The three-step plan is recomputed from this validated report. Your evidence is not uploaded again.</small></div>}
         <ol>{report.nextSteps.map((step) => {
           const buildsOnClaims = step.buildsOn.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
-          return <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><small className="step-foundation">Evidence: {buildsOnClaims.map((claim) => claim.title).join(" and ")}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></small><dl className="step-contract"><div><dt>Reuse</dt><dd>{step.reuses}</dd></div><div><dt>Learn</dt><dd>{step.newConcept}</dd></div><div><dt>Why teams use it</dt><dd>{step.whyItIsUsed}</dd></div><div><dt>Proof</dt><dd>{step.proof}</dd></div></dl><p>{step.whyNow}</p></div></li>;
+          return <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><small className="step-foundation">Evidence: {buildsOnClaims.map((claim) => claim.title).join(" and ")}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></small><details className="reasoning-receipt step-reasoning"><summary>Why this step?</summary><div><p>{step.whyNow}</p><span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></div></details><dl className="step-contract"><div><dt>Reuse</dt><dd>{step.reuses}</dd></div><div><dt>Learn</dt><dd>{step.newConcept}</dd></div><div><dt>Why teams use it</dt><dd>{step.whyItIsUsed}</dd></div><div><dt>Proof</dt><dd>{step.proof}</dd></div></dl></div></li>;
         })}</ol>
       </section>
 

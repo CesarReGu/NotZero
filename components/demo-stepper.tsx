@@ -6,6 +6,7 @@ import { EvidenceLedgerView } from "@/components/evidence-ledger";
 import { KnowledgeBridgeReportView } from "@/components/knowledge-bridge-report";
 import { classifyAnalysisResult, isLimitFailure, type AnalysisState } from "@/lib/analysis/outcome";
 import { deriveEvidenceMix } from "@/lib/evidence/mix";
+import { reprioritizeBridge } from "@/lib/bridge/review";
 
 type DemoStepperProps = { scenario: PreparedScenario };
 type Mode = "prepared" | "custom";
@@ -75,6 +76,8 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [ledger, setLedger] = useState<EvidenceLedger | null>(null);
   const [report, setReport] = useState<KnowledgeBridgeReport | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
+  const [analysisId, setAnalysisId] = useState("");
+  const [excludedClaimIds, setExcludedClaimIds] = useState<string[]>([]);
   const [revealStep, setRevealStep] = useState(-1);
   const [error, setError] = useState("");
   const [curriculum, setCurriculum] = useState<DatedFile[]>([]);
@@ -133,6 +136,8 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     clearRevealTimers();
     setLedger(null);
     setReport(null);
+    setAnalysisId("");
+    setExcludedClaimIds([]);
     setRevealStep(-1);
     setError("");
     setAnalysisState("idle");
@@ -145,6 +150,8 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setMode(nextMode);
     setLedger(null);
     setReport(null);
+    setAnalysisId("");
+    setExcludedClaimIds([]);
     setRevealStep(-1);
     setError("");
     setAnalysisState("idle");
@@ -173,6 +180,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     try {
       const form = new FormData();
       form.set("mode", mode);
+      form.set("deferComparison", "true");
       if (mode === "custom") {
         form.set("field", field);
         form.set("targetTitle", targetTitle);
@@ -187,7 +195,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         form.set("projectDates", JSON.stringify(project.map((item) => item.date)));
       }
       const response = await fetch("/api/evidence-ledger", { method: "POST", body: form });
-      const body = await response.json() as { ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; message?: string; error?: string };
+      const body = await response.json() as { status?: string; analysisId?: string; ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; message?: string; error?: string };
       if (!response.ok || !body.ledger) {
         if (isLimitFailure(response.status, body.error)) {
           setError(body.message || "The evidence exceeds a documented analysis limit.");
@@ -198,12 +206,39 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
       }
       setLedger(body.ledger);
       setReport(body.report ?? null);
-      setAnalysisState(classifyAnalysisResult(body.ledger, body.report));
+      setAnalysisId(body.analysisId ?? "");
+      setExcludedClaimIds([]);
+      setAnalysisState(body.status === "review" ? "review" : classifyAnalysisResult(body.ledger, body.report));
       if (body.report) playReveal();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The evidence could not be analyzed.");
       setAnalysisState("error");
       return;
+    }
+  }
+
+  async function compareReviewedEvidence() {
+    if (!ledger || !analysisId) return;
+    setAnalysisState("loading");
+    setError("");
+    try {
+      const form = new FormData();
+      form.set("action", "compare");
+      form.set("analysisId", analysisId);
+      form.set("excludedClaimIds", JSON.stringify(excludedClaimIds));
+      const response = await fetch("/api/evidence-ledger", { method: "POST", body: form });
+      const body = await response.json() as { ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; message?: string; error?: string };
+      if (!response.ok || !body.ledger) {
+        if (isLimitFailure(response.status, body.error)) { setError(body.message || "The comparison limit was reached."); setAnalysisState("limit"); return; }
+        throw new Error(body.message || "The reviewed evidence could not be compared.");
+      }
+      setLedger(body.ledger);
+      setReport(body.report ?? null);
+      setAnalysisState(classifyAnalysisResult(body.ledger, body.report));
+      if (body.report) playReveal();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The reviewed evidence could not be compared.");
+      setAnalysisState("error");
     }
   }
 
@@ -217,6 +252,8 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setProject([]);
     setLedger(null);
     setReport(null);
+    setAnalysisId("");
+    setExcludedClaimIds([]);
     setRevealStep(-1);
     setError("");
     setAnalysisState("idle");
@@ -298,11 +335,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             {analysisState === "limit" && <div className="analysis-state analysis-limit" role="alert" ref={statusRef} tabIndex={-1}><strong>This evidence set is outside the prototype limits.</strong><p>{error}</p><span>Return to the evidence step, reduce the bounded set, and try again.</span></div>}
             {analysisState === "empty" && <div className="analysis-state analysis-empty" role="status" ref={statusRef} tabIndex={-1}><strong>Your files passed validation. No capability conclusion was generated.</strong><p>The current deployment can verify this evidence set, but a profession-specific market comparison is not available for it yet.</p></div>}
             {analysisState === "partial" && <div className="analysis-state analysis-partial" role="status" ref={statusRef} tabIndex={-1}><strong>Your evidence ledger is ready. The market bridge is still incomplete.</strong><p>Review the extracted claims below. NotZero will not apply the software market pack to a different field or context.</p></div>}
+            {analysisState === "review" && ledger && <section className="evidence-review" aria-labelledby="evidence-review-title"><p className="eyebrow">Evidence checkpoint</p><h3 id="evidence-review-title">Keep only the claims that reflect your experience</h3><p>Every extracted claim is included by default. Exclude anything that feels unsupported, then build the market comparison from the remaining evidence.</p><fieldset><legend>Claims to include</legend>{ledger.claims.map((claim) => { const excluded = excludedClaimIds.includes(claim.id); return <label key={claim.id}><input type="checkbox" checked={!excluded} onChange={() => setExcludedClaimIds((items) => excluded ? items.filter((id) => id !== claim.id) : [...items, claim.id])} /><span><strong>{claim.title}</strong><small>{claim.evidenceClass.replaceAll("_", " ")} · {claim.confidence} confidence</small><p>{claim.statement}</p></span></label>; })}</fieldset><div className="evidence-review-actions"><span>{ledger.claims.length - excludedClaimIds.length} of {ledger.claims.length} claims included</span><button className="button button-primary" type="button" onClick={compareReviewedEvidence} disabled={excludedClaimIds.length === ledger.claims.length}>Compare included evidence</button></div></section>}
             {analysisState === "completed" && <div className="analysis-state analysis-complete" role="status" ref={statusRef} tabIndex={-1}><strong>Your Knowledge Bridge is ready.</strong><p>Start with the decision brief, then open any conclusion to inspect its evidence and learning delta.</p></div>}
-            <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={analysisState === "loading"}>{analysisState === "loading" ? "Building your Knowledge Bridge…" : ledger ? "Rebuild Knowledge Bridge" : "Build Knowledge Bridge"}</button></div>
+            <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={analysisState === "loading"}>{analysisState === "loading" ? "Building your Knowledge Bridge…" : ledger ? "Restart analysis" : "Build Knowledge Bridge"}</button></div>
             {ledger && <div className="prepared-result" data-reveal-step={report ? revealStep : undefined} data-reveal-state={report && revealStep < analysisStages.length ? "playing" : "complete"} ref={resultRef} tabIndex={-1}>
               {report && <div className="result-reveal screen-only"><AnalysisPipeline loading={false} revealStep={revealStep} /><div className="result-reveal-controls"><span>{revealStep < analysisStages.length ? "The validated result is taking shape." : "Your evidence, current requirements, and sources are connected."}</span>{revealStep < analysisStages.length ? <button type="button" onClick={skipReveal}>Skip reveal</button> : <button type="button" onClick={playReveal}>Replay reveal</button>}</div></div>}
-              {report && <KnowledgeBridgeReportView report={report} ledger={ledger} subjectLabel={mode === "prepared" ? scenario.person.name : undefined} revealStep={revealStep} />}
+              {report && <KnowledgeBridgeReportView report={report} ledger={ledger} subjectLabel={mode === "prepared" ? scenario.person.name : undefined} revealStep={revealStep} onPriorityChange={(requirementId) => setReport((current) => current ? reprioritizeBridge(current, requirementId) : current)} />}
               {report ? <details className="evidence-appendix" id="evidence-appendix"><summary>Evidence appendix · {ledger.claims.length} validated claims</summary><EvidenceMix ledger={ledger} /><EvidenceLedgerView ledger={ledger} /></details> : <EvidenceLedgerView ledger={ledger} />}
             </div>}
             {(ledger || analysisState === "error" || analysisState === "limit") && <button className="reset-evidence" type="button" onClick={resetAnalysis}>{mode === "custom" ? "Clear my files and result" : "Start over and clear result"}</button>}

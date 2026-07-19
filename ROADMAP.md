@@ -198,7 +198,7 @@ Verified state before this phase: stage one (GPT-5.6 evidence extraction with se
 - [x] **P0:** Add deterministic and mocked-model fixtures for a successful custom report, weak evidence, summary-only evidence, invented citations, missing market coverage, schema failure, and model failure.
 - [x] **P0:** Extend the operational controls to the two-stage flow: both stages count against the live-analysis reservation and circuit breaker, the cache key includes both prompt versions and the report schema version, and the comparison stage gets its own OpenAI prompt cache key.
 - [ ] **P0:** Configure the server-side deployment secret, enable the bounded live GPT-5.6 path, and verify one fictional custom upload from ingestion through the final downloaded report.
-- [ ] **P1:** Accept an optional list of user-excluded claim IDs in the comparison stage, then add an evidence-review checkpoint between extraction and comparison so the user can reject an inferred claim and rerun only the comparison without re-uploading. The API support lands with the stage; the checkpoint interface ships when the P0 report experience is stable.
+- [x] **P1:** Accept an optional list of user-excluded claim IDs in the comparison stage, then add an evidence-review checkpoint between extraction and comparison so the user can reject an inferred claim and rerun only the comparison without re-uploading. The API support lands with the stage; the checkpoint interface ships when the P0 report experience is stable.
 
 ### Decision-first information architecture
 
@@ -232,7 +232,7 @@ Keep the trust layer, change its posture: the same pattern readers know from cit
 - [x] **P0:** Keep every conclusion's evidence reachable within two interactions.
 - [x] **P0:** Make markers and panels fully keyboard- and touch-operable, with accessible names such as “Evidence 3: study plan, 2022”. Hover-only behavior is not acceptable.
 - [x] **P0:** Add a one-line trust strip under the headline: claims verified against the submitted files, dated market sources used, pack version and observation window, and the analysis pipeline (GPT-5.6 plus server validation). Each segment opens the matching panel.
-- [ ] **P1:** Add a `Why this conclusion?` control on the headline and on each next step that opens the combined reasoning receipt for that specific statement.
+- [x] **P1:** Add a `Why this conclusion?` control on the headline and on each next step that opens the combined reasoning receipt for that specific statement.
 
 ### Report visual system and the result reveal
 
@@ -292,7 +292,7 @@ Rejected forms, recorded so they stay rejected: pie and donut charts (angle judg
 - [x] **P0:** If the system cannot produce a project-grounded bridge, say what evidence is missing instead of filling the report with generic advice.
 - [x] **P0:** Align the landing page and demo copy with what the completed service actually delivers, and remove internal phase labels from user-facing copy.
 - [x] **P1:** Add a compact method panel titled “What makes this different from asking a chatbot”: the six contract guarantees, each linked to the live control that demonstrates it (a citation receipt, the pack version, an evidence-class label, the delta framing, the proof task, the download).
-- [ ] **P1:** Let the user choose a different supported bridge priority and recompute the three-step plan without re-uploading unchanged evidence.
+- [x] **P1:** Let the user choose a different supported bridge priority and recompute the three-step plan without re-uploading unchanged evidence.
 
 ### Judge experience
 

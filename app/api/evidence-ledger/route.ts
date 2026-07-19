@@ -6,10 +6,11 @@ import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 import { extractWithGpt56 } from "@/lib/evidence/openai-adapter";
 import { alexEvidenceLedger } from "@/lib/fixtures/alex-ledger";
 import { alexBridgeReport } from "@/lib/bridge/prepared-report";
+import { applyEvidenceReview, reviewedLedger } from "@/lib/bridge/review";
 import { BRIDGE_PROMPT_VERSION, BRIDGE_REPORT_SCHEMA_VERSION, compareWithGpt56 } from "@/lib/bridge/openai-adapter";
 import { selectCurrentPracticePack } from "@/lib/market/current-practice";
 import { analysisCacheKey, operationalSession } from "@/lib/operations/session";
-import { deleteSessionCache, getCachedResult, putCachedResult, recordSessionRequest, reserveLiveAnalysis } from "@/lib/operations/store";
+import { deleteSessionCache, getCachedResult, getSessionCachedResult, putCachedResult, recordSessionRequest, reserveLiveAnalysis } from "@/lib/operations/store";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,18 @@ function text(form: FormData, key: string) {
 
 function files(form: FormData, key: string) {
   return form.getAll(key).filter((value): value is File => value instanceof File && value.size > 0);
+}
+
+function excludedClaims(form: FormData) {
+  let parsed: unknown;
+  try { parsed = JSON.parse(text(form, "excludedClaimIds") || "[]"); } catch { throw new EvidenceInputError("invalid_review", "The evidence review selection is invalid."); }
+  if (!Array.isArray(parsed) || parsed.length > 100 || parsed.some((id) => typeof id !== "string" || id.length < 1 || id.length > 200)) throw new EvidenceInputError("invalid_review", "The evidence review selection is invalid.");
+  return [...new Set(parsed)] as string[];
+}
+
+function assertKnownExclusions(excludedClaimIds: string[], ledger: { claims: Array<{ id: string }> }) {
+  const known = new Set(ledger.claims.map((claim) => claim.id));
+  if (excludedClaimIds.some((id) => !known.has(id))) throw new EvidenceInputError("invalid_review", "The evidence review referenced a claim outside this validated ledger.", 400);
 }
 
 function dateList(form: FormData, key: string, count: number) {
@@ -63,6 +76,7 @@ export async function POST(request: Request) {
     if (contentLength > EVIDENCE_LIMITS.totalBytes + 1_000_000) throw new EvidenceInputError("request_size", "The complete request must be smaller than 9 MB.", 413);
     const form = await request.formData();
     if (text(form, "mode") === "prepared") {
+      if (text(form, "deferComparison") === "true") return json({ status: "review", analysisId: "prepared", ledger: alexEvidenceLedger });
       return json({ status: "completed", ledger: alexEvidenceLedger, report: alexBridgeReport });
     }
 
@@ -72,6 +86,45 @@ export async function POST(request: Request) {
     const now = Date.now();
     const usage = await recordSessionRequest(session.hash, now, config.sessionRequestLimit);
     if (!usage.allowed) throw new EvidenceInputError("request_limit", "This anonymous session has reached its daily analysis-request limit. Try again after the daily window resets.", 429);
+
+    if (text(form, "action") === "compare") {
+      const analysisId = text(form, "analysisId");
+      const excludedClaimIds = excludedClaims(form);
+      if (analysisId === "prepared") {
+        assertKnownExclusions(excludedClaimIds, alexEvidenceLedger);
+        const pack = selectCurrentPracticePack(alexEvidenceLedger.fieldContext);
+        if (!pack) throw new EvidenceInputError("unsupported_field", "A reviewed current-practice pack is not available for this evidence context.", 422);
+        const reviewed = applyEvidenceReview(alexEvidenceLedger, alexBridgeReport, excludedClaimIds, pack);
+        return json({ status: reviewed.report ? "completed" : "partial", ...reviewed }, 200, setCookie);
+      }
+      if (!/^[a-f0-9]{64}$/.test(analysisId)) throw new EvidenceInputError("invalid_review", "This evidence review has expired or is invalid.", 400);
+      const cached = await getSessionCachedResult(analysisId, session.hash, now);
+      if (!cached) throw new EvidenceInputError("review_expired", "This evidence review expired. Upload the evidence again to restart safely.", 410);
+      const stored = JSON.parse(cached.responseJson) as { ledger?: unknown; report?: unknown };
+      const originalLedger = evidenceLedgerSchema.parse(stored.ledger ?? stored);
+      assertKnownExclusions(excludedClaimIds, originalLedger);
+      const ledger = reviewedLedger(originalLedger, excludedClaimIds);
+      if (ledger.claims.length === 0) return json({ status: "partial", ledger }, 200, setCookie);
+      const pack = selectCurrentPracticePack(ledger.fieldContext);
+      if (!pack) return json({ status: "partial", ledger }, 200, setCookie);
+      if (stored.report) {
+        const reviewed = applyEvidenceReview(originalLedger, knowledgeBridgeReportSchema.parse(stored.report), excludedClaimIds, pack);
+        return json({ status: reviewed.report ? "completed" : "partial", ...reviewed }, 200, setCookie);
+      }
+      if (!config.liveAnalysisEnabled || !process.env.OPENAI_API_KEY) throw new EvidenceInputError("live_disabled", "Live GPT-5.6 comparison is not enabled in this deployment.", 503);
+      const reviewHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(excludedClaimIds.sort().join("\n"))).then((value) => Buffer.from(value).toString("hex"));
+      const variantKey = `${analysisId}:${reviewHash}`;
+      const cachedVariant = await getSessionCachedResult(variantKey, session.hash, now);
+      if (cachedVariant) {
+        const variant = JSON.parse(cachedVariant.responseJson) as { ledger?: unknown; report?: unknown };
+        return json({ status: "completed", ledger: evidenceLedgerSchema.parse(variant.ledger), report: knowledgeBridgeReportSchema.parse(variant.report) }, 200, setCookie, "hit");
+      }
+      const reservation = await reserveLiveAnalysis(session.hash, now, config.sessionLiveLimit, config.globalLiveLimit, `live-comparison:${config.analysisVersion}`);
+      if (!reservation.allowed) throw new EvidenceInputError(reservation.reason, reservation.reason === "session_limit" ? "This anonymous session has reached its daily live-analysis limit." : "Live analysis is temporarily paused by the deployment-wide spending circuit breaker.", 429);
+      const report = await compareWithGpt56({ apiKey: process.env.OPENAI_API_KEY, model: config.model, ledger, pack, analysisVersion: config.analysisVersion });
+      await putCachedResult(variantKey, session.hash, JSON.stringify({ ledger, report }), now, config.cacheTtlSeconds);
+      return json({ status: "completed", ledger, report }, 200, setCookie, "miss");
+    }
 
     const fieldContext = fieldContextSchema.parse({
       field: text(form, "field"),
@@ -108,7 +161,7 @@ export async function POST(request: Request) {
     const cacheKey = await analysisCacheKey({
       sessionHash: session.hash,
       analysisVersion: config.analysisVersion,
-      promptVersions: ["evidence-extraction.v1", BRIDGE_PROMPT_VERSION],
+      promptVersions: ["evidence-extraction.v1", BRIDGE_PROMPT_VERSION, "evidence-review.v1"],
       reportSchemaVersion: BRIDGE_REPORT_SCHEMA_VERSION,
       model: config.model,
       liveAnalysisEnabled: config.liveAnalysisEnabled,
@@ -125,6 +178,7 @@ export async function POST(request: Request) {
       const stored = JSON.parse(cached.responseJson) as { ledger?: unknown; report?: unknown };
       const ledger = evidenceLedgerSchema.parse(stored.ledger ?? stored);
       const report = stored.report ? knowledgeBridgeReportSchema.parse(stored.report) : undefined;
+      if (text(form, "deferComparison") === "true" && ledger.claims.length > 0) return json({ status: "review", analysisId: cacheKey, ledger }, 200, setCookie, "hit");
       return json({ status: "cached", ledger, report }, 200, setCookie, "hit");
     }
 
@@ -165,6 +219,10 @@ export async function POST(request: Request) {
       sources: extractedSources,
       inputWarnings: warnings,
     });
+    if (text(form, "deferComparison") === "true") {
+      await putCachedResult(cacheKey, session.hash, JSON.stringify({ ledger }), now, config.cacheTtlSeconds);
+      return json({ status: "review", analysisId: cacheKey, ledger }, 200, setCookie, "miss");
+    }
     const pack = selectCurrentPracticePack(fieldContext);
     const report = pack && ledger.claims.length > 0
       ? await compareWithGpt56({ apiKey: process.env.OPENAI_API_KEY, model: config.model, ledger, pack, analysisVersion: config.analysisVersion })

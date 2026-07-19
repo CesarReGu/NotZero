@@ -12,6 +12,7 @@ The software-graduate vertical slice now includes the decision-ready report, evi
 - persistent navigation to Method, Privacy, and the prepared demo;
 - a fictional 2022 software-graduate scenario that requires no account or upload;
 - a functional Evidence, Target context, Review and analyze stepper;
+- an evidence-review checkpoint that can exclude a claim before the market comparison without uploading files again;
 - visible privacy guidance before upload;
 - a deterministic, provenance-aware evidence ledger and complete Knowledge Bridge Graph;
 - a multidisciplinary field context containing field, target, location, and optional jurisdiction;
@@ -24,6 +25,7 @@ The software-graduate vertical slice now includes the decision-ready report, evi
 - five result groups: current, transferable, small bridge, genuine gap, and insufficient evidence;
 - relationship evidence from the market pack and official Docker, GitHub, and OpenTelemetry documentation;
 - exactly three prioritized next steps and one existing-project upgrade challenge;
+- combined reasoning receipts for the headline and each next step, plus an instant supported-priority selector;
 - a project-grounded walkthrough with an exact artifact locator and an explicitly illustrative Dockerfile;
 - visible verified, illustrative, and conceptual comparison states;
 - a decision-first report with a validated conclusion, four large count tiles, the shortest bridge, and the next actions before the detailed role map;
