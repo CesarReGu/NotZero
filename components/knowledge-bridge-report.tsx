@@ -173,7 +173,7 @@ function CitationMarker({ receipt, onOpen }: { receipt: CitationReceipt; onOpen:
   return <button className="citation-marker" type="button" aria-label={`Evidence ${receipt.number}: ${receipt.sourceName}, ${receipt.date}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpen(receipt, event.currentTarget); }}><sup>[{receipt.number}]</sup><span className="citation-preview" aria-hidden="true"><strong>{receipt.sourceName}</strong><small>{receipt.date}{receipt.evidenceClass ? ` · ${receipt.evidenceClass}` : ""}</small><span>{receipt.excerpt}</span></span></button>;
 }
 
-export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { report: KnowledgeBridgeReport; ledger: EvidenceLedger; subjectLabel?: string }) {
+export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, revealStep = 5 }: { report: KnowledgeBridgeReport; ledger: EvidenceLedger; subjectLabel?: string; revealStep?: number }) {
   const pack = currentPracticePackById(report.currentPracticePackId);
   const [filter, setFilter] = useState<FindingFilter>("all");
   const [activeReceipt, setActiveReceipt] = useState<CitationReceipt | null>(null);
@@ -284,10 +284,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
       </div>
 
       <div className="report-counts" aria-label="Knowledge Bridge result counts">
-        <div data-group="strengths"><strong>{supportedStrengths}</strong><span>Supported strengths</span><small>Useful foundations already visible</small></div>
-        <div data-group="small_bridge"><strong>{report.counts.smallBridge}</strong><span>Practical bridges</span><small>Small additions with high leverage</small></div>
-        <div data-group="genuine_gap"><strong>{report.counts.genuineGap}</strong><span>Genuine gaps</span><small>Important areas with no direct foundation</small></div>
-        <div data-group="insufficient_evidence"><strong>{report.counts.insufficientEvidence}</strong><span>Unknowns</span><small>More evidence would change the answer</small></div>
+        <div data-group="strengths"><strong>{revealStep >= 2 ? supportedStrengths : 0}</strong><span>Supported strengths</span><small>Useful foundations already visible</small></div>
+        <div data-group="small_bridge"><strong>{revealStep >= 2 ? report.counts.smallBridge : 0}</strong><span>Practical bridges</span><small>Small additions with high leverage</small></div>
+        <div data-group="genuine_gap"><strong>{revealStep >= 2 ? report.counts.genuineGap : 0}</strong><span>Genuine gaps</span><small>Important areas with no direct foundation</small></div>
+        <div data-group="insufficient_evidence"><strong>{revealStep >= 2 ? report.counts.insufficientEvidence : 0}</strong><span>Unknowns</span><small>More evidence would change the answer</small></div>
       </div>
 
       {requirementCoverage.length > 0 && <figure className="coverage-figure" aria-labelledby="coverage-caption">

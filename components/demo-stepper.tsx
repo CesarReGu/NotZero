@@ -11,6 +11,30 @@ type Mode = "prepared" | "custom";
 type DatedFile = { file: File; date: string };
 
 const steps = ["Evidence", "Target context", "Review and analyze"];
+const analysisStages = [
+  "Reading evidence",
+  "Building the evidence ledger",
+  "Comparing current requirements",
+  "Constructing bridges",
+  "Checking sources",
+];
+
+function AnalysisPipeline({ loading, revealStep }: { loading: boolean; revealStep: number }) {
+  return (
+    <div className="analysis-pipeline" aria-label="Analysis pipeline">
+      <div className="analysis-pipeline-heading">
+        <div><span>Analysis pipeline</span><strong>{loading ? "Working through your evidence" : revealStep >= analysisStages.length ? "All checks completed" : "Settling the verified result"}</strong></div>
+        <small>{loading ? "No estimated percentage" : `${Math.min(revealStep + 1, analysisStages.length)} of ${analysisStages.length} checks shown`}</small>
+      </div>
+      <ol>
+        {analysisStages.map((label, index) => {
+          const state = loading ? (index === 0 ? "current" : "pending") : index <= revealStep ? "complete" : index === revealStep + 1 ? "current" : "pending";
+          return <li data-state={state} key={label}><span aria-hidden="true">{state === "complete" ? "✓" : index + 1}</span><strong>{label}</strong><small>{state}</small></li>;
+        })}
+      </ol>
+    </div>
+  );
+}
 
 function evidenceLabel(value: PreparedScenario["evidence"][number]["evidenceClass"]) {
   return value.replaceAll("_", " ");
@@ -45,6 +69,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [ledger, setLedger] = useState<EvidenceLedger | null>(null);
   const [report, setReport] = useState<KnowledgeBridgeReport | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
+  const [revealStep, setRevealStep] = useState(-1);
   const [error, setError] = useState("");
   const [curriculum, setCurriculum] = useState<DatedFile[]>([]);
   const [supporting, setSupporting] = useState<DatedFile[]>([]);
@@ -57,6 +82,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const revealTimersRef = useRef<number[]>([]);
   const role = scenario.targetRoles[0];
 
   useEffect(() => {
@@ -73,9 +99,35 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [ledger]);
 
+  useEffect(() => () => revealTimersRef.current.forEach((timer) => window.clearTimeout(timer)), []);
+
+  function clearRevealTimers() {
+    revealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    revealTimersRef.current = [];
+  }
+
+  function playReveal() {
+    clearRevealTimers();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setRevealStep(analysisStages.length);
+      return;
+    }
+    setRevealStep(0);
+    for (let index = 1; index <= analysisStages.length; index += 1) {
+      revealTimersRef.current.push(window.setTimeout(() => setRevealStep(index), index * 480));
+    }
+  }
+
+  function skipReveal() {
+    clearRevealTimers();
+    setRevealStep(analysisStages.length);
+  }
+
   function moveTo(nextStep: number) {
+    clearRevealTimers();
     setLedger(null);
     setReport(null);
+    setRevealStep(-1);
     setError("");
     setAnalysisState("idle");
     setStep(nextStep);
@@ -83,9 +135,11 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   }
 
   function chooseMode(nextMode: Mode) {
+    clearRevealTimers();
     setMode(nextMode);
     setLedger(null);
     setReport(null);
+    setRevealStep(-1);
     setError("");
     setAnalysisState("idle");
   }
@@ -104,10 +158,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   }
 
   async function analyze() {
+    clearRevealTimers();
     setAnalysisState("loading");
     setError("");
     setLedger(null);
     setReport(null);
+    setRevealStep(-1);
     try {
       const form = new FormData();
       form.set("mode", mode);
@@ -137,6 +193,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
       setLedger(body.ledger);
       setReport(body.report ?? null);
       setAnalysisState(classifyAnalysisResult(body.ledger, body.report));
+      if (body.report) playReveal();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The evidence could not be analyzed.");
       setAnalysisState("error");
@@ -145,6 +202,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   }
 
   async function resetAnalysis() {
+    clearRevealTimers();
     if (mode === "custom") {
       try { await fetch("/api/evidence-ledger", { method: "DELETE" }); } catch { /* Local state is still cleared below. */ }
     }
@@ -153,6 +211,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setProject([]);
     setLedger(null);
     setReport(null);
+    setRevealStep(-1);
     setError("");
     setAnalysisState("idle");
     setStep(1);
@@ -228,14 +287,18 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
               <div><dt>Context</dt><dd>{mode === "prepared" ? role.location : `${location}${jurisdiction ? ` · ${jurisdiction}` : ""}`}</dd></div>
             </dl>
             <div className="disclaimer">NotZero interprets the materials and market sources available to it. It does not certify mastery or guarantee job eligibility. Review the evidence and correct anything that does not reflect your experience.</div>
-            {analysisState === "loading" && <div className="analysis-state analysis-loading" role="status" ref={statusRef} tabIndex={-1}><span className="analysis-pulse" aria-hidden="true" /><div><strong>Reading the evidence and building connections</strong><p>Checking source dates, supported claims, current expectations, and the smallest useful next steps.</p></div></div>}
+            {analysisState === "loading" && <div className="analysis-state analysis-loading" role="status" ref={statusRef} tabIndex={-1}><span className="analysis-pulse" aria-hidden="true" /><div><strong>Reading the evidence and building connections</strong><p>The server is completing the stages below. A stage is only marked complete after a validated result returns.</p></div><AnalysisPipeline loading revealStep={-1} /></div>}
             {analysisState === "error" && <div className="analysis-state analysis-error" role="alert" ref={statusRef} tabIndex={-1}><strong>We could not build the analysis.</strong><p>{error}</p><span>Your selected files remain in this browser so you can correct the issue and try again.</span></div>}
             {analysisState === "limit" && <div className="analysis-state analysis-limit" role="alert" ref={statusRef} tabIndex={-1}><strong>This evidence set is outside the prototype limits.</strong><p>{error}</p><span>Return to the evidence step, reduce the bounded set, and try again.</span></div>}
             {analysisState === "empty" && <div className="analysis-state analysis-empty" role="status" ref={statusRef} tabIndex={-1}><strong>Your files passed validation. No capability conclusion was generated.</strong><p>The current deployment can verify this evidence set, but a profession-specific market comparison is not available for it yet.</p></div>}
             {analysisState === "partial" && <div className="analysis-state analysis-partial" role="status" ref={statusRef} tabIndex={-1}><strong>Your evidence ledger is ready. The market bridge is still incomplete.</strong><p>Review the extracted claims below. NotZero will not apply the software market pack to a different field or context.</p></div>}
-            {analysisState === "completed" && <div className="analysis-state analysis-complete" role="status" ref={statusRef} tabIndex={-1}><strong>Your Knowledge Bridge is ready.</strong><p>Start with the four-count summary, then open any conclusion to inspect its evidence and learning delta.</p></div>}
+            {analysisState === "completed" && <div className="analysis-state analysis-complete" role="status" ref={statusRef} tabIndex={-1}><strong>Your Knowledge Bridge is ready.</strong><p>Start with the decision brief, then open any conclusion to inspect its evidence and learning delta.</p></div>}
             <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={analysisState === "loading"}>{analysisState === "loading" ? "Building your Knowledge Bridge…" : ledger ? "Rebuild Knowledge Bridge" : "Build Knowledge Bridge"}</button></div>
-            {ledger && <div className="prepared-result" ref={resultRef} tabIndex={-1}>{report && <KnowledgeBridgeReportView report={report} ledger={ledger} subjectLabel={mode === "prepared" ? scenario.person.name : undefined} />}{report ? <details className="evidence-appendix"><summary>Evidence appendix · {ledger.claims.length} verified claims</summary><EvidenceLedgerView ledger={ledger} /></details> : <EvidenceLedgerView ledger={ledger} />}</div>}
+            {ledger && <div className="prepared-result" data-reveal-step={report ? revealStep : undefined} data-reveal-state={report && revealStep < analysisStages.length ? "playing" : "complete"} ref={resultRef} tabIndex={-1}>
+              {report && <div className="result-reveal screen-only"><AnalysisPipeline loading={false} revealStep={revealStep} /><div className="result-reveal-controls"><span>{revealStep < analysisStages.length ? "The validated result is taking shape." : "Your evidence, current requirements, and sources are connected."}</span>{revealStep < analysisStages.length ? <button type="button" onClick={skipReveal}>Skip reveal</button> : <button type="button" onClick={playReveal}>Replay reveal</button>}</div></div>}
+              {report && <KnowledgeBridgeReportView report={report} ledger={ledger} subjectLabel={mode === "prepared" ? scenario.person.name : undefined} revealStep={revealStep} />}
+              {report ? <details className="evidence-appendix"><summary>Evidence appendix · {ledger.claims.length} verified claims</summary><EvidenceLedgerView ledger={ledger} /></details> : <EvidenceLedgerView ledger={ledger} />}
+            </div>}
             {(ledger || analysisState === "error" || analysisState === "limit") && <button className="reset-evidence" type="button" onClick={resetAnalysis}>{mode === "custom" ? "Clear my files and result" : "Start over and clear result"}</button>}
           </section>
         )}
