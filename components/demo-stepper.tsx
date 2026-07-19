@@ -56,6 +56,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [jurisdiction, setJurisdiction] = useState("Mexico");
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const role = scenario.targetRoles[0];
 
   useEffect(() => {
@@ -65,6 +66,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   useEffect(() => {
     if (analysisState !== "idle") statusRef.current?.focus();
   }, [analysisState]);
+
+  useEffect(() => {
+    if (!ledger) return;
+    resultRef.current?.focus({ preventScroll: true });
+    resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [ledger]);
 
   function moveTo(nextStep: number) {
     setLedger(null);
@@ -228,7 +235,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             {analysisState === "partial" && <div className="analysis-state analysis-partial" role="status" ref={statusRef} tabIndex={-1}><strong>Your evidence ledger is ready. The market bridge is still incomplete.</strong><p>Review the extracted claims below. NotZero will not apply the software market pack to a different field or context.</p></div>}
             {analysisState === "completed" && <div className="analysis-state analysis-complete" role="status" ref={statusRef} tabIndex={-1}><strong>Your Knowledge Bridge is ready.</strong><p>Start with the four-count summary, then open any conclusion to inspect its evidence and learning delta.</p></div>}
             <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={analysisState === "loading"}>{analysisState === "loading" ? "Building your Knowledge Bridge…" : ledger ? "Rebuild Knowledge Bridge" : "Build Knowledge Bridge"}</button></div>
-            {ledger && <div className="prepared-result"><EvidenceLedgerView ledger={ledger} />{report && <KnowledgeBridgeReportView report={report} ledger={ledger} />}</div>}
+            {ledger && <div className="prepared-result" ref={resultRef} tabIndex={-1}>{report && <KnowledgeBridgeReportView report={report} ledger={ledger} subjectLabel={mode === "prepared" ? scenario.person.name : undefined} />}{report ? <details className="evidence-appendix"><summary>Evidence appendix · {ledger.claims.length} verified claims</summary><EvidenceLedgerView ledger={ledger} /></details> : <EvidenceLedgerView ledger={ledger} />}</div>}
             {(ledger || analysisState === "error" || analysisState === "limit") && <button className="reset-evidence" type="button" onClick={resetAnalysis}>{mode === "custom" ? "Clear my files and result" : "Start over and clear result"}</button>}
           </section>
         )}

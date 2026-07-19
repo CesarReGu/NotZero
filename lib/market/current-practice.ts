@@ -25,6 +25,24 @@ function validatePack(pack: CurrentPracticePack) {
 
 export const softwareBackendPracticePack = validatePack(currentPracticePackSchema.parse(rawPack));
 
+const softwareFields = new Set(["software development", "software engineering", "computer science"]);
+const softwareTargets = ["backend", "back-end", "full stack", "full-stack", "devops", "software engineer"];
+const supportedLocations = ["mexico", "méxico", "latin america", "latam", "remote"];
+
+export function selectCurrentPracticePack(context: { field: string; targetTitle: string; location: string }) {
+  const field = context.field.trim().toLowerCase();
+  const target = context.targetTitle.trim().toLowerCase();
+  const location = context.location.trim().toLowerCase();
+  if (!softwareFields.has(field)) return null;
+  if (!softwareTargets.some((term) => target.includes(term))) return null;
+  if (!supportedLocations.some((term) => location.includes(term))) return null;
+  return softwareBackendPracticePack;
+}
+
+export function currentPracticePackById(id: string) {
+  return id === softwareBackendPracticePack.id ? softwareBackendPracticePack : null;
+}
+
 export function requirementById(pack: CurrentPracticePack, id: string) {
   const requirement = pack.requirements.find((item) => item.id === id);
   if (!requirement) throw new Error(`Current-practice requirement ${id} was not found.`);

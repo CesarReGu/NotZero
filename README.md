@@ -17,7 +17,7 @@ Phases 1 through 5 are complete as technical foundations for the deterministic s
 - a multidisciplinary field context containing field, target, location, and optional jurisdiction;
 - a custom evidence path for one curriculum, up to three supporting documents, and one bounded project or professional task;
 - server-side PDF and text extraction, normalized hashing, duplicate detection, source allowlists, limits, and secret checks;
-- a typed GPT-5.6 Responses API adapter using strict structured output;
+- two typed GPT-5.6 Responses API stages using strict structured output, one for evidence extraction and one for bridge comparison;
 - validation that rejects malformed model output, unknown sources, and excerpts that cannot be resolved in the submitted material;
 - a dated current-practice pack built from eight manually reviewed employer postings for Mexico and remote Latin America;
 - normalized market requirements with exact mention counts, source links, observation dates, and usage records;
@@ -26,8 +26,9 @@ Phases 1 through 5 are complete as technical foundations for the deterministic s
 - exactly three prioritized next steps and one existing-project upgrade challenge;
 - a project-grounded walkthrough with an exact artifact locator and an explicitly illustrative Dockerfile;
 - visible verified, illustrative, and conceptual comparison states;
-- a reassuring report header with a four-count summary for supported strengths, practical bridges, genuine gaps, and unknowns;
-- expandable conclusions that expose the submitted evidence, exact artifact locator, relationship, modern counterpart, learning delta, use rationale, proof task, confidence, sources, and limits;
+- a decision-first report with a validated conclusion, four large count tiles, the shortest bridge, and the next actions before the detailed role map;
+- collapsed conclusions that reveal the connection and learning delta first, with evidence receipts, exact locators, counts, sources, and limits on demand;
+- an end-of-report evidence appendix instead of a permanent wall of provenance text;
 - result filters that preserve the complete narrative as the default view;
 - distinct loading, empty, partial, error, limit-reached, and completed states;
 - keyboard focus management, visible focus indicators, responsive report layouts, and a clear reset action;
@@ -35,13 +36,13 @@ Phases 1 through 5 are complete as technical foundations for the deterministic s
 - a deployment-wide live-analysis circuit breaker with a configurable hard ceiling;
 - analysis-versioned, session-scoped result caching with a 30-minute default lifetime;
 - a server-side cache deletion endpoint connected to the user-facing reset action;
-- an OpenAI prompt cache key for the reusable GPT-5.6 extraction prefix;
+- separate OpenAI prompt cache keys for the reusable extraction and bridge-comparison prefixes;
 - no-store API responses and application logging that excludes document bodies, credentials, and extracted text;
 - server-only environment validation and a safe health endpoint;
 - shared Zod contracts for field context, evidence sources, claims, provenance, evidence classes, and tool relationships; and
 - route-level production tests.
 
-The prepared software scenario remains deterministic for reliable judging and does not consume a live-analysis allowance. Custom files are validated and extracted in the hosted app. Live GPT-5.6 claims remain disabled until the deployment has both a server-side API key and `NOTZERO_ENABLE_LIVE_ANALYSIS=true`. When disabled, the interface returns a source receipt and makes no capability claims.
+The prepared software scenario remains deterministic for reliable judging and does not consume a live-analysis allowance. For a conservatively matched software target, the custom path now validates extracted evidence, runs the second bridge-comparison stage, reconstructs every citation and count from server-owned data, and returns a complete report. Unsupported fields stop at an honest evidence ledger. Live GPT-5.6 analysis remains disabled in the hosted app until the deployment has both a server-side API key and `NOTZERO_ENABLE_LIVE_ANALYSIS=true`. When disabled, the interface returns a source receipt and makes no capability claims.
 
 The hosted judge demo is publicly reachable without an account, payment, API key, or ChatGPT subscription. It must remain available through August 5, 2026 at 5:00 p.m. PT under the official judging-period requirement.
 
@@ -154,9 +155,9 @@ The shared domain contracts use the evidence classes defined in the trust standa
 
 ## GPT-5.6 integration
 
-Phase 2 includes a typed server-side Responses API adapter for `gpt-5.6`. It requests strict JSON Schema output, then independently validates the result with Zod. The server also verifies that every cited source exists and that every quoted excerpt resolves inside the normalized submitted text. Uploaded text is marked as untrusted data in the model instructions and cannot change the extraction contract.
+Phase 2 introduced a typed server-side Responses API adapter for `gpt-5.6`. Phase 6 adds `bridge-comparison.v1`, a second schema-constrained call that receives only the validated evidence ledger and one conservatively selected, dated practice pack. Both stages enforce output-token ceilings, prompt-cache keys, and strict JSON Schema output before independent Zod validation.
 
-GPT-5.6 performs the substantive interpretation of bounded academic, project, or prior-task evidence. Its validated claims become the input to the relationship and market-comparison layer. Deterministic server logic owns file limits, source types, hashes, secret checks, allowed evidence classes, market-pack versions, schema validation, provenance verification, and the prepared judge result. The implementation follows OpenAI's [Structured Outputs guidance](https://developers.openai.com/api/docs/guides/structured-outputs) and uses the Responses API.
+GPT-5.6 performs the substantive interpretation of bounded academic, project, or prior-task evidence, then proposes the smallest supported bridges into current practice. Deterministic server logic owns file limits, source types, hashes, secret checks, allowed evidence classes, market-pack selection and versions, schema validation, provenance verification, URLs, exact excerpts, artifact locators, dates, and market counts. Unknown claim IDs, unsupported relationships, invented locators, and misstated pack data are rejected before display. The implementation follows OpenAI's [Structured Outputs guidance](https://developers.openai.com/api/docs/guides/structured-outputs) and uses the Responses API.
 
 ## Codex collaboration
 

@@ -5,7 +5,7 @@ const serverConfigSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   NOTZERO_MODEL: z.string().min(1).default("gpt-5.6"),
   NOTZERO_ENABLE_LIVE_ANALYSIS: z.enum(["true", "false"]).default("false"),
-  NOTZERO_ANALYSIS_VERSION: z.string().min(1).default("phase-5"),
+  NOTZERO_ANALYSIS_VERSION: z.string().min(1).default("phase-6"),
   NOTZERO_SESSION_REQUEST_LIMIT: z.coerce.number().int().min(1).max(100).default(8),
   NOTZERO_SESSION_LIVE_LIMIT: z.coerce.number().int().min(1).max(20).default(3),
   NOTZERO_GLOBAL_LIVE_LIMIT: z.coerce.number().int().min(1).max(10_000).default(25),

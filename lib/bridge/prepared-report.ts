@@ -51,7 +51,7 @@ function validateReportReferences(report: KnowledgeBridgeReport, ledger: Evidenc
     for (const evidence of finding.relationshipEvidence) if (!sourceIds.has(evidence.sourceId)) throw new Error(`Unknown relationship source ${evidence.sourceId}.`);
   }
   for (const claimId of report.upgradeChallenge.basedOnClaimIds) if (!claimIds.has(claimId)) throw new Error(`Unknown challenge claim ${claimId}.`);
-  if (!claimIds.has(report.walkthrough.claimId)) throw new Error(`Unknown walkthrough claim ${report.walkthrough.claimId}.`);
+  if (report.walkthrough && !claimIds.has(report.walkthrough.claimId)) throw new Error(`Unknown walkthrough claim ${report.walkthrough.claimId}.`);
   return report;
 }
 

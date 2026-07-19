@@ -12,7 +12,7 @@ export default function DemoPage() {
     <main id="main-content" className="demo-main">
       <div className="page-shell demo-shell">
         <div className="demo-intro">
-          <p className="eyebrow">Phase 5 · Safe judge experience</p>
+          <p className="eyebrow">Private, bounded evidence analysis</p>
           <h1>See how your evidence reaches current practice.</h1>
           <p>
             Use the fictional software scenario for the complete market comparison,

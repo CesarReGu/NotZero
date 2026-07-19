@@ -51,7 +51,7 @@ test("server-renders the complete prepared-demo intake shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /Phase 5 · Safe judge experience/);
+  assert.match(html, /Private, bounded evidence analysis/);
   assert.match(html, /Evidence/);
   assert.match(html, /Target context/);
   assert.match(html, /Review and analyze/);
@@ -77,7 +77,7 @@ test("health route exposes safe configuration state without secrets", async () =
   const body = await response.json();
   assert.deepEqual(body, {
     status: "ok",
-    analysisVersion: "phase-5",
+    analysisVersion: "phase-6",
     liveAnalysisEnabled: false,
     operationalControls: {
       sessionRequestLimit: 8,

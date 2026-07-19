@@ -216,14 +216,14 @@ export const projectWalkthroughSchema = z.object({
 
 export const knowledgeBridgeReportSchema = z.object({
   id: z.string().min(1),
-  schemaVersion: z.literal("knowledge-bridge-report.v1"),
-  analysisVersion: z.literal("phase-4"),
-  analysisMode: z.literal("prepared_fixture"),
+  schemaVersion: z.enum(["knowledge-bridge-report.v1", "knowledge-bridge-report.v2"]),
+  analysisVersion: z.string().min(1).max(80),
+  analysisMode: z.enum(["prepared_fixture", "live_gpt_5_6"]),
   ledgerId: z.string().min(1),
   currentPracticePackId: z.string().min(1),
   datasetVersion: z.string().min(1),
   generatedAt: z.iso.datetime(),
-  findings: z.array(bridgeFindingSchema).min(5),
+  findings: z.array(bridgeFindingSchema).min(1).max(12),
   counts: z.object({
     current: z.number().int().nonnegative(),
     transferable: z.number().int().nonnegative(),
@@ -233,8 +233,17 @@ export const knowledgeBridgeReportSchema = z.object({
   }),
   nextSteps: z.array(prioritizedNextStepSchema).length(3),
   upgradeChallenge: upgradeChallengeSchema,
-  walkthrough: projectWalkthroughSchema,
+  walkthrough: projectWalkthroughSchema.optional(),
+  walkthroughUnavailableReason: z.string().min(1).max(500).optional(),
   limitations: z.array(z.string().min(1).max(500)).min(1),
+}).superRefine((report, context) => {
+  if (Boolean(report.walkthrough) === Boolean(report.walkthroughUnavailableReason)) {
+    context.addIssue({
+      code: "custom",
+      path: ["walkthrough"],
+      message: "Provide either a project walkthrough or a reason it is unavailable.",
+    });
+  }
 });
 
 export const evidenceItemSchema = z.object({

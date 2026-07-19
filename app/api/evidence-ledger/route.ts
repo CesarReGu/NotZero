@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { evidenceLedgerSchema, fieldContextSchema, type EvidenceSourceType } from "@/lib/domain/schemas";
+import { evidenceLedgerSchema, fieldContextSchema, knowledgeBridgeReportSchema, type EvidenceSourceType } from "@/lib/domain/schemas";
 import { readServerConfig } from "@/lib/config/server";
 import { EvidenceInputError, extractEvidenceFile, type ExtractedSource } from "@/lib/evidence/files";
 import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 import { extractWithGpt56 } from "@/lib/evidence/openai-adapter";
 import { alexEvidenceLedger } from "@/lib/fixtures/alex-ledger";
 import { alexBridgeReport } from "@/lib/bridge/prepared-report";
+import { BRIDGE_PROMPT_VERSION, BRIDGE_REPORT_SCHEMA_VERSION, compareWithGpt56 } from "@/lib/bridge/openai-adapter";
+import { selectCurrentPracticePack } from "@/lib/market/current-practice";
 import { analysisCacheKey, operationalSession } from "@/lib/operations/session";
 import { deleteSessionCache, getCachedResult, putCachedResult, recordSessionRequest, reserveLiveAnalysis } from "@/lib/operations/store";
 
@@ -106,7 +108,8 @@ export async function POST(request: Request) {
     const cacheKey = await analysisCacheKey({
       sessionHash: session.hash,
       analysisVersion: config.analysisVersion,
-      promptVersion: "evidence-extraction.v1",
+      promptVersions: ["evidence-extraction.v1", BRIDGE_PROMPT_VERSION],
+      reportSchemaVersion: BRIDGE_REPORT_SCHEMA_VERSION,
       model: config.model,
       liveAnalysisEnabled: config.liveAnalysisEnabled,
       fieldContext,
@@ -119,8 +122,10 @@ export async function POST(request: Request) {
     });
     const cached = await getCachedResult(cacheKey, now);
     if (cached) {
-      const ledger = evidenceLedgerSchema.parse(JSON.parse(cached.responseJson));
-      return json({ status: "cached", ledger }, 200, setCookie, "hit");
+      const stored = JSON.parse(cached.responseJson) as { ledger?: unknown; report?: unknown };
+      const ledger = evidenceLedgerSchema.parse(stored.ledger ?? stored);
+      const report = stored.report ? knowledgeBridgeReportSchema.parse(stored.report) : undefined;
+      return json({ status: "cached", ledger, report }, 200, setCookie, "hit");
     }
 
     if (!config.liveAnalysisEnabled || !process.env.OPENAI_API_KEY) {
@@ -135,7 +140,7 @@ export async function POST(request: Request) {
         warnings,
         limitations: ["The files passed server-side validation and text extraction. Live GPT-5.6 evidence claims are disabled in this deployment, so no capability conclusion has been generated."],
       });
-      await putCachedResult(cacheKey, session.hash, JSON.stringify(ledger), now, config.cacheTtlSeconds);
+      await putCachedResult(cacheKey, session.hash, JSON.stringify({ ledger }), now, config.cacheTtlSeconds);
       return json({ status: "validated", ledger }, 200, setCookie, "miss");
     }
 
@@ -160,8 +165,12 @@ export async function POST(request: Request) {
       sources: extractedSources,
       inputWarnings: warnings,
     });
-    await putCachedResult(cacheKey, session.hash, JSON.stringify(ledger), now, config.cacheTtlSeconds);
-    return json({ status: "completed", ledger }, 200, setCookie, "miss");
+    const pack = selectCurrentPracticePack(fieldContext);
+    const report = pack && ledger.claims.length > 0
+      ? await compareWithGpt56({ apiKey: process.env.OPENAI_API_KEY, model: config.model, ledger, pack, analysisVersion: config.analysisVersion })
+      : undefined;
+    await putCachedResult(cacheKey, session.hash, JSON.stringify({ ledger, report }), now, config.cacheTtlSeconds);
+    return json({ status: report ? "completed" : "partial", ledger, report }, 200, setCookie, "miss");
   } catch (error) {
     if (error instanceof EvidenceInputError) return json({ error: error.code, message: error.message }, error.status, setCookie);
     if (error instanceof Error && error.name === "ZodError") return json({ error: "invalid_context", message: "Field, target, and location are required and must fit the documented limits." }, 400, setCookie);

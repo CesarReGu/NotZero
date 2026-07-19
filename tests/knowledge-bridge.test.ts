@@ -20,6 +20,7 @@ test("the current-practice pack has reciprocal sources and exact mention counts"
 
 test("the prepared report exercises every result group and exactly three next steps", () => {
   const report = alexBridgeReport;
+  assert.ok(report.walkthrough);
   assert.deepEqual(new Set(report.findings.map((finding) => finding.group)), new Set([
     "current", "transferable", "small_bridge", "genuine_gap", "insufficient_evidence",
   ]));
