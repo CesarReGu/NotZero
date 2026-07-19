@@ -6,7 +6,7 @@ NotZero connects academic knowledge and past projects with current professional 
 
 ## Current status
 
-Phase 5 is complete for the deterministic software judge path. The runnable application includes:
+Phases 1 through 5 are complete for the deterministic software judge path. Phase 6 verification and submission preparation are in progress. The runnable application includes:
 
 - a public landing page with the approved product message;
 - persistent navigation to Method, Privacy, and the prepared demo;
@@ -120,7 +120,15 @@ npm run typecheck
 npm run build
 ```
 
+Run the complete release verification, including dependency-license metadata and tracked-file safety checks:
+
+```bash
+npm run verify
+```
+
 The route tests render the production worker and verify the landing, demo, Method, Privacy, and health routes.
+
+For a release candidate, clone the repository into a clean directory, follow **Local setup**, run `npm run verify`, and exercise the hosted demo without an authenticated session. The deployment must return the same prepared findings and source receipts as the checked-in fixture.
 
 ## Architecture
 
@@ -152,9 +160,17 @@ GPT-5.6 performs the substantive interpretation of bounded academic, project, or
 
 ## Codex collaboration
 
-Codex was used to read and reconcile the product brief, design direction, trust standard, roadmap, and hackathon requirements before implementation. It then scaffolded the application, separated the domain and server boundaries, built the Phase 1 experience, created deterministic fixtures and tests, and inspected the rendered flow at desktop and mobile widths.
+The entrant directed the product scope, emotional story, multidisciplinary positioning, visual critique, use-case animation, roadmap priorities, and decision to keep software graduates as the validated MVP. Codex translated that direction into implementation plans, challenged scope that would weaken the evidence standard, and kept the repository, tests, deployment, and documentation synchronized.
+
+Codex read and reconciled the product brief, design direction, trust standard, roadmap, and hackathon requirements before implementation. It accelerated the engineering work by scaffolding the runnable site, separating domain rules from presentation and model access, implementing each roadmap phase, writing deterministic fixtures and tests, and inspecting the rendered flow at desktop and mobile widths. The entrant reviewed each phase in the hosted product and requested the major revisions that shaped the final experience.
 
 The primary Codex task should be preserved for the required `/feedback` Session ID. Dated commits provide the repository record of work completed during the submission period.
+
+## Build Week development record
+
+NotZero was created during the Build Week submission period. The first repository commit is dated July 17, 2026. The dated history records the runnable judge path, marketing redesign, evidence transformation, multidisciplinary positioning, evidence ledger, Knowledge Bridge Graph, report experience, operational controls, and final verification work as separate milestones.
+
+The final product and engineering decisions remain the entrant's. Codex provided implementation leverage and analysis inside the primary build task. GPT-5.6 is the product's substantive evidence-interpretation engine through the server-side adapter described above. The deterministic fixture keeps the core judge walkthrough reliable and does not pretend to be a live model result.
 
 ## Key decisions
 
@@ -177,11 +193,13 @@ Do not add real academic records, employer-owned code, credentials, private fixt
 
 ## Dependency and asset notes
 
-The application uses the open-source dependencies recorded in `package-lock.json`. `unpdf` provides MIT-licensed, serverless-compatible PDF text extraction. `tsx` is an MIT-licensed development dependency used for typed adapter and report tests. The interface uses system fonts. The social preview image was generated specifically for NotZero during this build and is stored at `public/og.png`.
+The application uses the open-source dependencies recorded in `package-lock.json`. `unpdf` provides MIT-licensed, serverless-compatible PDF text extraction. `tsx` is an MIT-licensed development dependency used for typed adapter and report tests. The interface uses system fonts. The social preview image was generated specifically for NotZero during this build and is stored at `public/og.png`. The complete review record and repeatable audit procedure are in [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md).
 
 The market pack stores factual requirement labels and links from publicly accessible employer postings. It does not redistribute job descriptions. Official technical documentation is summarized and linked. Source and use details are recorded in `data/market/README.md` and the versioned JSON pack.
 
 Product, design, trust, and roadmap context is available in `docs/` and `ROADMAP.md`.
+
+Submission copy, the demo narration plan, and the final owner checklist are maintained in [`docs/SUBMISSION.md`](docs/SUBMISSION.md). The file contains no credentials or private submission identifiers.
 
 ## License
 
