@@ -5,6 +5,7 @@ import type { EvidenceLedger, KnowledgeBridgeReport, PreparedScenario } from "@/
 import { EvidenceLedgerView } from "@/components/evidence-ledger";
 import { KnowledgeBridgeReportView } from "@/components/knowledge-bridge-report";
 import { classifyAnalysisResult, isLimitFailure, type AnalysisState } from "@/lib/analysis/outcome";
+import { deriveEvidenceMix } from "@/lib/evidence/mix";
 
 type DemoStepperProps = { scenario: PreparedScenario };
 type Mode = "prepared" | "custom";
@@ -18,6 +19,11 @@ const analysisStages = [
   "Constructing bridges",
   "Checking sources",
 ];
+
+function EvidenceMix({ ledger }: { ledger: EvidenceLedger }) {
+  const mix = deriveEvidenceMix(ledger);
+  return <figure className="evidence-mix" aria-labelledby="evidence-mix-caption"><div className="evidence-mix-strip" role="list" aria-label="Claims by evidence class">{mix.flatMap((group) => Array.from({ length: group.count }, (_, index) => <span role="listitem" data-evidence-class={group.evidenceClass} aria-label={`${group.evidenceClass.replaceAll("_", " ")} claim ${index + 1} of ${group.count}`} key={`${group.evidenceClass}-${index}`} />))}</div><figcaption id="evidence-mix-caption"><strong>Evidence mix</strong><span>{mix.map((group) => `${group.count} ${group.evidenceClass.replaceAll("_", " ")}`).join(" · ")}</span></figcaption></figure>;
+}
 
 function AnalysisPipeline({ loading, revealStep }: { loading: boolean; revealStep: number }) {
   return (
@@ -297,7 +303,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             {ledger && <div className="prepared-result" data-reveal-step={report ? revealStep : undefined} data-reveal-state={report && revealStep < analysisStages.length ? "playing" : "complete"} ref={resultRef} tabIndex={-1}>
               {report && <div className="result-reveal screen-only"><AnalysisPipeline loading={false} revealStep={revealStep} /><div className="result-reveal-controls"><span>{revealStep < analysisStages.length ? "The validated result is taking shape." : "Your evidence, current requirements, and sources are connected."}</span>{revealStep < analysisStages.length ? <button type="button" onClick={skipReveal}>Skip reveal</button> : <button type="button" onClick={playReveal}>Replay reveal</button>}</div></div>}
               {report && <KnowledgeBridgeReportView report={report} ledger={ledger} subjectLabel={mode === "prepared" ? scenario.person.name : undefined} revealStep={revealStep} />}
-              {report ? <details className="evidence-appendix"><summary>Evidence appendix · {ledger.claims.length} verified claims</summary><EvidenceLedgerView ledger={ledger} /></details> : <EvidenceLedgerView ledger={ledger} />}
+              {report ? <details className="evidence-appendix" id="evidence-appendix"><summary>Evidence appendix · {ledger.claims.length} validated claims</summary><EvidenceMix ledger={ledger} /><EvidenceLedgerView ledger={ledger} /></details> : <EvidenceLedgerView ledger={ledger} />}
             </div>}
             {(ledger || analysisState === "error" || analysisState === "limit") && <button className="reset-evidence" type="button" onClick={resetAnalysis}>{mode === "custom" ? "Clear my files and result" : "Start over and clear result"}</button>}
           </section>

@@ -14,9 +14,10 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "typecheck": "tsc --noEmit",
     "audit:licenses": "node scripts/audit-licenses.mjs",
+    "audit:palette": "node scripts/audit-palette.mjs",
     "audit:repository": "node scripts/audit-repository.mjs",
     "audit:security": "npm audit --audit-level=moderate",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run audit:licenses && npm run audit:repository && npm run audit:security"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run audit:palette && npm run audit:licenses && npm run audit:repository && npm run audit:security"
   },
   "dependencies": {
     "next": "16.2.10",

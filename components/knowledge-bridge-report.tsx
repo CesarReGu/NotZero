@@ -277,6 +277,13 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
 
   return (
     <section className="bridge-report" aria-labelledby="bridge-report-title">
+      <section className="report-print-cover" aria-label="Report cover">
+        <p className="eyebrow">NotZero Knowledge Bridge</p>
+        <h2>{decisionHeadline}</h2>
+        <p>{strongestFoundation.existingCapability}</p>
+        <dl><div><dt>Highest-leverage bridge</dt><dd>{shortestBridge.title}</dd></div><div><dt>First action</dt><dd>{report.nextSteps[0].title}</dd></div><div><dt>Evidence reviewed</dt><dd>{ledger.claims.length} validated claims and {pack.sources.length} dated market sources</dd></div></dl>
+        <small>Generated {report.generatedAt.slice(0, 10)} · Market pack {pack.datasetVersion}</small>
+      </section>
       <section className="decision-brief" aria-label="Your decision brief">
       <header className="bridge-report-header">
         <div>
@@ -288,10 +295,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
       </header>
 
       <div className="report-trust-strip" aria-label="How this result was checked">
-        <span>{ledger.claims.length} claims checked against submitted files</span>
-        <span>{pack.sources.length} dated market sources</span>
-        <span>{pack.datasetVersion}</span>
-        <span>{report.analysisMode === "live_gpt_5_6" ? "GPT-5.6 plus server validation" : "Prepared fixture plus server validation"}</span>
+        <details id="trust-claims"><summary>{ledger.claims.length} file-backed claims</summary><div><strong>Submitted evidence</strong><p>Each claim points to a source, stable locator, and exact excerpt. Unsupported conclusions remain unknown.</p><a href="#evidence-appendix">Inspect the evidence appendix</a></div></details>
+        <details id="trust-market"><summary>{pack.sources.length} dated market sources</summary><div><strong>Observation window</strong><p>{pack.observedFrom} through {pack.observedThrough}. Counts come from the controlled pack, not from an open-ended web summary.</p></div></details>
+        <details id="trust-version"><summary>{pack.datasetVersion}</summary><div><strong>Reproducible inputs</strong><p>The report records its analysis version, schema version, market dataset, and generation date.</p></div></details>
+        <details id="trust-validation"><summary>{report.analysisMode === "live_gpt_5_6" ? "GPT-5.6 plus validation" : "Prepared fixture plus validation"}</summary><div><strong>Server-validated result</strong><p>Typed schemas, known claim IDs, dated market literals, and project locators are checked before display.</p></div></details>
       </div>
 
       <div className="decision-answers" aria-label="Decision brief answers">
@@ -313,7 +320,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
             const requirement = pack.requirements.find((candidate) => candidate.id === item.requirementId);
             if (!requirement) return null;
             const label = `${requirement.name}: ${coverageLabel[item.group]}, ${item.evidenceCount} supporting evidence ${item.evidenceCount === 1 ? "claim" : "claims"}`;
-            return <button type="button" role="listitem" data-group={item.group} aria-label={label} title={label} onClick={() => goToFinding(item.findingId)} key={item.requirementId}><span aria-hidden="true" /></button>;
+            return <button type="button" role="listitem" className="chart-mark" data-tooltip={label} data-group={item.group} aria-label={label} onKeyDown={(event) => { if (event.key === "Escape") event.currentTarget.blur(); }} onClick={() => goToFinding(item.findingId)} key={item.requirementId}><span aria-hidden="true" /></button>;
           })}
         </div>
         <figcaption id="coverage-caption"><strong>Supported foundations: {supportedRequirementCount} of {requirementCoverage.length} reviewed requirements.</strong><span>{notAssessedCount > 0 ? `${notAssessedCount} ${notAssessedCount === 1 ? "requirement was" : "requirements were"} not assessed from this evidence set.` : "Every reviewed requirement received an evidence-based conclusion."}</span></figcaption>
@@ -334,7 +341,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
         <h4 id="next-steps-title">Three steps, ordered by learning delta</h4>
         <ol>{report.nextSteps.map((step) => {
           const buildsOnClaims = step.buildsOn.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
-          return <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><small className="step-foundation">Builds on: {buildsOnClaims.map((claim) => claim.title).join(" and ")}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></small><p>{step.whyNow}</p><small>Proof: {step.proof}</small></div></li>;
+          return <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><small className="step-foundation">Evidence: {buildsOnClaims.map((claim) => claim.title).join(" and ")}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></small><dl className="step-contract"><div><dt>Reuse</dt><dd>{step.reuses}</dd></div><div><dt>Learn</dt><dd>{step.newConcept}</dd></div><div><dt>Why teams use it</dt><dd>{step.whyItIsUsed}</dd></div><div><dt>Proof</dt><dd>{step.proof}</dd></div></dl><p>{step.whyNow}</p></div></li>;
         })}</ol>
       </section>
 
@@ -344,9 +351,14 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
       </section>
 
       <div className="report-actions screen-only">
-        <button type="button" className="button button-secondary" onClick={() => window.print()}>Download report (PDF)</button>
+        <button id="download-report" type="button" className="button button-secondary" onClick={() => window.print()}>Download report (PDF)</button>
         <span>Choose Save as PDF in the print dialog. The downloaded report uses this validated result.</span>
       </div>
+
+      <details className="difference-method screen-only">
+        <summary>What makes this different from asking a chatbot</summary>
+        <div><p>A chat can produce similar prose. NotZero adds an inspectable method and a keepable result.</p><ul><li><a href="#trust-claims">Claims resolve to submitted evidence.</a></li><li><a href="#trust-market">Market comparisons use a dated source pack.</a></li><li><a href="#evidence-appendix">Evidence classes separate demonstrated, inferred, and unknown.</a></li><li><a href="#shortest-bridge-title">The learning delta is explicit.</a></li><li><a href="#challenge-title">The result ends in a project-grounded proof task.</a></li><li><a href="#download-report">The same validated payload becomes the downloadable report.</a></li></ul></div>
+      </details>
 
       <div className="bridge-findings">
         <p className="eyebrow">Role map</p>
@@ -360,7 +372,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
               const sources = requirement.sourceIds.map((sourceId) => pack.sources.find((source) => source.id === sourceId)).filter((source) => source !== undefined);
               const sourceSummary = sources.map((source) => `${source.employer}, ${source.roleTitle}, ${source.observedAt}`).join("; ");
               const label = `${requirement.name}: ${requirement.mentionCount} of ${pack.sources.length} reviewed postings. ${coverageLabel[item.group]}. Sources: ${sourceSummary}`;
-              return <button type="button" role="listitem" className={requirement.id === shortestBridge.currentRequirementId ? "is-priority" : ""} aria-label={label} title={label} onClick={() => goToFinding(item.findingId)} key={requirement.id}>
+              return <button type="button" role="listitem" className={`chart-mark ${requirement.id === shortestBridge.currentRequirementId ? "is-priority" : ""}`} data-tooltip={label} aria-label={label} onKeyDown={(event) => { if (event.key === "Escape") event.currentTarget.blur(); }} onClick={() => goToFinding(item.findingId)} key={requirement.id}>
                 <span className="demand-name">{requirement.name}</span><span className="demand-group" data-group={item.group}>{coverageLabel[item.group]}</span><span className="demand-track" aria-hidden="true"><span style={{ width: `${(requirement.mentionCount / pack.sources.length) * 100}%` }} /></span><strong>{requirement.mentionCount} of {pack.sources.length}</strong>
               </button>;
             })}

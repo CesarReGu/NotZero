@@ -187,6 +187,9 @@ export const prioritizedNextStepSchema = z.object({
   rank: z.number().int().min(1).max(3),
   title: z.string().min(1).max(140),
   buildsOn: z.array(z.string().min(1)).min(1),
+  reuses: z.string().min(1).max(400),
+  newConcept: z.string().min(1).max(400),
+  whyItIsUsed: z.string().min(1).max(500),
   whyNow: z.string().min(1).max(500),
   proof: z.string().min(1).max(500),
 });

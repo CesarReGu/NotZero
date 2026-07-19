@@ -6,7 +6,7 @@ NotZero connects academic knowledge and past projects with current professional 
 
 ## Current status
 
-Phases 1 through 5 are complete as technical foundations for the deterministic software judge path. Phase 6 now focuses on completing the live custom Knowledge Bridge and replacing the evidence-dense report with a decision-ready experience. Final verification and submission move to Phase 7. The runnable application currently includes:
+The software-graduate vertical slice now includes the decision-ready report, evidence receipts, dated market comparison, project-grounded walkthrough, and print-to-PDF path. The remaining release work is deployment configuration and final submission verification. The runnable application currently includes:
 
 - a public landing page with the approved product message;
 - persistent navigation to Method, Privacy, and the prepared demo;
@@ -97,12 +97,12 @@ No OpenAI API key is needed for the prepared judge demo. A server-side key is re
 
 ## Judge scenario
 
-1. Open the landing page and select **Try the graduate demo**.
+1. Open the landing page and select **See Alex's bridge**.
 2. Review Alex Rivera's fictional academic and project evidence.
 3. Continue to the single supported junior backend role.
-4. Build the prepared evidence ledger and expand a claim to inspect its exact source receipt and limitation.
-5. Read the four-count summary, filter or inspect the five result groups, and open the bridge from runtime configuration to containerization.
-6. Review the three next steps, the existing-project challenge, and the expandable market methodology.
+4. Build the Knowledge Bridge. Read the first-screen conclusion, shortest bridge, and first action.
+5. Open one numbered citation to inspect its exact source receipt and limitation.
+6. Review the then-and-now project walkthrough, expand **What makes this different from asking a chatbot**, then download the same validated result through **Download report (PDF)**.
 
 The secondary path accepts bounded evidence from other fields. It records field, target, location, and jurisdiction before analysis. This does not imply that the current release contains validated market-comparison packs for law, nursing, accounting, or other regulated professions.
 
@@ -154,11 +154,11 @@ tests/               Production-rendered routes and deterministic model scenario
 worker/              Cloudflare-compatible application entry point
 ```
 
-The shared domain contracts use the evidence classes defined in the trust standard: expected exposure, demonstrated, self-reported, inferred, and unknown. Relationship values are restricted to the approved directional taxonomy. The Phase 4 report contract validates every claim, requirement, relationship source, comparison state, use rationale, next-step rank, and project reference before display. Phase 5 wraps that analysis in durable operational controls.
+The shared domain contracts use the evidence classes defined in the trust standard: expected exposure, demonstrated, self-reported, inferred, and unknown. Relationship values are restricted to the approved directional taxonomy. The report contract validates every claim, requirement, relationship source, comparison state, use rationale, next-step field, and project reference before display. Operational controls bound the two-stage analysis.
 
 ## GPT-5.6 integration
 
-Phase 2 introduced a typed server-side Responses API adapter for `gpt-5.6`. Phase 6 adds `bridge-comparison.v1`, a second schema-constrained call that receives only the validated evidence ledger and one conservatively selected, dated practice pack. Both stages enforce output-token ceilings, prompt-cache keys, and strict JSON Schema output before independent Zod validation.
+The typed server-side Responses API adapter uses `gpt-5.6` in two schema-constrained calls. The comparison prompt `bridge-comparison.v1` receives only the validated evidence ledger and one conservatively selected, dated practice pack. Both stages enforce output-token ceilings, prompt-cache keys, and strict JSON Schema output before independent Zod validation.
 
 GPT-5.6 performs the substantive interpretation of bounded academic, project, or prior-task evidence, then proposes the smallest supported bridges into current practice. Deterministic server logic owns file limits, source types, hashes, secret checks, allowed evidence classes, market-pack selection and versions, schema validation, provenance verification, URLs, exact excerpts, artifact locators, dates, and market counts. Unknown claim IDs, unsupported relationships, invented locators, and misstated pack data are rejected before display. The implementation follows OpenAI's [Structured Outputs guidance](https://developers.openai.com/api/docs/guides/structured-outputs) and uses the Responses API.
 

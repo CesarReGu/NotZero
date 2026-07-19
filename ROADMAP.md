@@ -231,7 +231,7 @@ Keep the trust layer, change its posture: the same pattern readers know from cit
 - [x] **P0:** The full receipt panel shows the verbatim excerpt, the path and locator in monospace, the evidence class, the confidence label with its basis, and the specific limitation. Market receipts show employer, role, location, observation date, and the source link.
 - [x] **P0:** Keep every conclusion's evidence reachable within two interactions.
 - [x] **P0:** Make markers and panels fully keyboard- and touch-operable, with accessible names such as “Evidence 3: study plan, 2022”. Hover-only behavior is not acceptable.
-- [ ] **P0:** Add a one-line trust strip under the headline: claims verified against the submitted files, dated market sources used, pack version and observation window, and the analysis pipeline (GPT-5.6 plus server validation). Each segment opens the matching panel.
+- [x] **P0:** Add a one-line trust strip under the headline: claims verified against the submitted files, dated market sources used, pack version and observation window, and the analysis pipeline (GPT-5.6 plus server validation). Each segment opens the matching panel.
 - [ ] **P1:** Add a `Why this conclusion?` control on the headline and on each next step that opens the combined reasoning receipt for that specific statement.
 
 ### Report visual system and the result reveal
@@ -243,8 +243,8 @@ The landing animation sets the quality bar for the product. The moment the resul
 - [x] **P0:** Build the result reveal: when analysis completes, one staged sequence plays in which the pipeline stages settle, the counts count up, the group tiles appear in turn, and the headline conclusion fades in. Total duration under six seconds, skippable, replayable, and replaced by a static completed layout under reduced-motion preferences. Reuse the existing hero animation vocabulary (scan line, staged captions, result cards) so the product feels continuous.
 - [x] **P0:** Draw the bridge connection as a graphic, not only prose: extend the existing landing bridge-card pattern into the report so each finding renders its left node (your evidence), labeled connecting rule (the relationship), and right node (the current requirement) as one visual unit, built with semantic HTML and CSS/SVG. No chart library. Collapses to stacked order on narrow screens.
 - [x] **P0:** Rebuild the walkthrough as a then-and-now comparison: side-by-side panels labeled “In your project” with its date and “Current practice” with its date, the observed excerpt on the user-material surface color, the counterpart on the generated-suggestion surface, and the illustrative or conceptual state chip always visible. Stacked in reading order on mobile.
-- [ ] **P0:** Verify every group color and text pairing against WCAG contrast, and never encode a state by color alone.
-- [ ] **P1:** Self-host Inter and IBM Plex Mono with recorded licenses if loading stays within performance budget; otherwise keep the system stacks and rely on the scale above.
+- [x] **P0:** Verify every group color and text pairing against WCAG contrast, and never encode a state by color alone.
+- [x] **P1:** Self-host Inter and IBM Plex Mono with recorded licenses if loading stays within performance budget; otherwise keep the system stacks and rely on the scale above. NotZero keeps the system stacks to avoid font transfer and layout shift.
 
 Anti-goals: no scroll-jacked storytelling, no autoplaying loops after the reveal, no gauges, no decorative AI imagery, and nothing from the anti-generic-AI checklist in the design direction.
 
@@ -266,39 +266,39 @@ Rejected forms, recorded so they stay rejected: pie and donut charts (angle judg
 - [x] **P0:** Build the requirement coverage strip in the decision brief: one cell per requirement in the selected pack (eight in the software pack), colored by the user's result group, separated by 2 px surface gaps, with a caption stating the derived count, for example “Supported foundations: 5 of 8 reviewed requirements.” Requirements without a finding render as neutral track cells labeled “not assessed.” Hover or focus shows the requirement, group, and evidence count; activating a cell moves to that finding row.
 - [x] **P0:** Build the market demand chart at the head of the role map: one row per pack requirement, a solid hairline track for the denominator, a thin bar for the mention count with a rounded data end, and the exact count (“7 of 8”) at the bar end. All bars share one muted hue; only the requirement chosen as the shortest bridge uses the bridge accent, so the chart makes one point. Each row shows the requirement name and a group chip with a text label, activates its finding row, and its tooltip names the postings behind the count with observation dates, linking into the receipts.
 - [x] **P0:** Quantify honestly everywhere: counts with visible denominators, discrete confidence dots, and no continuous percentage, gauge, composite readiness score, or radar chart anywhere in the product, including the PDF and the bridge card.
-- [ ] **P0:** Fix the group palette before it appears in chart fills. A colorblind-safety and contrast check of the current five group colors on the light surface failed: the current-group green, the gap ochre, and the unknown slate are too gray to read as fills, the ochre and coral pair is too close under red-blind vision, and the ochre and slate pair is hard to separate even with full color vision. Re-step the gap color away from the coral accent, raise the chroma of the current-group green, render insufficient evidence as a neutral outlined or track style instead of a categorical fill, and re-validate adjacent-pair colorblind separation, grayness, and contrast before freezing. Group colors stay paired with text labels regardless.
+- [x] **P0:** Fix the group palette before it appears in chart fills. A colorblind-safety and contrast check of the current five group colors on the light surface failed: the current-group green, the gap ochre, and the unknown slate are too gray to read as fills, the ochre and coral pair is too close under red-blind vision, and the ochre and slate pair is hard to separate even with full color vision. Re-step the gap color away from the coral accent, raise the chroma of the current-group green, render insufficient evidence as a neutral outlined or track style instead of a categorical fill, and re-validate adjacent-pair colorblind separation, grayness, and contrast before freezing. Group colors stay paired with text labels regardless.
 - [x] **P0:** Implement all graphics as inline SVG or semantic HTML and CSS rendered from the validated report payload. No chart library, and no client-side aggregation that could drift from the validated counts.
-- [ ] **P0:** Follow one mark and interaction standard: thin marks with rounded data ends anchored to the baseline, 2 px surface gaps between adjacent fills, solid hairline tracks and rules (never dashed), hit areas of at least 24 px, tooltips that enhance but never gate (every charted value also exists as text), keyboard focus reaching every interactive mark with the same information as hover, and Escape dismissing any open tooltip.
+- [x] **P0:** Follow one mark and interaction standard: thin marks with rounded data ends anchored to the baseline, 2 px surface gaps between adjacent fills, solid hairline tracks and rules (never dashed), hit areas of at least 24 px, tooltips that enhance but never gate (every charted value also exists as text), keyboard focus reaching every interactive mark with the same information as hover, and Escape dismissing any open tooltip.
 - [x] **P0:** Give every chart a text equivalent inside the document: a figure with a caption stating its conclusion, and the underlying counts reachable as text in the report or appendix. Charts render in the print stylesheet with exact colors and keep their captions in the PDF.
 - [x] **P0:** Animate charts only inside the result reveal: cells fill and bars grow once, under 600 ms per element, with a static completed layout under reduced-motion preferences.
-- [ ] **P1:** Add the evidence-mix strip to the appendix header: claims by evidence class as a small unit strip with counts, using the same construction and rules as the coverage strip.
+- [x] **P1:** Add the evidence-mix strip to the appendix header: claims by evidence class as a small unit strip with counts, using the same construction and rules as the coverage strip.
 
 ### A report you keep
 
 - [ ] **P0:** Add “Download your report (PDF)” using a print stylesheet and the browser's print-to-PDF path: a cover page with the decision brief and counts, the findings with citation numbers, the next moves and challenge, a numbered evidence-reference appendix, and a footer with analysis version, dates, pack version, and the standard disclaimer. Verified in Chrome and Edge at A4 and Letter sizes.
-- [ ] **P0:** The downloaded document renders from the same validated payload as the screen, with no regeneration, so its conclusions match exactly.
-- [ ] **P0:** Downloads work in the logged-out judge context and for the prepared scenario.
+- [x] **P0:** The downloaded document renders from the same validated payload as the screen, with no regeneration, so its conclusions match exactly.
+- [x] **P0:** Downloads work in the logged-out judge context and for the prepared scenario.
 - [ ] **P1:** Add “Save your bridge card”: a 1200 by 630 pixel PNG rendered entirely client-side with the headline conclusion, counts, shortest bridge, and first next move. No excerpts, paths, or file names appear on the card, and nothing is uploaded anywhere.
 
 ### Prove product value
 
-- [ ] **P0:** Evaluate Alex and one fictional custom upload against five value criteria:
+- [x] **P0:** Evaluate Alex and one fictional custom upload against five value criteria:
   - exact grounding in the user's own work;
   - dated current-practice evidence;
   - validated and inspectable provenance;
   - a smaller learning delta than a generic gap list; and
   - a concrete proof task that reuses an existing project.
-- [ ] **P0:** Require every recommended action to name the existing knowledge it reuses, the genuinely new concept, why the new practice is used, and what artifact will prove the bridge.
-- [ ] **P0:** If the system cannot produce a project-grounded bridge, say what evidence is missing instead of filling the report with generic advice.
-- [ ] **P0:** Align the landing page and demo copy with what the completed service actually delivers, and remove internal phase labels from user-facing copy.
-- [ ] **P1:** Add a compact method panel titled “What makes this different from asking a chatbot”: the six contract guarantees, each linked to the live control that demonstrates it (a citation receipt, the pack version, an evidence-class label, the delta framing, the proof task, the download).
+- [x] **P0:** Require every recommended action to name the existing knowledge it reuses, the genuinely new concept, why the new practice is used, and what artifact will prove the bridge.
+- [x] **P0:** If the system cannot produce a project-grounded bridge, say what evidence is missing instead of filling the report with generic advice.
+- [x] **P0:** Align the landing page and demo copy with what the completed service actually delivers, and remove internal phase labels from user-facing copy.
+- [x] **P1:** Add a compact method panel titled “What makes this different from asking a chatbot”: the six contract guarantees, each linked to the live control that demonstrates it (a citation receipt, the pack version, an evidence-class label, the delta framing, the proof task, the download).
 - [ ] **P1:** Let the user choose a different supported bridge priority and recompute the three-step plan without re-uploading unchanged evidence.
 
 ### Judge experience
 
 - [ ] **P0:** Confirm the five demo beats read clearly in a 1080p screen recording: the reveal, the first-viewport decision brief, one citation receipt opening and closing, the then-and-now walkthrough, and the PDF download.
 - [ ] **P0:** Verify the redesigned flow logged out, at desktop and mobile widths, keyboard-only, and with reduced motion enabled.
-- [ ] **P1:** Add a short reviewer note to the README describing the fastest path through the redesigned result.
+- [x] **P1:** Add a short reviewer note to the README describing the fastest path through the redesigned result.
 
 **Scope control:** if the July 20 freeze approaches with work remaining, cut in this order: the appendix evidence-mix strip, the bridge card PNG, the priority recompute, the method panel, self-hosted fonts, the market demand chart (fall back to the textual counts already in each row), reveal richness (fall back to a fade plus count-up), then the evidence-review checkpoint interface (keep the API exclusion support). Do not cut the second analysis stage, its server-side validation, the decision-first order, citation receipts, honest unsupported-field states, the coverage strip, or the PDF download.
 

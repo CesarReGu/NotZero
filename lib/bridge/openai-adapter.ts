@@ -44,6 +44,9 @@ const modelNextStepSchema = z.object({
   rank: z.number().int().min(1).max(3),
   title: z.string().min(1).max(140),
   buildsOn: z.array(z.string().min(1)).min(1),
+  reuses: z.string().min(1).max(400),
+  newConcept: z.string().min(1).max(400),
+  whyItIsUsed: z.string().min(1).max(500),
   whyNow: z.string().min(1).max(500),
   proof: z.string().min(1).max(500),
 }).strict();
@@ -108,7 +111,7 @@ const bridgeOutputJsonSchema = {
         },
       },
     },
-    nextSteps: { type: "array", minItems: 3, maxItems: 3, items: { type: "object", additionalProperties: false, required: ["rank", "title", "buildsOn", "whyNow", "proof"], properties: { rank: { type: "integer", minimum: 1, maximum: 3 }, title: { type: "string" }, buildsOn: { type: "array", minItems: 1, items: { type: "string" } }, whyNow: { type: "string" }, proof: { type: "string" } } } },
+    nextSteps: { type: "array", minItems: 3, maxItems: 3, items: { type: "object", additionalProperties: false, required: ["rank", "title", "buildsOn", "reuses", "newConcept", "whyItIsUsed", "whyNow", "proof"], properties: { rank: { type: "integer", minimum: 1, maximum: 3 }, title: { type: "string" }, buildsOn: { type: "array", minItems: 1, items: { type: "string" } }, reuses: { type: "string" }, newConcept: { type: "string" }, whyItIsUsed: { type: "string" }, whyNow: { type: "string" }, proof: { type: "string" } } } },
     upgradeChallenge: { type: "object", additionalProperties: false, required: ["id", "title", "basedOnClaimIds", "objective", "acceptanceCriteria", "comparisonState"], properties: { id: { type: "string" }, title: { type: "string" }, basedOnClaimIds: { type: "array", minItems: 1, items: { type: "string" } }, objective: { type: "string" }, acceptanceCriteria: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } }, comparisonState: { type: "string", enum: comparisonStateSchema.options } } },
     walkthrough: { anyOf: [{ type: "null" }, { type: "object", additionalProperties: false, required: ["title", "claimId", "observedImplementation", "modernCounterpart", "relationshipType", "comparisonState", "illustrativeSketch", "whatTransfers", "whatIsNew", "limitations"], properties: { title: { type: "string" }, claimId: { type: "string" }, observedImplementation: { type: "string" }, modernCounterpart: { type: "string" }, relationshipType: { type: "string", enum: relationshipTypeSchema.options }, comparisonState: { type: "string", enum: comparisonStateSchema.options }, illustrativeSketch: { type: ["string", "null"] }, whatTransfers: { type: "array", minItems: 1, items: { type: "string" } }, whatIsNew: { type: "array", minItems: 1, items: { type: "string" } }, limitations: { type: "array", minItems: 1, items: { type: "string" } } } }] },
     walkthroughUnavailableReason: { type: ["string", "null"] }, limitations: { type: "array", minItems: 1, maxItems: 12, items: { type: "string" } },
