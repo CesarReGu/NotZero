@@ -6,11 +6,11 @@ This record documents the license and permission review for the submitted NotZer
 
 The application declares its direct runtime and development dependencies in `package.json` and locks the complete dependency graph in `package-lock.json`. The repeatable check `npm run audit:licenses` verifies that every installed package exposes license metadata.
 
-The July 19, 2026 audit inspected 497 installed packages. Every package reported a license. The dependency graph contained the following license identifiers:
+The July 19, 2026 audit inspected 496 installed packages. Every package reported a license. The dependency graph contained the following license identifiers:
 
 | License | Packages |
 |---|---:|
-| MIT | 417 |
+| MIT | 416 |
 | Apache-2.0 | 26 |
 | ISC | 19 |
 | BSD-2-Clause | 11 |
@@ -39,4 +39,4 @@ The market pack stores factual requirement labels, employer and role names, obse
 
 ## Final review procedure
 
-Before submitting a different commit, run `npm ci`, `npm run audit:licenses`, and `npm run audit:repository`. Review any new package, dataset, image, font, icon, or copied text before updating this record.
+Before submitting a different commit, run `npm ci` and `npm run verify`. The July 19 release audit reported zero known npm vulnerabilities after updating the Cloudflare, Vite, Wrangler, Next, and related transitive build dependencies. Review any new package, dataset, image, font, icon, or copied text before updating this record.

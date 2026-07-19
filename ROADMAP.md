@@ -159,12 +159,12 @@ The submitted judge path remains the software scenario. The underlying evidence 
 
 **Target:** July 20–21
 
-- [ ] **P0:** Run lint, type-check, tests, and production build from a clean checkout.
-- [ ] **P0:** Follow the README from a clean environment and correct every missing step.
+- [x] **P0:** Run lint, type-check, tests, and production build from a clean checkout.
+- [x] **P0:** Follow the README from a clean environment and correct every missing step.
 - [ ] **P0:** Confirm the deployed behavior matches the repository, description, and video.
-- [ ] **P0:** Audit licenses for dependencies, fonts, icons, sample data, and market data.
-- [ ] **P0:** Scan for secrets, private uploads, personal information, and malicious/unwanted files.
-- [ ] **P0:** Write the README sections required by the rules:
+- [x] **P0:** Audit licenses for dependencies, fonts, icons, sample data, and market data.
+- [x] **P0:** Scan for secrets, private uploads, personal information, and malicious/unwanted files.
+- [x] **P0:** Write the README sections required by the rules:
   - setup and run;
   - sample/judge scenario;
   - testing instructions;
