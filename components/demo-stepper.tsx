@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { EvidenceLedger, KnowledgeBridgeReport, PreparedScenario } from "@/lib/domain/schemas";
 import { EvidenceLedgerView } from "@/components/evidence-ledger";
 import { KnowledgeBridgeReportView } from "@/components/knowledge-bridge-report";
+import { classifyAnalysisResult, isLimitFailure, type AnalysisState } from "@/lib/analysis/outcome";
 
 type DemoStepperProps = { scenario: PreparedScenario };
 type Mode = "prepared" | "custom";
@@ -43,7 +44,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [mode, setMode] = useState<Mode>("prepared");
   const [ledger, setLedger] = useState<EvidenceLedger | null>(null);
   const [report, setReport] = useState<KnowledgeBridgeReport | null>(null);
-  const [requestState, setRequestState] = useState<"idle" | "reading" | "error">("idle");
+  const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [error, setError] = useState("");
   const [curriculum, setCurriculum] = useState<DatedFile[]>([]);
   const [supporting, setSupporting] = useState<DatedFile[]>([]);
@@ -53,12 +54,23 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [targetTitle, setTargetTitle] = useState("Junior backend engineer");
   const [location, setLocation] = useState("Mexico · Remote-friendly");
   const [jurisdiction, setJurisdiction] = useState("Mexico");
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
   const role = scenario.targetRoles[0];
+
+  useEffect(() => {
+    stepHeadingRef.current?.focus();
+  }, [step]);
+
+  useEffect(() => {
+    if (analysisState !== "idle") statusRef.current?.focus();
+  }, [analysisState]);
 
   function moveTo(nextStep: number) {
     setLedger(null);
     setReport(null);
     setError("");
+    setAnalysisState("idle");
     setStep(nextStep);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -68,6 +80,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setLedger(null);
     setReport(null);
     setError("");
+    setAnalysisState("idle");
   }
 
   function updateDate(setter: React.Dispatch<React.SetStateAction<DatedFile[]>>, index: number, date: string) {
@@ -84,7 +97,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   }
 
   async function analyze() {
-    setRequestState("reading");
+    setAnalysisState("loading");
     setError("");
     setLedger(null);
     setReport(null);
@@ -105,25 +118,33 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         form.set("projectDates", JSON.stringify(project.map((item) => item.date)));
       }
       const response = await fetch("/api/evidence-ledger", { method: "POST", body: form });
-      const body = await response.json() as { ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; message?: string };
-      if (!response.ok || !body.ledger) throw new Error(body.message || "The evidence could not be analyzed.");
+      const body = await response.json() as { ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; message?: string; error?: string };
+      if (!response.ok || !body.ledger) {
+        if (isLimitFailure(response.status, body.error)) {
+          setError(body.message || "The evidence exceeds a documented analysis limit.");
+          setAnalysisState("limit");
+          return;
+        }
+        throw new Error(body.message || "The evidence could not be analyzed.");
+      }
       setLedger(body.ledger);
       setReport(body.report ?? null);
+      setAnalysisState(classifyAnalysisResult(body.ledger, body.report));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The evidence could not be analyzed.");
-      setRequestState("error");
+      setAnalysisState("error");
       return;
     }
-    setRequestState("idle");
   }
 
-  function resetCustomEvidence() {
+  function resetAnalysis() {
     setCurriculum([]);
     setSupporting([]);
     setProject([]);
     setLedger(null);
     setReport(null);
     setError("");
+    setAnalysisState("idle");
     setStep(1);
   }
 
@@ -141,7 +162,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         {step === 1 && (
           <section aria-labelledby="evidence-title">
             <p className="step-count">Step 1 of 3</p>
-            <h2 id="evidence-title">Choose the evidence</h2>
+            <h2 id="evidence-title" ref={stepHeadingRef} tabIndex={-1}>Choose the evidence</h2>
             <p className="step-description">Use Alex&apos;s prepared software profile or validate a bounded evidence set from any field.</p>
             <div className="privacy-notice" role="note"><strong>Before using your own materials</strong><p>Do not upload credentials, confidential employer material, patient or client information, personal identifiers, or work you do not have the right to share. Files are processed for this request and are not retained by the current prototype flow.</p></div>
 
@@ -174,7 +195,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
 
         {step === 2 && (
           <section aria-labelledby="target-title">
-            <p className="step-count">Step 2 of 3</p><h2 id="target-title">Describe where you are going</h2>
+            <p className="step-count">Step 2 of 3</p><h2 id="target-title" ref={stepHeadingRef} tabIndex={-1}>Describe where you are going</h2>
             {mode === "prepared" ? (
               <><p className="step-description">The judge path remains deliberately bounded to one software role and market context.</p><div className="target-card" aria-label="Selected target role"><span className="radio-mark" aria-hidden="true" /><div><span className="status-label status-current">Selected target</span><h3>{role.title}</h3><p>{role.location}</p><small>{role.scope}</small></div></div></>
             ) : (
@@ -187,7 +208,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
 
         {step === 3 && (
           <section aria-labelledby="review-title">
-            <p className="step-count">Step 3 of 3</p><h2 id="review-title">Review and build the bridge</h2>
+            <p className="step-count">Step 3 of 3</p><h2 id="review-title" ref={stepHeadingRef} tabIndex={-1}>Review and build the bridge</h2>
             <p className="step-description">NotZero first validates the evidence, then compares supported claims with one dated, profession-specific current-practice pack.</p>
             <dl className="review-list">
               <div><dt>Evidence mode</dt><dd>{mode === "prepared" ? "Prepared fictional fixture" : "Your bounded evidence set"}</dd></div>
@@ -197,9 +218,15 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
               <div><dt>Context</dt><dd>{mode === "prepared" ? role.location : `${location}${jurisdiction ? ` · ${jurisdiction}` : ""}`}</dd></div>
             </dl>
             <div className="disclaimer">NotZero interprets the materials and market sources available to it. It does not certify mastery or guarantee job eligibility. Review the evidence and correct anything that does not reflect your experience.</div>
-            {error && <div className="analysis-error" role="alert"><strong>We could not build the analysis.</strong><p>{error}</p><span>Your selected files remain in this browser so you can correct the issue.</span></div>}
-            <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={requestState === "reading"}>{requestState === "reading" ? "Reading evidence and comparing context…" : "Build Knowledge Bridge"}</button></div>
-            {ledger && <><div className="prepared-result"><EvidenceLedgerView ledger={ledger} />{report && <KnowledgeBridgeReportView report={report} />}</div>{mode === "custom" && <button className="reset-evidence" type="button" onClick={resetCustomEvidence}>Clear my files and result</button>}</>}
+            {analysisState === "loading" && <div className="analysis-state analysis-loading" role="status" ref={statusRef} tabIndex={-1}><span className="analysis-pulse" aria-hidden="true" /><div><strong>Reading the evidence and building connections</strong><p>Checking source dates, supported claims, current expectations, and the smallest useful next steps.</p></div></div>}
+            {analysisState === "error" && <div className="analysis-state analysis-error" role="alert" ref={statusRef} tabIndex={-1}><strong>We could not build the analysis.</strong><p>{error}</p><span>Your selected files remain in this browser so you can correct the issue and try again.</span></div>}
+            {analysisState === "limit" && <div className="analysis-state analysis-limit" role="alert" ref={statusRef} tabIndex={-1}><strong>This evidence set is outside the prototype limits.</strong><p>{error}</p><span>Return to the evidence step, reduce the bounded set, and try again.</span></div>}
+            {analysisState === "empty" && <div className="analysis-state analysis-empty" role="status" ref={statusRef} tabIndex={-1}><strong>Your files passed validation. No capability conclusion was generated.</strong><p>The current deployment can verify this evidence set, but a profession-specific market comparison is not available for it yet.</p></div>}
+            {analysisState === "partial" && <div className="analysis-state analysis-partial" role="status" ref={statusRef} tabIndex={-1}><strong>Your evidence ledger is ready. The market bridge is still incomplete.</strong><p>Review the extracted claims below. NotZero will not apply the software market pack to a different field or context.</p></div>}
+            {analysisState === "completed" && <div className="analysis-state analysis-complete" role="status" ref={statusRef} tabIndex={-1}><strong>Your Knowledge Bridge is ready.</strong><p>Start with the four-count summary, then open any conclusion to inspect its evidence and learning delta.</p></div>}
+            <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={analysisState === "loading"}>{analysisState === "loading" ? "Building your Knowledge Bridge…" : ledger ? "Rebuild Knowledge Bridge" : "Build Knowledge Bridge"}</button></div>
+            {ledger && <div className="prepared-result"><EvidenceLedgerView ledger={ledger} />{report && <KnowledgeBridgeReportView report={report} ledger={ledger} />}</div>}
+            {(ledger || analysisState === "error" || analysisState === "limit") && <button className="reset-evidence" type="button" onClick={resetAnalysis}>{mode === "custom" ? "Clear my files and result" : "Start over and clear result"}</button>}
           </section>
         )}
       </div>

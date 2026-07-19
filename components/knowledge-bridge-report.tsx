@@ -1,4 +1,7 @@
-import type { BridgeFinding, KnowledgeBridgeReport } from "@/lib/domain/schemas";
+"use client";
+
+import { useState } from "react";
+import type { BridgeFinding, EvidenceLedger, KnowledgeBridgeReport } from "@/lib/domain/schemas";
 import { softwareBackendPracticePack } from "@/lib/market/current-practice";
 
 const groupLabel: Record<BridgeFinding["group"], string> = {
@@ -13,23 +16,41 @@ function humanize(value: string) {
   return value.replaceAll("_", " ");
 }
 
-export function KnowledgeBridgeReportView({ report }: { report: KnowledgeBridgeReport }) {
+type FindingFilter = "all" | "strengths" | "bridges" | "gaps" | "unknowns";
+
+const filterGroups: Record<Exclude<FindingFilter, "all">, BridgeFinding["group"][]> = {
+  strengths: ["current", "transferable"],
+  bridges: ["small_bridge"],
+  gaps: ["genuine_gap"],
+  unknowns: ["insufficient_evidence"],
+};
+
+export function KnowledgeBridgeReportView({ report, ledger }: { report: KnowledgeBridgeReport; ledger: EvidenceLedger }) {
   const pack = softwareBackendPracticePack;
+  const [filter, setFilter] = useState<FindingFilter>("all");
+  const supportedStrengths = report.counts.current + report.counts.transferable;
+  const visibleFindings = filter === "all" ? report.findings : report.findings.filter((finding) => filterGroups[filter].includes(finding.group));
+  const filterOptions: { id: FindingFilter; label: string; count: number }[] = [
+    { id: "all", label: "All conclusions", count: report.findings.length },
+    { id: "strengths", label: "Supported strengths", count: supportedStrengths },
+    { id: "bridges", label: "Bridges", count: report.counts.smallBridge },
+    { id: "gaps", label: "Genuine gaps", count: report.counts.genuineGap },
+    { id: "unknowns", label: "Unknowns", count: report.counts.insufficientEvidence },
+  ];
 
   return (
     <section className="bridge-report" aria-labelledby="bridge-report-title">
       <header className="bridge-report-header">
         <div>
           <p className="eyebrow">Knowledge Bridge Graph</p>
-          <h3 id="bridge-report-title">Your foundations already reach part of the way.</h3>
-          <p>NotZero compared Alex&apos;s dated evidence with {pack.sources.length} reviewed roles in Mexico and remote Latin America. Each connection shows its evidence, relationship, and remaining learning delta.</p>
+          <h3 id="bridge-report-title">Alex already has {supportedStrengths} supported strengths and a practical bridge into this role.</h3>
+          <p>NotZero compared dated evidence with {pack.sources.length} reviewed roles in Mexico and remote Latin America. The result separates supported foundations from genuine new learning and areas where more evidence would help.</p>
         </div>
         <span className="report-date">Market pack<br /><strong>{pack.observedThrough}</strong></span>
       </header>
 
       <div className="report-counts" aria-label="Knowledge Bridge result counts">
-        <div data-group="current"><strong>{report.counts.current}</strong><span>Current</span></div>
-        <div data-group="transferable"><strong>{report.counts.transferable}</strong><span>Transferable</span></div>
+        <div data-group="strengths"><strong>{supportedStrengths}</strong><span>Supported strengths</span></div>
         <div data-group="small_bridge"><strong>{report.counts.smallBridge}</strong><span>Small bridge</span></div>
         <div data-group="genuine_gap"><strong>{report.counts.genuineGap}</strong><span>Genuine gap</span></div>
         <div data-group="insufficient_evidence"><strong>{report.counts.insufficientEvidence}</strong><span>Unknown</span></div>
@@ -37,8 +58,14 @@ export function KnowledgeBridgeReportView({ report }: { report: KnowledgeBridgeR
 
       <div className="bridge-findings">
         <h4>Five evidence-based conclusions</h4>
-        {report.findings.map((finding) => {
+        <div className="finding-filters" aria-label="Filter conclusions">
+          {filterOptions.map((option) => <button type="button" aria-pressed={filter === option.id} onClick={() => setFilter(option.id)} key={option.id}>{option.label}<span>{option.count}</span></button>)}
+        </div>
+        {filter !== "all" && <p className="filter-note" role="status">Showing {visibleFindings.length} of {report.findings.length} conclusions. Choose All conclusions to restore the complete narrative.</p>}
+        <div className="filtered-findings">
+        {visibleFindings.map((finding) => {
           const requirement = pack.requirements.find((item) => item.id === finding.currentRequirementId);
+          const claims = finding.evidenceClaimIds.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
           return (
             <details className="bridge-finding" data-group={finding.group} key={finding.id} open={finding.group === "small_bridge"}>
               <summary>
@@ -48,9 +75,14 @@ export function KnowledgeBridgeReportView({ report }: { report: KnowledgeBridgeR
               </summary>
               <div className="finding-body">
                 <div className="finding-connection">
-                  <div><span>Evidence supports</span><p>{finding.existingCapability}</p></div>
+                  <div><span>What Alex already knows</span><p>{finding.existingCapability}</p></div>
                   <strong>{finding.relationshipType ? humanize(finding.relationshipType) : "compare with"}</strong>
-                  <div><span>Current context</span><p>{finding.modernCounterpart}</p></div>
+                  <div><span>Modern counterpart</span><p>{finding.modernCounterpart}</p></div>
+                </div>
+
+                <div className="finding-evidence">
+                  <strong>Evidence from Alex&apos;s materials</strong>
+                  {claims.map((claim) => <div key={claim.id}><p><b>{claim.title}</b> {claim.statement}</p>{claim.references.map((reference) => <code key={`${claim.id}-${reference.locator.path}-${reference.locator.value}`}>{reference.locator.path} · {humanize(reference.locator.kind)}: {reference.locator.value}</code>)}</div>)}
                 </div>
 
                 {requirement && (
@@ -72,6 +104,8 @@ export function KnowledgeBridgeReportView({ report }: { report: KnowledgeBridgeR
                   <div><span>What is actually new</span><ul>{finding.newConcepts.map((item) => <li key={item}>{item}</li>)}</ul></div>
                 </div>
 
+                <div className="why-used"><strong>Why this practice is used</strong><p>{finding.whyItIsUsed}</p></div>
+
                 {finding.manualStepsChanged.length > 0 && <div className="manual-change"><strong>What the newer practice changes</strong><ul>{finding.manualStepsChanged.map((item) => <li key={item}>{item}</li>)}</ul></div>}
 
                 <div className="finding-action"><span>Smallest useful proof</span><p>{finding.recommendedAction}</p></div>
@@ -84,6 +118,7 @@ export function KnowledgeBridgeReportView({ report }: { report: KnowledgeBridgeR
             </details>
           );
         })}
+        </div>
       </div>
 
       <section className="walkthrough" aria-labelledby="walkthrough-title">

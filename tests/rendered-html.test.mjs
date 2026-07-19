@@ -51,7 +51,7 @@ test("server-renders the complete prepared-demo intake shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /Phase 3 · Knowledge Bridge Graph/);
+  assert.match(html, /Phase 4 · Report and trust experience/);
   assert.match(html, /Evidence/);
   assert.match(html, /Target context/);
   assert.match(html, /Review and analyze/);
@@ -77,7 +77,7 @@ test("health route exposes safe configuration state without secrets", async () =
   const body = await response.json();
   assert.deepEqual(body, {
     status: "ok",
-    analysisVersion: "phase-3",
+    analysisVersion: "phase-4",
     liveAnalysisEnabled: false,
   });
   assert.equal("hasOpenAIKey" in body, false);
@@ -95,7 +95,9 @@ test("prepared fixture becomes a provenance-aware evidence ledger", async () => 
   assert.equal(body.ledger.claims.length, 4);
   assert.equal(body.ledger.claims[2].references[0].locator.path, "alex-api/src/config.ts");
   assert.equal(body.report.schemaVersion, "knowledge-bridge-report.v1");
+  assert.equal(body.report.analysisVersion, "phase-4");
   assert.equal(body.report.findings.length, 5);
+  assert.ok(body.report.findings.every((finding) => finding.whyItIsUsed.length > 0));
   assert.deepEqual(body.report.nextSteps.map((step) => step.rank), [1, 2, 3]);
   assert.equal(body.report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
 });

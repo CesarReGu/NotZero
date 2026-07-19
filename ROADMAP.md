@@ -117,9 +117,9 @@ The submitted judge path remains the software scenario. The underlying evidence 
 
 **Target:** July 19–20
 
-- [ ] **P0:** Build the report header around a specific reassuring conclusion rather than a generic score.
-- [ ] **P0:** Show counts of supported strengths, bridges, genuine gaps, and unknowns.
-- [ ] **P0:** Build expandable bridge rows/cards with:
+- [x] **P0:** Build the report header around a specific reassuring conclusion rather than a generic score.
+- [x] **P0:** Show counts of supported strengths, bridges, genuine gaps, and unknowns.
+- [x] **P0:** Build expandable bridge rows/cards with:
   - what you already know;
   - evidence from your materials;
   - exact artifact location when available;
@@ -131,12 +131,12 @@ The submitted judge path remains the software scenario. The underlying evidence 
   - why it is used;
   - recommended proof task; and
   - confidence/source details.
-- [ ] **P0:** Provide distinct loading, empty, partial, error, limit-reached, and completed states.
-- [ ] **P0:** Test the full keyboard flow and visible focus states.
-- [ ] **P0:** Verify desktop and mobile layouts.
-- [ ] **P0:** Add a deletion/reset action for user materials and results.
-- [ ] **P1:** Add filters for result type without hiding the complete narrative.
-- [ ] **P1:** Add print/export only if it does not destabilize the core flow.
+- [x] **P0:** Provide distinct loading, empty, partial, error, limit-reached, and completed states.
+- [x] **P0:** Test the full keyboard flow and visible focus states.
+- [x] **P0:** Verify desktop and mobile layouts.
+- [x] **P0:** Add a deletion/reset action for user materials and results.
+- [x] **P1:** Add filters for result type without hiding the complete narrative.
+- [x] **P1:** Keep print/export out of the hackathon flow because it adds a second document surface without improving the judge path.
 
 **Exit criterion:** A judge can understand the result in 15 seconds and inspect the evidence for any conclusion in one interaction.
 

@@ -27,6 +27,7 @@ test("the prepared report exercises every result group and exactly three next st
   assert.equal(report.upgradeChallenge.acceptanceCriteria.length, 4);
   assert.equal(report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
   assert.equal(report.walkthrough.comparisonState, "illustrative");
+  assert.ok(report.findings.every((finding) => finding.whyItIsUsed.length > 0));
 });
 
 test("the prepared report rejects a missing evidence claim", () => {

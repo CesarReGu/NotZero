@@ -5,7 +5,7 @@ const serverConfigSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   NOTZERO_MODEL: z.string().min(1).default("gpt-5.6"),
   NOTZERO_ENABLE_LIVE_ANALYSIS: z.enum(["true", "false"]).default("false"),
-  NOTZERO_ANALYSIS_VERSION: z.string().min(1).default("phase-3"),
+  NOTZERO_ANALYSIS_VERSION: z.string().min(1).default("phase-4"),
 });
 
 export type ServerConfig = {

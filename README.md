@@ -6,7 +6,7 @@ NotZero connects academic knowledge and past projects with current professional 
 
 ## Current status
 
-Phase 3 is complete for the deterministic software judge path. The runnable application includes:
+Phase 4 is complete for the deterministic software judge path. The runnable application includes:
 
 - a public landing page with the approved product message;
 - persistent navigation to Method, Privacy, and the prepared demo;
@@ -26,6 +26,11 @@ Phase 3 is complete for the deterministic software judge path. The runnable appl
 - exactly three prioritized next steps and one existing-project upgrade challenge;
 - a project-grounded walkthrough with an exact artifact locator and an explicitly illustrative Dockerfile;
 - visible verified, illustrative, and conceptual comparison states;
+- a reassuring report header with a four-count summary for supported strengths, practical bridges, genuine gaps, and unknowns;
+- expandable conclusions that expose the submitted evidence, exact artifact locator, relationship, modern counterpart, learning delta, use rationale, proof task, confidence, sources, and limits;
+- result filters that preserve the complete narrative as the default view;
+- distinct loading, empty, partial, error, limit-reached, and completed states;
+- keyboard focus management, visible focus indicators, responsive report layouts, and a clear reset action;
 - server-only environment validation and a safe health endpoint;
 - shared Zod contracts for field context, evidence sources, claims, provenance, evidence classes, and tool relationships; and
 - route-level production tests.
@@ -84,7 +89,7 @@ No OpenAI API key is needed for the prepared judge demo. A server-side key is re
 2. Review Alex Rivera's fictional academic and project evidence.
 3. Continue to the single supported junior backend role.
 4. Build the prepared evidence ledger and expand a claim to inspect its exact source receipt and limitation.
-5. Inspect all five result groups, the bridge from runtime configuration to containerization, and the exact fictional artifact locator.
+5. Read the four-count summary, filter or inspect the five result groups, and open the bridge from runtime configuration to containerization.
 6. Review the three next steps, the existing-project challenge, and the expandable market methodology.
 
 The secondary path accepts bounded evidence from other fields. It records field, target, location, and jurisdiction before analysis. This does not imply that the current release contains validated market-comparison packs for law, nursing, accounting, or other regulated professions.
@@ -126,7 +131,7 @@ tests/               Production-rendered route tests
 worker/              Cloudflare-compatible application entry point
 ```
 
-The shared domain contracts use the evidence classes defined in the trust standard: expected exposure, demonstrated, self-reported, inferred, and unknown. Relationship values are restricted to the approved directional taxonomy. The Phase 3 report validates every claim, requirement, relationship source, comparison state, next-step rank, and project reference before display.
+The shared domain contracts use the evidence classes defined in the trust standard: expected exposure, demonstrated, self-reported, inferred, and unknown. Relationship values are restricted to the approved directional taxonomy. The Phase 4 report validates every claim, requirement, relationship source, comparison state, use rationale, next-step rank, and project reference before display.
 
 ## GPT-5.6 integration
 

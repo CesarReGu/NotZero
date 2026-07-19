@@ -176,6 +176,7 @@ export const bridgeFindingSchema = z.object({
   manualStepsChanged: z.array(z.string().min(1).max(300)),
   transferableConcepts: z.array(z.string().min(1).max(200)),
   newConcepts: z.array(z.string().min(1).max(200)),
+  whyItIsUsed: z.string().min(1).max(500),
   explanation: z.string().min(1).max(900),
   recommendedAction: z.string().min(1).max(500),
   confidence: z.enum(["low", "medium", "high"]),
@@ -216,7 +217,7 @@ export const projectWalkthroughSchema = z.object({
 export const knowledgeBridgeReportSchema = z.object({
   id: z.string().min(1),
   schemaVersion: z.literal("knowledge-bridge-report.v1"),
-  analysisVersion: z.literal("phase-3"),
+  analysisVersion: z.literal("phase-4"),
   analysisMode: z.literal("prepared_fixture"),
   ledgerId: z.string().min(1),
   currentPracticePackId: z.string().min(1),
