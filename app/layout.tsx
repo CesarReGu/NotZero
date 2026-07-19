@@ -17,8 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase = new URL("http://localhost:3000");
   }
 
-  const title = "NotZero | Map your degree to today's software roles";
-  const description = "See how what you studied and built connects to the tools entry-level software roles ask for now, then find the smallest useful next step.";
+  const title = "NotZero | Connect your education to current practice";
+  const description = "See how what you studied and built connects to current practice in your field, then find the smallest useful next step.";
   const socialImage = new URL("/og.png", metadataBase).toString();
 
   return {

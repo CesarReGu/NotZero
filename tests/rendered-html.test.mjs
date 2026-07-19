@@ -21,11 +21,15 @@ test("server-renders the NotZero landing page and persistent judge path", async 
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>NotZero \| Map your degree to today(?:&#x27;|')s software roles<\/title>/i);
-  assert.match(html, /You learned the foundation\./);
+  assert.match(html, /<title>NotZero \| Connect your education to current practice<\/title>/i);
+  assert.match(html, /Your field moved forward\./);
   assert.match(html, /The job post looks unfamiliar\. Your knowledge doesn/);
   assert.match(html, /You are not starting from zero\./);
   assert.match(html, /See Alex(?:&#x27;|')s knowledge bridge/);
+  assert.match(html, /Software development/);
+  assert.match(html, /Law/);
+  assert.match(html, /Accounting/);
+  assert.match(html, /Upload a final project/);
   assert.match(html, /Final Project/);
   assert.match(html, /Already demonstrated/);
   assert.match(html, /No evidence found yet/);

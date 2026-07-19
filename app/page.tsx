@@ -8,12 +8,12 @@ export default function Home() {
       <section className="home-hero">
         <div className="page-shell home-hero-grid">
           <div className="hero-copy">
-            <p className="hero-category">For software graduates facing the first job search</p>
-            <h1>You learned the foundation. <span>The job post changed the vocabulary.</span></h1>
+            <p className="hero-category">For students, recent graduates, and people returning to their field</p>
+            <h1>Your field moved forward. <span>Your education still carries.</span></h1>
             <p className="hero-lede">
-              NotZero reads your curriculum and projects, then maps them to the
-              tools entry-level roles ask for now. See what already transfers,
-              what needs a small bridge, and what is genuinely new.
+              NotZero reads what you studied and built, then connects it to
+              current practice in your field. See what still transfers, what
+              needs an update, and the smallest useful next step.
             </p>
             <div className="button-row">
               <Link className="button button-primary" href="/demo">See Alex&apos;s knowledge bridge</Link>
@@ -36,10 +36,10 @@ export default function Home() {
             <p className="eyebrow">The thought that follows</p>
             <h2>Then what were those years at university for?</h2>
             <p>
-              For the concepts underneath the tools: data structures, systems,
-              APIs, testing, databases, and the practice of solving unfamiliar
-              problems. The market keeps adding new layers. Your foundation did
-              not disappear when the vocabulary changed.
+              For the principles underneath current practice: how to reason,
+              investigate, build, test, communicate, and solve unfamiliar
+              problems. Every field adds new tools, standards, and rules. Your
+              foundation does not disappear when professional practice changes.
             </p>
             <p className="recognition-answer">You are not starting from zero.</p>
           </div>
@@ -49,7 +49,7 @@ export default function Home() {
       <section className="page-shell translation-section" id="how-it-works">
         <div className="section-heading translation-heading">
           <p className="eyebrow">What the product actually does</p>
-          <h2>It translates your education into the language of the role.</h2>
+          <h2>It translates your education into the language of current practice.</h2>
           <p>One evidence trail connects what you learned, what employers name, and the smallest useful next step.</p>
         </div>
         <div className="translation-map">
@@ -64,7 +64,7 @@ export default function Home() {
             <p>Evidence-backed<br />relationship map</p>
           </div>
           <div className="translation-column outcome-column">
-            <p className="column-label">02 · The role, decoded</p>
+            <p className="column-label">02 · Current practice, decoded</p>
             <div className="outcome-row current"><span>Transfers</span><strong>REST APIs</strong><small>demonstrated</small></div>
             <div className="outcome-row bridge"><span>Small bridge</span><strong>Docker</strong><small>high confidence</small></div>
             <div className="outcome-row unknown"><span>No evidence yet</span><strong>Cloud deployment</strong><small>unknown</small></div>
@@ -72,7 +72,7 @@ export default function Home() {
         </div>
         <ol className="process-list">
           <li><span>01</span><h3>Bring what you studied</h3><p>A curriculum, a few supporting documents, and one project are enough for the focused flow.</p></li>
-          <li><span>02</span><h3>Choose a target role</h3><p>NotZero compares your evidence with a bounded, dated set of current job requirements.</p></li>
+          <li><span>02</span><h3>Choose where you are going</h3><p>NotZero compares your evidence with a bounded, dated set of current professional requirements.</p></li>
           <li><span>03</span><h3>Build the smallest bridge</h3><p>Get three priorities and one project upgrade that reuses what you already know.</p></li>
         </ol>
       </section>
@@ -95,7 +95,7 @@ export default function Home() {
 
       <section className="page-shell section bridge-section">
         <div className="section-heading bridge-heading">
-          <div><p className="eyebrow">See one real translation</p><h2>“Docker” becomes a bounded learning task.</h2></div>
+        <div><p className="eyebrow">The software judge example</p><h2>“Docker” becomes a bounded learning task.</h2></div>
           <p>NotZero does not call two tools equivalent. It shows the relationship, the source evidence, what transfers, and what remains new.</p>
         </div>
         <BridgePreview />
