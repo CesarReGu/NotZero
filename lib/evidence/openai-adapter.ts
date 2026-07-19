@@ -103,6 +103,7 @@ export async function extractWithGpt56(args: {
     headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: args.model,
+      prompt_cache_key: "notzero-evidence-extraction-v1",
       reasoning: { effort: "medium" },
       instructions: [
         "You extract a conservative evidence ledger for NotZero.",

@@ -6,7 +6,7 @@ NotZero connects academic knowledge and past projects with current professional 
 
 ## Current status
 
-Phase 4 is complete for the deterministic software judge path. The runnable application includes:
+Phase 5 is complete for the deterministic software judge path. The runnable application includes:
 
 - a public landing page with the approved product message;
 - persistent navigation to Method, Privacy, and the prepared demo;
@@ -31,11 +31,19 @@ Phase 4 is complete for the deterministic software judge path. The runnable appl
 - result filters that preserve the complete narrative as the default view;
 - distinct loading, empty, partial, error, limit-reached, and completed states;
 - keyboard focus management, visible focus indicators, responsive report layouts, and a clear reset action;
+- durable anonymous-session request and live-analysis limits backed by the hosted D1 database;
+- a deployment-wide live-analysis circuit breaker with a configurable hard ceiling;
+- analysis-versioned, session-scoped result caching with a 30-minute default lifetime;
+- a server-side cache deletion endpoint connected to the user-facing reset action;
+- an OpenAI prompt cache key for the reusable GPT-5.6 extraction prefix;
+- no-store API responses and application logging that excludes document bodies, credentials, and extracted text;
 - server-only environment validation and a safe health endpoint;
 - shared Zod contracts for field context, evidence sources, claims, provenance, evidence classes, and tool relationships; and
 - route-level production tests.
 
-The prepared software scenario remains deterministic for reliable judging. Custom files are validated and extracted in the hosted app. Live GPT-5.6 claims remain disabled until the deployment has both a server-side API key and `NOTZERO_ENABLE_LIVE_ANALYSIS=true`. When disabled, the interface returns a source receipt and makes no capability claims.
+The prepared software scenario remains deterministic for reliable judging and does not consume a live-analysis allowance. Custom files are validated and extracted in the hosted app. Live GPT-5.6 claims remain disabled until the deployment has both a server-side API key and `NOTZERO_ENABLE_LIVE_ANALYSIS=true`. When disabled, the interface returns a source receipt and makes no capability claims.
+
+The hosted judge demo is publicly reachable without an account, payment, API key, or ChatGPT subscription. It must remain available through August 5, 2026 at 5:00 p.m. PT under the official judging-period requirement.
 
 ## Technology
 
@@ -125,13 +133,16 @@ lib/domain/          Runtime-validated evidence and relationship contracts
 lib/evidence/        File validation, extraction, hashing, limits, and GPT-5.6 adapter
 lib/bridge/          Deterministic comparison and report validation
 lib/market/          Current-practice pack validation and lookup helpers
+lib/operations/      Anonymous sessions, durable limits, cache, and circuit breaker
 lib/fixtures/        Parsed deterministic scenario data
+db/                  Runtime D1 schema definitions
+drizzle/             Hosted D1 migrations
 fixtures/alex/       Fictional source artifacts used by the prepared scenario
 tests/               Production-rendered route tests
 worker/              Cloudflare-compatible application entry point
 ```
 
-The shared domain contracts use the evidence classes defined in the trust standard: expected exposure, demonstrated, self-reported, inferred, and unknown. Relationship values are restricted to the approved directional taxonomy. The Phase 4 report validates every claim, requirement, relationship source, comparison state, use rationale, next-step rank, and project reference before display.
+The shared domain contracts use the evidence classes defined in the trust standard: expected exposure, demonstrated, self-reported, inferred, and unknown. Relationship values are restricted to the approved directional taxonomy. The Phase 4 report contract validates every claim, requirement, relationship source, comparison state, use rationale, next-step rank, and project reference before display. Phase 5 wraps that analysis in durable operational controls.
 
 ## GPT-5.6 integration
 
@@ -154,6 +165,9 @@ The primary Codex task should be preserved for the required `/feedback` Session 
 - The hero includes a replayable evidence transformation that maps a fictional 2022 final project into demonstrated knowledge, a small modernization bridge, and an explicit unknown. It uses CSS motion, lightweight React controls, and a static reduced-motion state.
 - System sans and monospaced stacks avoid an unnecessary font dependency during the hackathon.
 - User uploads are processed in memory for the current request. No document storage or longitudinal profile is implemented.
+- Cache keys contain a one-way anonymous session hash, the analysis version, normalized input hashes, dated source types, target context, and model configuration. They do not contain uploaded document bodies.
+- Cached evidence ledgers expire after 30 minutes by default and can be deleted immediately through reset. Complete uploaded documents are never persisted.
+- The live-analysis circuit breaker limits total calls for an analysis version. OpenAI project usage limits remain the final account-level backstop.
 
 ## Privacy and data handling
 

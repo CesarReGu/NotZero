@@ -51,7 +51,7 @@ test("server-renders the complete prepared-demo intake shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /Phase 4 · Report and trust experience/);
+  assert.match(html, /Phase 5 · Safe judge experience/);
   assert.match(html, /Evidence/);
   assert.match(html, /Target context/);
   assert.match(html, /Review and analyze/);
@@ -77,8 +77,14 @@ test("health route exposes safe configuration state without secrets", async () =
   const body = await response.json();
   assert.deepEqual(body, {
     status: "ok",
-    analysisVersion: "phase-4",
+    analysisVersion: "phase-5",
     liveAnalysisEnabled: false,
+    operationalControls: {
+      sessionRequestLimit: 8,
+      sessionLiveLimit: 3,
+      globalLiveLimit: 25,
+      cacheTtlSeconds: 1800,
+    },
   });
   assert.equal("hasOpenAIKey" in body, false);
 });
@@ -127,6 +133,20 @@ test("custom evidence is validated without inventing claims when live analysis i
   assert.equal(body.ledger.fieldContext.field, "Business administration");
   assert.equal(body.ledger.sources.length, 2);
   assert.equal(body.ledger.claims.length, 0);
+  assert.equal(response.headers.get("x-notzero-cache"), "miss");
+
+  const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+  assert.ok(cookie?.startsWith("notzero_session="));
+  const cachedResponse = await request("/api/evidence-ledger", { method: "POST", body: customEvidenceForm(), headers: { cookie } });
+  assert.equal(cachedResponse.status, 200);
+  assert.equal(cachedResponse.headers.get("x-notzero-cache"), "hit");
+  assert.equal((await cachedResponse.json()).status, "cached");
+
+  const deleteResponse = await request("/api/evidence-ledger", { method: "DELETE", headers: { cookie } });
+  assert.equal(deleteResponse.status, 200);
+  assert.equal((await deleteResponse.json()).status, "cleared");
+  const afterDelete = await request("/api/evidence-ledger", { method: "POST", body: customEvidenceForm(), headers: { cookie } });
+  assert.equal(afterDelete.headers.get("x-notzero-cache"), "miss");
 });
 
 test("duplicate and unsupported evidence are rejected before model analysis", async () => {

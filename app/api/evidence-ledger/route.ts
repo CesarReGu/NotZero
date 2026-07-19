@@ -6,8 +6,17 @@ import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 import { extractWithGpt56 } from "@/lib/evidence/openai-adapter";
 import { alexEvidenceLedger } from "@/lib/fixtures/alex-ledger";
 import { alexBridgeReport } from "@/lib/bridge/prepared-report";
+import { analysisCacheKey, operationalSession } from "@/lib/operations/session";
+import { deleteSessionCache, getCachedResult, putCachedResult, recordSessionRequest, reserveLiveAnalysis } from "@/lib/operations/store";
 
 export const runtime = "nodejs";
+
+function json(body: unknown, status = 200, setCookie?: string | null, cacheStatus?: "hit" | "miss") {
+  const headers = new Headers({ "Cache-Control": "no-store" });
+  if (setCookie) headers.set("Set-Cookie", setCookie);
+  if (cacheStatus) headers.set("X-NotZero-Cache", cacheStatus);
+  return NextResponse.json(body, { status, headers });
+}
 
 function text(form: FormData, key: string) {
   const value = form.get(key);
@@ -39,12 +48,28 @@ async function extractGroup(inputFiles: File[], dates: string[], sourceType: Evi
   return { sources, warnings };
 }
 
+export async function DELETE(request: Request) {
+  const session = await operationalSession(request);
+  await deleteSessionCache(session.hash);
+  return json({ status: "cleared" }, 200, session.setCookie);
+}
+
 export async function POST(request: Request) {
+  let setCookie: string | null = null;
   try {
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (contentLength > EVIDENCE_LIMITS.totalBytes + 1_000_000) throw new EvidenceInputError("request_size", "The complete request must be smaller than 9 MB.", 413);
     const form = await request.formData();
     if (text(form, "mode") === "prepared") {
-      return NextResponse.json({ status: "completed", ledger: alexEvidenceLedger, report: alexBridgeReport });
+      return json({ status: "completed", ledger: alexEvidenceLedger, report: alexBridgeReport });
     }
+
+    const config = readServerConfig();
+    const session = await operationalSession(request);
+    setCookie = session.setCookie;
+    const now = Date.now();
+    const usage = await recordSessionRequest(session.hash, now, config.sessionRequestLimit);
+    if (!usage.allowed) throw new EvidenceInputError("request_limit", "This anonymous session has reached its daily analysis-request limit. Try again after the daily window resets.", 429);
 
     const fieldContext = fieldContextSchema.parse({
       field: text(form, "field"),
@@ -78,7 +103,26 @@ export async function POST(request: Request) {
       hashes.add(source.metadata.normalizedHash);
     }
 
-    const config = readServerConfig();
+    const cacheKey = await analysisCacheKey({
+      sessionHash: session.hash,
+      analysisVersion: config.analysisVersion,
+      promptVersion: "evidence-extraction.v1",
+      model: config.model,
+      liveAnalysisEnabled: config.liveAnalysisEnabled,
+      fieldContext,
+      projectType,
+      sources: extractedSources.map((source) => ({
+        hash: source.metadata.normalizedHash,
+        sourceType: source.metadata.sourceType,
+        date: source.metadata.date,
+      })),
+    });
+    const cached = await getCachedResult(cacheKey, now);
+    if (cached) {
+      const ledger = evidenceLedgerSchema.parse(JSON.parse(cached.responseJson));
+      return json({ status: "cached", ledger }, 200, setCookie, "hit");
+    }
+
     if (!config.liveAnalysisEnabled || !process.env.OPENAI_API_KEY) {
       const ledger = evidenceLedgerSchema.parse({
         id: `preflight-${crypto.randomUUID()}`,
@@ -91,7 +135,22 @@ export async function POST(request: Request) {
         warnings,
         limitations: ["The files passed server-side validation and text extraction. Live GPT-5.6 evidence claims are disabled in this deployment, so no capability conclusion has been generated."],
       });
-      return NextResponse.json({ status: "validated", ledger });
+      await putCachedResult(cacheKey, session.hash, JSON.stringify(ledger), now, config.cacheTtlSeconds);
+      return json({ status: "validated", ledger }, 200, setCookie, "miss");
+    }
+
+    const reservation = await reserveLiveAnalysis(
+      session.hash,
+      now,
+      config.sessionLiveLimit,
+      config.globalLiveLimit,
+      `live-analysis:${config.analysisVersion}`,
+    );
+    if (!reservation.allowed) {
+      const message = reservation.reason === "session_limit"
+        ? "This anonymous session has reached its daily live-analysis limit."
+        : "Live analysis is temporarily paused by the deployment-wide spending circuit breaker.";
+      throw new EvidenceInputError(reservation.reason, message, 429);
     }
 
     const ledger = await extractWithGpt56({
@@ -101,10 +160,11 @@ export async function POST(request: Request) {
       sources: extractedSources,
       inputWarnings: warnings,
     });
-    return NextResponse.json({ status: "completed", ledger });
+    await putCachedResult(cacheKey, session.hash, JSON.stringify(ledger), now, config.cacheTtlSeconds);
+    return json({ status: "completed", ledger }, 200, setCookie, "miss");
   } catch (error) {
-    if (error instanceof EvidenceInputError) return NextResponse.json({ error: error.code, message: error.message }, { status: error.status });
-    if (error instanceof Error && error.name === "ZodError") return NextResponse.json({ error: "invalid_context", message: "Field, target, and location are required and must fit the documented limits." }, { status: 400 });
-    return NextResponse.json({ error: "analysis_failed", message: "The evidence could not be analyzed safely. No result was retained." }, { status: 502 });
+    if (error instanceof EvidenceInputError) return json({ error: error.code, message: error.message }, error.status, setCookie);
+    if (error instanceof Error && error.name === "ZodError") return json({ error: "invalid_context", message: "Field, target, and location are required and must fit the documented limits." }, 400, setCookie);
+    return json({ error: "analysis_failed", message: "The evidence could not be analyzed safely. No result was retained." }, 502, setCookie);
   }
 }

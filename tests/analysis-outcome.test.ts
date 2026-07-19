@@ -14,6 +14,7 @@ test("documented evidence and request limits use a distinct outcome", () => {
   assert.equal(isLimitFailure(413), true);
   assert.equal(isLimitFailure(429), true);
   assert.equal(isLimitFailure(400, "total_size"), true);
+  assert.equal(isLimitFailure(429, "global_limit"), true);
   assert.equal(isLimitFailure(400, "unsupported_file"), false);
   assert.equal(isLimitFailure(502, "analysis_failed"), false);
 });

@@ -7,5 +7,11 @@ export async function GET() {
     status: "ok",
     analysisVersion: config.analysisVersion,
     liveAnalysisEnabled: config.liveAnalysisEnabled,
+    operationalControls: {
+      sessionRequestLimit: config.sessionRequestLimit,
+      sessionLiveLimit: config.sessionLiveLimit,
+      globalLiveLimit: config.globalLiveLimit,
+      cacheTtlSeconds: config.cacheTtlSeconds,
+    },
   });
 }

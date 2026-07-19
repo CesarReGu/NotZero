@@ -144,14 +144,14 @@ The submitted judge path remains the software scenario. The underlying evidence 
 
 **Target:** July 20
 
-- [ ] **P0:** Keep all API keys and model calls server-side.
-- [ ] **P0:** Add request, file-count, file-size, token, and per-account/per-session analysis limits.
-- [ ] **P0:** Add a global spend circuit breaker.
-- [ ] **P0:** Cache the prepared scenario and identical safe inputs.
-- [ ] **P0:** Prevent repeated model and web calls for an unchanged analysis version.
-- [ ] **P0:** Ensure logs do not contain document bodies, secrets, or credentials.
-- [ ] **P0:** Prepare free judge access valid through August 5, 2026 at 5:00 p.m. PT.
-- [ ] **P0:** Verify the judge flow in a logged-out/private browser context.
+- [x] **P0:** Keep all API keys and model calls server-side.
+- [x] **P0:** Add request, file-count, file-size, token, and per-account/per-session analysis limits.
+- [x] **P0:** Add a global spend circuit breaker.
+- [x] **P0:** Cache the prepared scenario and identical safe inputs.
+- [x] **P0:** Prevent repeated model and web calls for an unchanged analysis version.
+- [x] **P0:** Ensure logs do not contain document bodies, secrets, or credentials.
+- [x] **P0:** Prepare free judge access valid through August 5, 2026 at 5:00 p.m. PT.
+- [x] **P0:** Verify the judge flow in a logged-out/private browser context.
 
 **Exit criterion:** The public demo cannot create unbounded spend, and judges can exercise every submitted feature without payment or reconstruction.
 

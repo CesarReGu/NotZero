@@ -5,7 +5,11 @@ const serverConfigSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   NOTZERO_MODEL: z.string().min(1).default("gpt-5.6"),
   NOTZERO_ENABLE_LIVE_ANALYSIS: z.enum(["true", "false"]).default("false"),
-  NOTZERO_ANALYSIS_VERSION: z.string().min(1).default("phase-4"),
+  NOTZERO_ANALYSIS_VERSION: z.string().min(1).default("phase-5"),
+  NOTZERO_SESSION_REQUEST_LIMIT: z.coerce.number().int().min(1).max(100).default(8),
+  NOTZERO_SESSION_LIVE_LIMIT: z.coerce.number().int().min(1).max(20).default(3),
+  NOTZERO_GLOBAL_LIVE_LIMIT: z.coerce.number().int().min(1).max(10_000).default(25),
+  NOTZERO_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(86_400).default(1_800),
 });
 
 export type ServerConfig = {
@@ -13,6 +17,10 @@ export type ServerConfig = {
   liveAnalysisEnabled: boolean;
   analysisVersion: string;
   hasOpenAIKey: boolean;
+  sessionRequestLimit: number;
+  sessionLiveLimit: number;
+  globalLiveLimit: number;
+  cacheTtlSeconds: number;
 };
 
 export function readServerConfig(environment = process.env): ServerConfig {
@@ -31,5 +39,9 @@ export function readServerConfig(environment = process.env): ServerConfig {
     liveAnalysisEnabled: result.data.NOTZERO_ENABLE_LIVE_ANALYSIS === "true",
     analysisVersion: result.data.NOTZERO_ANALYSIS_VERSION,
     hasOpenAIKey: Boolean(result.data.OPENAI_API_KEY),
+    sessionRequestLimit: result.data.NOTZERO_SESSION_REQUEST_LIMIT,
+    sessionLiveLimit: result.data.NOTZERO_SESSION_LIVE_LIMIT,
+    globalLiveLimit: result.data.NOTZERO_GLOBAL_LIVE_LIMIT,
+    cacheTtlSeconds: result.data.NOTZERO_CACHE_TTL_SECONDS,
   };
 }

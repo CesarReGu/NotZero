@@ -50,6 +50,7 @@ test("GPT-5.6 adapter sends a strict schema request and validates provenance", a
     },
   });
   assert.equal((requestBody?.text as { format: { strict: boolean } }).format.strict, true);
+  assert.equal(requestBody?.prompt_cache_key, "notzero-evidence-extraction-v1");
   assert.equal(ledger.analysisMode, "live_gpt_5_6");
   assert.equal(ledger.claims[0].references[0].locator.path, "project.md");
 });

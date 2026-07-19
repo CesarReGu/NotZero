@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       <div className="page-shell prose-shell">
         <p className="eyebrow">Privacy</p>
         <h1>Bring only material you can safely share.</h1>
-        <p className="page-lede">The prepared demo uses fictional files. NotZero can validate a bounded evidence set without an account and processes it only for the current request.</p>
+        <p className="page-lede">The prepared demo uses fictional files. NotZero can validate a bounded evidence set without an account and keeps retention deliberately short.</p>
 
         <section>
           <h2>Before any upload</h2>
@@ -21,8 +21,10 @@ export default function PrivacyPage() {
 
         <section>
           <h2>Prototype boundary</h2>
-          <p>The current prototype enforces file-count, type, size, extracted-text, duplicate, and obvious-secret checks on the server. Uploaded bytes and extracted text are not written to application storage. The browser offers a reset action that clears its selected files and result.</p>
+          <p>The current prototype enforces request, file-count, type, size, extracted-text, duplicate, and obvious-secret checks on the server. Uploaded bytes and complete extracted documents are not written to application storage.</p>
+          <p>A normalized input hash and the validated evidence ledger may be cached for up to 30 minutes so an unchanged safe request does not trigger another model call. The cache contains the result and its cited excerpts, never the complete uploaded document. Choosing the reset action deletes cached results associated with the anonymous session.</p>
           <p>When live analysis is enabled, extracted text is sent to OpenAI for the requested evidence analysis. The prepared judge path remains deterministic and sends no fixture documents to an external model.</p>
+          <p>An anonymous session cookie enforces daily request limits. It does not contain uploaded content, a name, an email address, or an account identifier.</p>
         </section>
 
         <section>

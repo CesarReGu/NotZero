@@ -137,7 +137,10 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     }
   }
 
-  function resetAnalysis() {
+  async function resetAnalysis() {
+    if (mode === "custom") {
+      try { await fetch("/api/evidence-ledger", { method: "DELETE" }); } catch { /* Local state is still cleared below. */ }
+    }
     setCurriculum([]);
     setSupporting([]);
     setProject([]);
@@ -164,7 +167,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             <p className="step-count">Step 1 of 3</p>
             <h2 id="evidence-title" ref={stepHeadingRef} tabIndex={-1}>Choose the evidence</h2>
             <p className="step-description">Use Alex&apos;s prepared software profile or validate a bounded evidence set from any field.</p>
-            <div className="privacy-notice" role="note"><strong>Before using your own materials</strong><p>Do not upload credentials, confidential employer material, patient or client information, personal identifiers, or work you do not have the right to share. Files are processed for this request and are not retained by the current prototype flow.</p></div>
+            <div className="privacy-notice" role="note"><strong>Before using your own materials</strong><p>Do not upload credentials, confidential employer material, patient or client information, personal identifiers, or work you do not have the right to share. Validated results may be cached for up to 30 minutes. Reset deletes the anonymous session&apos;s cached result.</p></div>
 
             <div className="mode-choice" aria-label="Evidence source">
               <button type="button" className={mode === "prepared" ? "is-selected" : ""} aria-pressed={mode === "prepared"} onClick={() => chooseMode("prepared")}><strong>Prepared graduate profile</strong><span>Recommended for judges</span></button>
