@@ -5,6 +5,7 @@ import { EvidenceInputError, extractEvidenceFile, type ExtractedSource } from "@
 import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 import { extractWithGpt56 } from "@/lib/evidence/openai-adapter";
 import { alexEvidenceLedger } from "@/lib/fixtures/alex-ledger";
+import { alexBridgeReport } from "@/lib/bridge/prepared-report";
 
 export const runtime = "nodejs";
 
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     if (text(form, "mode") === "prepared") {
-      return NextResponse.json({ status: "completed", ledger: alexEvidenceLedger });
+      return NextResponse.json({ status: "completed", ledger: alexEvidenceLedger, report: alexBridgeReport });
     }
 
     const fieldContext = fieldContextSchema.parse({

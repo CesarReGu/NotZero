@@ -51,7 +51,7 @@ test("server-renders the complete prepared-demo intake shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /Phase 2 · Evidence ledger/);
+  assert.match(html, /Phase 3 · Knowledge Bridge Graph/);
   assert.match(html, /Evidence/);
   assert.match(html, /Target context/);
   assert.match(html, /Review and analyze/);
@@ -65,8 +65,10 @@ test("server-renders method and privacy explanations", async () => {
   assert.equal(method.status, 200);
   assert.equal(privacy.status, 200);
 
-  assert.match(await method.text(), /Unknown is not converted into a gap/);
-  assert.match(await privacy.text(), /Phase 2 can validate a bounded evidence set/);
+  const methodHtml = await method.text();
+  assert.match(methodHtml, /Unknown is not converted into a gap/);
+  assert.match(methodHtml, /eight employer postings reviewed on July 18, 2026/i);
+  assert.match(await privacy.text(), /bounded evidence set/);
 });
 
 test("health route exposes safe configuration state without secrets", async () => {
@@ -75,7 +77,7 @@ test("health route exposes safe configuration state without secrets", async () =
   const body = await response.json();
   assert.deepEqual(body, {
     status: "ok",
-    analysisVersion: "phase-2",
+    analysisVersion: "phase-3",
     liveAnalysisEnabled: false,
   });
   assert.equal("hasOpenAIKey" in body, false);
@@ -92,6 +94,10 @@ test("prepared fixture becomes a provenance-aware evidence ledger", async () => 
   assert.equal(body.ledger.sources.length, 4);
   assert.equal(body.ledger.claims.length, 4);
   assert.equal(body.ledger.claims[2].references[0].locator.path, "alex-api/src/config.ts");
+  assert.equal(body.report.schemaVersion, "knowledge-bridge-report.v1");
+  assert.equal(body.report.findings.length, 5);
+  assert.deepEqual(body.report.nextSteps.map((step) => step.rank), [1, 2, 3]);
+  assert.equal(body.report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
 });
 
 function customEvidenceForm() {

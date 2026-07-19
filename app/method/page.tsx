@@ -16,7 +16,7 @@ export default function MethodPage() {
 
         <section>
           <h2>Field context comes before comparison</h2>
-          <p>The evidence ledger records a field, target, location, and jurisdiction where relevant. A software tool, accounting standard, nursing guideline, and legal authority cannot be updated from the same source set. Phase 2 extracts prior evidence first. Later comparison uses a profession-specific source hierarchy.</p>
+          <p>The evidence ledger records a field, target, location, and jurisdiction where relevant. A software tool, accounting standard, nursing guideline, and legal authority cannot be updated from the same source set. The current release includes one reviewed software pack. Other fields remain evidence-only until their own source and safety layers exist.</p>
         </section>
 
         <section>
@@ -34,6 +34,21 @@ export default function MethodPage() {
           <h2>Relationship before equivalence</h2>
           <p>Current tools can automate, standardize, encapsulate, or build on earlier work. Each bridge names the directional relationship, the concepts that transfer, and the concepts that remain new.</p>
           <div className="method-example"><span>environment configuration</span><strong>foundation for</strong><span>containerization</span></div>
+        </section>
+
+        <section>
+          <h2>A dated, controlled market sample</h2>
+          <p>The prepared software comparison uses eight employer postings reviewed on July 18, 2026 for Mexico and remote Latin America. NotZero stores normalized factual requirements and source links, not copied job descriptions. Counts show explicit mentions within this sample. They do not establish universal requirements.</p>
+          <p>Official Docker, GitHub, and OpenTelemetry documentation supports claims about what current tools automate, standardize, or make observable. Job-posting frequency alone cannot establish a tool relationship.</p>
+        </section>
+
+        <section>
+          <h2>Comparison states</h2>
+          <div className="definition-list">
+            <div><h3>Verified</h3><p>The modernized implementation was executed successfully against the submitted project in a controlled environment.</p></div>
+            <div><h3>Illustrative</h3><p>The suggestion is adapted to available evidence but has not been executed.</p></div>
+            <div><h3>Conceptual</h3><p>The comparison explains a pattern without claiming compatibility with the project.</p></div>
+          </div>
         </section>
 
         <section>

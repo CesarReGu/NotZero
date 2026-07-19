@@ -1,0 +1,222 @@
+{
+  "id": "software-backend-devops-mx-2026",
+  "schemaVersion": "current-practice-pack.v1",
+  "datasetVersion": "software-backend-devops-mx.v1.2026-07-18",
+  "field": "Software development",
+  "targetScope": "Junior backend engineering with DevOps-adjacent responsibilities",
+  "locationScope": "Mexico and remote roles open to Latin America",
+  "observedFrom": "2026-07-18",
+  "observedThrough": "2026-07-18",
+  "sources": [
+    {
+      "id": "job-lingaro-backend-mx",
+      "employer": "Lingaro",
+      "roleTitle": "Backend developer",
+      "location": "Mexico, remote",
+      "seniority": "mixed",
+      "url": "https://jobs.lever.co/lingarogroup/8caeae49-ea63-4b90-b28f-d1012d252643",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["api-design", "relational-databases", "containerization", "ci-cd", "cloud-platform"]
+    },
+    {
+      "id": "job-restaurant365-devops-mx",
+      "employer": "Restaurant365",
+      "roleTitle": "DevOps Engineer",
+      "location": "Mexico City, hybrid",
+      "seniority": "early_career",
+      "url": "https://jobs.lever.co/restaurant365/daaf8fa8-b8d2-460f-b2e6-9a1b6607db3e",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["containerization", "ci-cd", "cloud-platform"]
+    },
+    {
+      "id": "job-idt-devops-latam",
+      "employer": "IDT",
+      "roleTitle": "DevOps Engineer, LATAM",
+      "location": "Mexico and Latin America, remote",
+      "seniority": "mixed",
+      "url": "https://jobs.lever.co/idt/6bd1cea5-9b7c-45aa-a67e-9b345c5c6833",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["containerization", "ci-cd", "cloud-platform", "infrastructure-as-code", "observability"]
+    },
+    {
+      "id": "job-nextlink-fde-mx",
+      "employer": "NextLink Labs",
+      "roleTitle": "Forward Deployed Engineer, Mexico",
+      "location": "Mexico and Latin America, remote",
+      "seniority": "mixed",
+      "url": "https://jobs.ashbyhq.com/nextlinklabs/4449d540-746d-4c90-9cea-121f679fe585",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["api-design", "automated-testing", "containerization", "ci-cd", "cloud-platform", "infrastructure-as-code", "observability"]
+    },
+    {
+      "id": "job-panoptyc-fullstack-latam",
+      "employer": "Panoptyc",
+      "roleTitle": "Full Stack Engineer, LATAM",
+      "location": "Mexico and Latin America, remote",
+      "seniority": "senior",
+      "url": "https://jobs.ashbyhq.com/Panoptyc/304803f3-18a8-4b86-9812-3ce44f094e65",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["api-design", "relational-databases", "containerization", "ci-cd", "cloud-platform", "infrastructure-as-code"]
+    },
+    {
+      "id": "job-hopper-backend-latam",
+      "employer": "Hopper",
+      "roleTitle": "Backend Engineer, LATAM, API",
+      "location": "Mexico, remote",
+      "seniority": "senior",
+      "url": "https://jobs.ashbyhq.com/hopper/63a7cb4d-2872-4d5a-be37-12830eaeae20/",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["api-design", "cloud-platform"]
+    },
+    {
+      "id": "job-latamcent-deployment-latam",
+      "employer": "LatamCent",
+      "roleTitle": "Forward Deployed Engineer",
+      "location": "Latin America, remote",
+      "seniority": "early_career",
+      "url": "https://jobs.ashbyhq.com/latamcent/b6b1c9c7-424a-4b52-b80d-1552feabfc61",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["api-design", "containerization", "observability"]
+    },
+    {
+      "id": "job-devsavant-backend-latam",
+      "employer": "DevSavant",
+      "roleTitle": "Backend Developer, Python",
+      "location": "Latin America, remote",
+      "seniority": "senior",
+      "url": "https://jobs.ashbyhq.com/devsavant/e0e8b09b-60e5-4dc5-90e5-39281b95dc75",
+      "observedAt": "2026-07-18",
+      "sourceType": "employer_job_posting",
+      "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
+      "requirementIds": ["api-design", "automated-testing", "relational-databases", "containerization", "ci-cd", "cloud-platform", "infrastructure-as-code", "observability"]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "api-design",
+      "name": "Backend and API design",
+      "kind": "concept",
+      "aliases": ["REST APIs", "backend services", "API integrations"],
+      "sourceIds": ["job-lingaro-backend-mx", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-hopper-backend-latam", "job-latamcent-deployment-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 6,
+      "context": "Six of eight reviewed postings named backend services, APIs, or API integrations. The sample mixes experience levels, so the count signals vocabulary demand rather than a universal entry requirement."
+    },
+    {
+      "id": "automated-testing",
+      "name": "Automated testing",
+      "kind": "practice",
+      "aliases": ["tests", "quality gates"],
+      "sourceIds": ["job-nextlink-fde-mx", "job-devsavant-backend-latam"],
+      "mentionCount": 2,
+      "context": "Two of eight postings explicitly named testing. CI/CD postings may also involve tests, but this dataset does not count an implied requirement as an explicit mention."
+    },
+    {
+      "id": "containerization",
+      "name": "Containerization",
+      "kind": "tool",
+      "aliases": ["Docker", "containers", "Kubernetes"],
+      "sourceIds": ["job-lingaro-backend-mx", "job-restaurant365-devops-mx", "job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-latamcent-deployment-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 7,
+      "context": "Seven of eight reviewed postings named containers or an orchestration platform. Docker and Kubernetes are not treated as equivalent skills."
+    },
+    {
+      "id": "ci-cd",
+      "name": "Continuous integration and delivery",
+      "kind": "practice",
+      "aliases": ["CI/CD", "GitHub Actions", "GitLab CI/CD", "Jenkins"],
+      "sourceIds": ["job-lingaro-backend-mx", "job-restaurant365-devops-mx", "job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 6,
+      "context": "Six of eight reviewed postings explicitly named CI/CD or a pipeline tool. Tool choice varied across employers."
+    },
+    {
+      "id": "cloud-platform",
+      "name": "Cloud platform fundamentals",
+      "kind": "concept",
+      "aliases": ["AWS", "Azure", "Google Cloud"],
+      "sourceIds": ["job-lingaro-backend-mx", "job-restaurant365-devops-mx", "job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-hopper-backend-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 7,
+      "context": "Seven of eight reviewed postings named at least one cloud platform. The dataset does not claim that one provider is universally preferred."
+    },
+    {
+      "id": "infrastructure-as-code",
+      "name": "Infrastructure as code",
+      "kind": "practice",
+      "aliases": ["Terraform", "Ansible", "Pulumi", "CDK"],
+      "sourceIds": ["job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 4,
+      "context": "Four of eight postings named infrastructure as code or a related tool. One mention was presented as desirable rather than mandatory."
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "kind": "practice",
+      "aliases": ["monitoring", "logging", "metrics", "tracing"],
+      "sourceIds": ["job-idt-devops-latam", "job-nextlink-fde-mx", "job-latamcent-deployment-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 4,
+      "context": "Four of eight reviewed postings named monitoring, logging, or observability. The terms overlap but are not treated as identical."
+    },
+    {
+      "id": "relational-databases",
+      "name": "Relational databases",
+      "kind": "concept",
+      "aliases": ["PostgreSQL", "SQL", "schema design"],
+      "sourceIds": ["job-lingaro-backend-mx", "job-panoptyc-fullstack-latam", "job-devsavant-backend-latam"],
+      "mentionCount": 3,
+      "context": "Three of eight reviewed postings explicitly named relational database work. The curriculum supports exposure, but the prepared project does not demonstrate database implementation."
+    }
+  ],
+  "technicalSources": [
+    {
+      "id": "docs-docker-overview",
+      "title": "What is Docker?",
+      "publisher": "Docker Docs",
+      "url": "https://docs.docker.com/get-started/docker-overview/",
+      "observedAt": "2026-07-18",
+      "usageBasis": "Official product documentation summarized in NotZero's own words and linked for verification.",
+      "supports": ["standardizes", "encapsulates", "commonly_used_with"]
+    },
+    {
+      "id": "docs-github-actions-ci",
+      "title": "Continuous integration",
+      "publisher": "GitHub Docs",
+      "url": "https://docs.github.com/en/actions/get-started/continuous-integration",
+      "observedAt": "2026-07-18",
+      "usageBasis": "Official product documentation summarized in NotZero's own words and linked for verification.",
+      "supports": ["automates", "standardizes", "commonly_used_with"]
+    },
+    {
+      "id": "docs-opentelemetry-overview",
+      "title": "What is OpenTelemetry?",
+      "publisher": "OpenTelemetry",
+      "url": "https://opentelemetry.io/docs/what-is-opentelemetry/",
+      "observedAt": "2026-07-18",
+      "usageBasis": "Official project documentation summarized in NotZero's own words and linked for verification.",
+      "supports": ["standardizes", "commonly_used_with", "no_direct_equivalent"]
+    }
+  ],
+  "methodology": [
+    "Eight publicly accessible employer postings were manually reviewed on July 18, 2026. No automated scraping or job-description redistribution is used.",
+    "Requirement counts record explicit mentions only. Similar terms are normalized conservatively and employer-specific tools remain distinct aliases.",
+    "The sample is geographically relevant to Mexico or remote Latin America, but it mixes experience levels and is not a statistical labor-market survey.",
+    "Official technical documentation supports tool-behavior relationships. Job frequency alone never proves equivalence between an academic practice and a current tool."
+  ],
+  "limitations": [
+    "This small, curated sample can demonstrate the product method but cannot represent every employer or entry-level role.",
+    "Postings can change or disappear after the observation date. The dataset version preserves what NotZero reviewed and when.",
+    "Several postings target experienced candidates. Their requirements are used as directional current-practice evidence, not as a claim that a graduate must meet every item."
+  ]
+}

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { EvidenceLedger, PreparedScenario } from "@/lib/domain/schemas";
-import { BridgePreview } from "@/components/bridge-preview";
+import type { EvidenceLedger, KnowledgeBridgeReport, PreparedScenario } from "@/lib/domain/schemas";
 import { EvidenceLedgerView } from "@/components/evidence-ledger";
+import { KnowledgeBridgeReportView } from "@/components/knowledge-bridge-report";
 
 type DemoStepperProps = { scenario: PreparedScenario };
 type Mode = "prepared" | "custom";
@@ -42,6 +42,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<Mode>("prepared");
   const [ledger, setLedger] = useState<EvidenceLedger | null>(null);
+  const [report, setReport] = useState<KnowledgeBridgeReport | null>(null);
   const [requestState, setRequestState] = useState<"idle" | "reading" | "error">("idle");
   const [error, setError] = useState("");
   const [curriculum, setCurriculum] = useState<DatedFile[]>([]);
@@ -56,6 +57,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
 
   function moveTo(nextStep: number) {
     setLedger(null);
+    setReport(null);
     setError("");
     setStep(nextStep);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -64,6 +66,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   function chooseMode(nextMode: Mode) {
     setMode(nextMode);
     setLedger(null);
+    setReport(null);
     setError("");
   }
 
@@ -84,6 +87,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setRequestState("reading");
     setError("");
     setLedger(null);
+    setReport(null);
     try {
       const form = new FormData();
       form.set("mode", mode);
@@ -101,9 +105,10 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         form.set("projectDates", JSON.stringify(project.map((item) => item.date)));
       }
       const response = await fetch("/api/evidence-ledger", { method: "POST", body: form });
-      const body = await response.json() as { ledger?: EvidenceLedger; message?: string };
+      const body = await response.json() as { ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; message?: string };
       if (!response.ok || !body.ledger) throw new Error(body.message || "The evidence could not be analyzed.");
       setLedger(body.ledger);
+      setReport(body.report ?? null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The evidence could not be analyzed.");
       setRequestState("error");
@@ -117,6 +122,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setSupporting([]);
     setProject([]);
     setLedger(null);
+    setReport(null);
     setError("");
     setStep(1);
   }
@@ -137,7 +143,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             <p className="step-count">Step 1 of 3</p>
             <h2 id="evidence-title">Choose the evidence</h2>
             <p className="step-description">Use Alex&apos;s prepared software profile or validate a bounded evidence set from any field.</p>
-            <div className="privacy-notice" role="note"><strong>Before using your own materials</strong><p>Do not upload credentials, confidential employer material, patient or client information, personal identifiers, or work you do not have the right to share. Files are processed for this request and are not retained by this Phase 2 flow.</p></div>
+            <div className="privacy-notice" role="note"><strong>Before using your own materials</strong><p>Do not upload credentials, confidential employer material, patient or client information, personal identifiers, or work you do not have the right to share. Files are processed for this request and are not retained by the current prototype flow.</p></div>
 
             <div className="mode-choice" aria-label="Evidence source">
               <button type="button" className={mode === "prepared" ? "is-selected" : ""} aria-pressed={mode === "prepared"} onClick={() => chooseMode("prepared")}><strong>Prepared graduate profile</strong><span>Recommended for judges</span></button>
@@ -174,15 +180,15 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             ) : (
               <><p className="step-description">Current practice depends on the field, target, location, and sometimes jurisdiction. These fields prevent a software-only or one-market interpretation.</p><div className="target-fields"><label>Field<input value={field} maxLength={80} onChange={(event) => setField(event.target.value)} required /></label><label>Target role or practice<input value={targetTitle} maxLength={120} onChange={(event) => setTargetTitle(event.target.value)} required /></label><label>Location<input value={location} maxLength={120} onChange={(event) => setLocation(event.target.value)} required /></label><label>Jurisdiction <span>if relevant</span><input value={jurisdiction} maxLength={120} onChange={(event) => setJurisdiction(event.target.value)} /></label></div></>
             )}
-            <div className="scope-note"><strong>Why context matters</strong><p>Software tools, accounting standards, nursing guidance, and legal authority change through different source systems. Phase 2 records the context now so later comparisons can use the right dated evidence.</p></div>
+            <div className="scope-note"><strong>Why context matters</strong><p>Software tools, accounting standards, nursing guidance, and legal authority change through different source systems. The current software pack uses dated market and technical sources selected for the target role and location.</p></div>
             <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(1)}>Back</button><button className="button button-primary" type="button" disabled={mode === "custom" && (!field.trim() || !targetTitle.trim() || !location.trim())} onClick={() => moveTo(3)}>Review the evidence</button></div>
           </section>
         )}
 
         {step === 3 && (
           <section aria-labelledby="review-title">
-            <p className="step-count">Step 3 of 3</p><h2 id="review-title">Review and build the ledger</h2>
-            <p className="step-description">NotZero reads and validates the evidence before making any claim about what it supports.</p>
+            <p className="step-count">Step 3 of 3</p><h2 id="review-title">Review and build the bridge</h2>
+            <p className="step-description">NotZero first validates the evidence, then compares supported claims with one dated, profession-specific current-practice pack.</p>
             <dl className="review-list">
               <div><dt>Evidence mode</dt><dd>{mode === "prepared" ? "Prepared fictional fixture" : "Your bounded evidence set"}</dd></div>
               <div><dt>Evidence items</dt><dd>{mode === "prepared" ? scenario.evidence.length : curriculum.length + supporting.length + project.length} dated sources</dd></div>
@@ -191,9 +197,9 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
               <div><dt>Context</dt><dd>{mode === "prepared" ? role.location : `${location}${jurisdiction ? ` · ${jurisdiction}` : ""}`}</dd></div>
             </dl>
             <div className="disclaimer">NotZero interprets the materials and market sources available to it. It does not certify mastery or guarantee job eligibility. Review the evidence and correct anything that does not reflect your experience.</div>
-            {error && <div className="analysis-error" role="alert"><strong>We could not build the ledger.</strong><p>{error}</p><span>Your selected files remain in this browser so you can correct the issue.</span></div>}
-            <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={requestState === "reading"}>{requestState === "reading" ? "Reading and checking evidence…" : "Build evidence ledger"}</button></div>
-            {ledger && <><div className="prepared-result"><EvidenceLedgerView ledger={ledger} />{mode === "prepared" && <div className="ledger-bridge-followup"><p className="eyebrow">Next phase preview</p><h3>One ledger claim becomes a Knowledge Bridge.</h3><BridgePreview /></div>}</div>{mode === "custom" && <button className="reset-evidence" type="button" onClick={resetCustomEvidence}>Clear my files and result</button>}</>}
+            {error && <div className="analysis-error" role="alert"><strong>We could not build the analysis.</strong><p>{error}</p><span>Your selected files remain in this browser so you can correct the issue.</span></div>}
+            <div className="step-actions"><button className="button button-secondary" type="button" onClick={() => moveTo(2)}>Back</button><button className="button button-primary" type="button" onClick={analyze} disabled={requestState === "reading"}>{requestState === "reading" ? "Reading evidence and comparing context…" : "Build Knowledge Bridge"}</button></div>
+            {ledger && <><div className="prepared-result"><EvidenceLedgerView ledger={ledger} />{report && <KnowledgeBridgeReportView report={report} />}</div>{mode === "custom" && <button className="reset-evidence" type="button" onClick={resetCustomEvidence}>Clear my files and result</button>}</>}
           </section>
         )}
       </div>

@@ -92,6 +92,150 @@ export const evidenceModelOutputSchema = z.object({
   limitations: z.array(z.string().min(1).max(500)).min(1).max(12),
 });
 
+export const marketRequirementKindSchema = z.enum(["concept", "practice", "tool"]);
+
+export const marketSourceSchema = z.object({
+  id: z.string().min(1),
+  employer: z.string().min(1),
+  roleTitle: z.string().min(1),
+  location: z.string().min(1),
+  seniority: z.enum(["entry", "early_career", "mixed", "senior"]),
+  url: z.url(),
+  observedAt: z.iso.date(),
+  sourceType: z.literal("employer_job_posting"),
+  usageBasis: z.string().min(1).max(500),
+  requirementIds: z.array(z.string().min(1)).min(1),
+});
+
+export const marketRequirementSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  kind: marketRequirementKindSchema,
+  aliases: z.array(z.string().min(1)),
+  sourceIds: z.array(z.string().min(1)).min(1),
+  mentionCount: z.number().int().positive(),
+  context: z.string().min(1).max(500),
+});
+
+export const technicalSourceSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  publisher: z.string().min(1),
+  url: z.url(),
+  observedAt: z.iso.date(),
+  usageBasis: z.string().min(1).max(500),
+  supports: z.array(relationshipTypeSchema).min(1),
+});
+
+export const currentPracticePackSchema = z.object({
+  id: z.string().min(1),
+  schemaVersion: z.literal("current-practice-pack.v1"),
+  datasetVersion: z.string().min(1),
+  field: z.literal("Software development"),
+  targetScope: z.string().min(1),
+  locationScope: z.string().min(1),
+  observedFrom: z.iso.date(),
+  observedThrough: z.iso.date(),
+  sources: z.array(marketSourceSchema).min(5),
+  requirements: z.array(marketRequirementSchema).min(1),
+  technicalSources: z.array(technicalSourceSchema).min(1),
+  methodology: z.array(z.string().min(1).max(500)).min(1),
+  limitations: z.array(z.string().min(1).max(500)).min(1),
+});
+
+export const resultGroupSchema = z.enum([
+  "current",
+  "transferable",
+  "small_bridge",
+  "genuine_gap",
+  "insufficient_evidence",
+]);
+
+export const comparisonStateSchema = z.enum(["verified", "illustrative", "conceptual"]);
+
+export const relationshipEvidenceSchema = z.object({
+  sourceId: z.string().min(1),
+  sourceKind: z.enum(["market_dataset", "official_documentation"]),
+  summary: z.string().min(1).max(500),
+  url: z.url(),
+});
+
+export const bridgeFindingSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(140),
+  group: resultGroupSchema,
+  existingCapability: z.string().min(1).max(500),
+  evidenceClaimIds: z.array(z.string().min(1)),
+  currentRequirementId: z.string().min(1),
+  relationshipType: relationshipTypeSchema.optional(),
+  relationshipEvidence: z.array(relationshipEvidenceSchema).min(1),
+  artifactReference: evidenceReferenceSchema.optional(),
+  observedImplementation: z.string().min(1).max(700),
+  modernCounterpart: z.string().min(1).max(700),
+  comparisonState: comparisonStateSchema,
+  manualStepsChanged: z.array(z.string().min(1).max(300)),
+  transferableConcepts: z.array(z.string().min(1).max(200)),
+  newConcepts: z.array(z.string().min(1).max(200)),
+  explanation: z.string().min(1).max(900),
+  recommendedAction: z.string().min(1).max(500),
+  confidence: z.enum(["low", "medium", "high"]),
+  limitations: z.array(z.string().min(1).max(500)).min(1),
+});
+
+export const prioritizedNextStepSchema = z.object({
+  rank: z.number().int().min(1).max(3),
+  title: z.string().min(1).max(140),
+  buildsOn: z.array(z.string().min(1)).min(1),
+  whyNow: z.string().min(1).max(500),
+  proof: z.string().min(1).max(500),
+});
+
+export const upgradeChallengeSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(140),
+  basedOnClaimIds: z.array(z.string().min(1)).min(1),
+  objective: z.string().min(1).max(700),
+  acceptanceCriteria: z.array(z.string().min(1).max(400)).min(2).max(6),
+  comparisonState: comparisonStateSchema,
+});
+
+export const projectWalkthroughSchema = z.object({
+  title: z.string().min(1).max(140),
+  claimId: z.string().min(1),
+  artifactReference: evidenceReferenceSchema,
+  observedImplementation: z.string().min(1).max(700),
+  modernCounterpart: z.string().min(1).max(700),
+  relationshipType: relationshipTypeSchema,
+  comparisonState: comparisonStateSchema,
+  illustrativeSketch: z.string().min(1).max(2000).optional(),
+  whatTransfers: z.array(z.string().min(1).max(250)).min(1),
+  whatIsNew: z.array(z.string().min(1).max(250)).min(1),
+  limitations: z.array(z.string().min(1).max(500)).min(1),
+});
+
+export const knowledgeBridgeReportSchema = z.object({
+  id: z.string().min(1),
+  schemaVersion: z.literal("knowledge-bridge-report.v1"),
+  analysisVersion: z.literal("phase-3"),
+  analysisMode: z.literal("prepared_fixture"),
+  ledgerId: z.string().min(1),
+  currentPracticePackId: z.string().min(1),
+  datasetVersion: z.string().min(1),
+  generatedAt: z.iso.datetime(),
+  findings: z.array(bridgeFindingSchema).min(5),
+  counts: z.object({
+    current: z.number().int().nonnegative(),
+    transferable: z.number().int().nonnegative(),
+    smallBridge: z.number().int().nonnegative(),
+    genuineGap: z.number().int().nonnegative(),
+    insufficientEvidence: z.number().int().nonnegative(),
+  }),
+  nextSteps: z.array(prioritizedNextStepSchema).length(3),
+  upgradeChallenge: upgradeChallengeSchema,
+  walkthrough: projectWalkthroughSchema,
+  limitations: z.array(z.string().min(1).max(500)).min(1),
+});
+
 export const evidenceItemSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
@@ -130,3 +274,6 @@ export type EvidenceClaim = z.infer<typeof evidenceClaimSchema>;
 export type EvidenceLedger = z.infer<typeof evidenceLedgerSchema>;
 export type FieldContext = z.infer<typeof fieldContextSchema>;
 export type PreparedScenario = z.infer<typeof preparedScenarioSchema>;
+export type CurrentPracticePack = z.infer<typeof currentPracticePackSchema>;
+export type KnowledgeBridgeReport = z.infer<typeof knowledgeBridgeReportSchema>;
+export type BridgeFinding = z.infer<typeof bridgeFindingSchema>;

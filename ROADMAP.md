@@ -1,7 +1,7 @@
 # NotZero roadmap
 
 **Status:** Hackathon build plan  
-**Last updated:** July 17, 2026  
+**Last updated:** July 18, 2026
 **Submission deadline:** July 21, 2026 at 5:00 p.m. Pacific Time  
 **Track:** Education
 
@@ -84,10 +84,10 @@ The submitted judge path remains the software scenario. The underlying evidence 
 
 **Target:** July 18–19
 
-- [ ] **P0:** Define one supported current-practice pack for the judge scenario: junior backend/DevOps-adjacent development in its dated market context.
-- [ ] **P0:** Create a controlled, dated job-requirement dataset with licenses or permitted sources recorded.
-- [ ] **P0:** Normalize job requirements into concepts, practices, and tools.
-- [ ] **P0:** Build the relationship taxonomy:
+- [x] **P0:** Define one supported current-practice pack for the judge scenario: junior backend/DevOps-adjacent development in its dated market context.
+- [x] **P0:** Create a controlled, dated job-requirement dataset with licenses or permitted sources recorded.
+- [x] **P0:** Normalize job requirements into concepts, practices, and tools.
+- [x] **P0:** Build the relationship taxonomy:
   - foundation for;
   - automates;
   - standardizes;
@@ -98,18 +98,18 @@ The submitted judge path remains the software scenario. The underlying evidence 
   - successor to;
   - partial replacement; and
   - no direct equivalent.
-- [ ] **P0:** Require evidence and confidence for each relationship.
-- [ ] **P0:** Generate the five result groups:
+- [x] **P0:** Require evidence and confidence for each relationship.
+- [x] **P0:** Generate the five result groups:
   - current;
   - transferable;
   - small bridge;
   - genuine gap; and
   - insufficient evidence.
-- [ ] **P0:** Generate exactly three prioritized next steps and one existing-project upgrade challenge.
-- [ ] **P0:** Generate at least one project-grounded walkthrough for the prepared fixture, with an exact artifact reference, an observed implementation, and a labeled modern counterpart.
-- [ ] **P0:** Distinguish verified, illustrative, and conceptual comparisons in the schema and interface.
-- [ ] **P1:** Show job-demand frequency using counts and dates rather than unsupported “industry standard” claims.
-- [ ] **P1:** Add a method/source panel explaining how the comparison was produced.
+- [x] **P0:** Generate exactly three prioritized next steps and one existing-project upgrade challenge.
+- [x] **P0:** Generate at least one project-grounded walkthrough for the prepared fixture, with an exact artifact reference, an observed implementation, and a labeled modern counterpart.
+- [x] **P0:** Distinguish verified, illustrative, and conceptual comparisons in the schema and interface.
+- [x] **P1:** Show job-demand frequency using counts and dates rather than unsupported “industry standard” claims.
+- [x] **P1:** Add a method/source panel explaining how the comparison was produced.
 
 **Exit criterion:** The prepared scenario produces several defensible bridges. At least one points to a real project artifact and explains a modern counterpart without claiming false equivalence.
 
