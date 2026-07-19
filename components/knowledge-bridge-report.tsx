@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { BridgeFinding, EvidenceLedger, KnowledgeBridgeReport } from "@/lib/domain/schemas";
+import { useEffect, useRef, useState } from "react";
+import type { BridgeFinding, CurrentPracticePack, EvidenceLedger, KnowledgeBridgeReport } from "@/lib/domain/schemas";
 import { currentPracticePackById } from "@/lib/market/current-practice";
 
 const groupLabel: Record<BridgeFinding["group"], string> = {
@@ -25,14 +25,190 @@ const filterGroups: Record<Exclude<FindingFilter, "all">, BridgeFinding["group"]
   unknowns: ["insufficient_evidence"],
 };
 
+type CitationReceipt = {
+  id: string;
+  number: number;
+  kind: "personal" | "market" | "technical";
+  title: string;
+  sourceName: string;
+  date: string;
+  excerpt: string;
+  evidenceClass?: string;
+  confidence?: string;
+  confidenceBasis?: string;
+  limitation?: string;
+  path?: string;
+  locator?: string;
+  employer?: string;
+  roleTitle?: string;
+  location?: string;
+  url?: string;
+};
+
+function personalReceiptKey(reference: BridgeFinding["artifactReference"] & {}) {
+  return `personal:${reference.sourceId}:${reference.locator.path}:${reference.locator.kind}:${reference.locator.value}:${reference.excerpt}`;
+}
+
+function externalReceiptKey(sourceId: string) {
+  return `external:${sourceId}`;
+}
+
+export function buildCitationLedger(report: KnowledgeBridgeReport, ledger: EvidenceLedger, pack: CurrentPracticePack) {
+  const receipts: CitationReceipt[] = [];
+  const byKey = new Map<string, CitationReceipt>();
+
+  function add(key: string, receipt: Omit<CitationReceipt, "id" | "number">) {
+    const existing = byKey.get(key);
+    if (existing) return existing;
+    const item = { ...receipt, id: `evidence-${receipts.length + 1}`, number: receipts.length + 1 };
+    receipts.push(item);
+    byKey.set(key, item);
+    return item;
+  }
+
+  function addClaimReferences(claimId: string) {
+    const claim = ledger.claims.find((item) => item.id === claimId);
+    if (!claim) return;
+    for (const reference of claim.references) {
+      const source = ledger.sources.find((item) => item.id === reference.sourceId);
+      add(personalReceiptKey(reference), {
+        kind: "personal",
+        title: claim.title,
+        sourceName: source?.name ?? reference.locator.path,
+        date: source?.date ?? "Date unavailable",
+        excerpt: reference.excerpt,
+        evidenceClass: humanize(claim.evidenceClass),
+        confidence: claim.confidence,
+        confidenceBasis: claim.statement,
+        limitation: claim.limitations[0],
+        path: reference.locator.path,
+        locator: `${humanize(reference.locator.kind)}: ${reference.locator.value}`,
+      });
+    }
+  }
+
+  const shortestBridge = report.findings.find((finding) => finding.group === "small_bridge") ?? report.findings.find((finding) => finding.group === "transferable") ?? report.findings[0];
+  const findingsInDisplayOrder = [shortestBridge, ...report.findings.filter((finding) => finding.id !== shortestBridge.id)];
+
+  for (const [findingIndex, finding] of findingsInDisplayOrder.entries()) {
+    for (const claimId of finding.evidenceClaimIds) addClaimReferences(claimId);
+
+    for (const relationship of finding.relationshipEvidence) {
+      const market = pack.sources.find((item) => item.id === relationship.sourceId);
+      const technical = pack.technicalSources.find((item) => item.id === relationship.sourceId);
+      if (market) {
+        add(externalReceiptKey(market.id), {
+          kind: "market",
+          title: `${market.employer}, ${market.roleTitle}`,
+          sourceName: market.employer,
+          date: market.observedAt,
+          excerpt: market.usageBasis,
+          employer: market.employer,
+          roleTitle: market.roleTitle,
+          location: market.location,
+          url: market.url,
+          limitation: "A reviewed posting is one dated market observation. It is not a universal requirement.",
+        });
+      } else if (technical) {
+        add(externalReceiptKey(technical.id), {
+          kind: "technical",
+          title: technical.title,
+          sourceName: technical.publisher,
+          date: technical.observedAt,
+          excerpt: technical.usageBasis,
+          url: technical.url,
+          limitation: "This source supports the stated tool relationship in the reviewed technical context.",
+        });
+      }
+    }
+
+    if (finding.artifactReference) {
+      const claim = ledger.claims.find((item) => item.references.some((reference) => personalReceiptKey(reference) === personalReceiptKey(finding.artifactReference!)));
+      const source = ledger.sources.find((item) => item.id === finding.artifactReference?.sourceId);
+      add(personalReceiptKey(finding.artifactReference), {
+        kind: "personal",
+        title: claim?.title ?? finding.title,
+        sourceName: source?.name ?? finding.artifactReference.locator.path,
+        date: source?.date ?? "Date unavailable",
+        excerpt: finding.artifactReference.excerpt,
+        evidenceClass: claim ? humanize(claim.evidenceClass) : "demonstrated",
+        confidence: claim?.confidence ?? finding.confidence,
+        confidenceBasis: claim?.statement ?? finding.observedImplementation,
+        limitation: claim?.limitations[0] ?? finding.limitations[0],
+        path: finding.artifactReference.locator.path,
+        locator: `${humanize(finding.artifactReference.locator.kind)}: ${finding.artifactReference.locator.value}`,
+      });
+    }
+
+    if (findingIndex === 0) {
+      for (const step of report.nextSteps) for (const claimId of step.buildsOn) addClaimReferences(claimId);
+    }
+  }
+
+  if (report.walkthrough) {
+    const claim = ledger.claims.find((item) => item.id === report.walkthrough?.claimId);
+    const reference = report.walkthrough.artifactReference;
+    const source = ledger.sources.find((item) => item.id === reference.sourceId);
+    add(personalReceiptKey(reference), {
+      kind: "personal",
+      title: claim?.title ?? report.walkthrough.title,
+      sourceName: source?.name ?? reference.locator.path,
+      date: source?.date ?? "Date unavailable",
+      excerpt: reference.excerpt,
+      evidenceClass: claim ? humanize(claim.evidenceClass) : "demonstrated",
+      confidence: claim?.confidence,
+      confidenceBasis: claim?.statement ?? report.walkthrough.observedImplementation,
+      limitation: claim?.limitations[0] ?? report.walkthrough.limitations[0],
+      path: reference.locator.path,
+      locator: `${humanize(reference.locator.kind)}: ${reference.locator.value}`,
+    });
+  }
+
+  return { receipts, byKey };
+}
+
+function CitationMarker({ receipt, onOpen }: { receipt: CitationReceipt; onOpen: (receipt: CitationReceipt, trigger: HTMLButtonElement) => void }) {
+  return <button className="citation-marker" type="button" aria-label={`Evidence ${receipt.number}: ${receipt.sourceName}, ${receipt.date}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpen(receipt, event.currentTarget); }}><sup>[{receipt.number}]</sup><span className="citation-preview" aria-hidden="true"><strong>{receipt.sourceName}</strong><small>{receipt.date}{receipt.evidenceClass ? ` · ${receipt.evidenceClass}` : ""}</small><span>{receipt.excerpt}</span></span></button>;
+}
+
 export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { report: KnowledgeBridgeReport; ledger: EvidenceLedger; subjectLabel?: string }) {
   const pack = currentPracticePackById(report.currentPracticePackId);
   const [filter, setFilter] = useState<FindingFilter>("all");
+  const [activeReceipt, setActiveReceipt] = useState<CitationReceipt | null>(null);
+  const receiptTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const receiptCloseRef = useRef<HTMLButtonElement | null>(null);
+  const receiptPanelRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!activeReceipt) return;
+    receiptCloseRef.current?.focus();
+    const handlePanelKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveReceipt(null);
+        requestAnimationFrame(() => receiptTriggerRef.current?.focus());
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...(receiptPanelRef.current?.querySelectorAll<HTMLElement>('button, a[href]') ?? [])];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handlePanelKeys);
+    return () => document.removeEventListener("keydown", handlePanelKeys);
+  }, [activeReceipt]);
+
   if (!pack || pack.datasetVersion !== report.datasetVersion) return <section className="analysis-state analysis-error" role="alert"><strong>This report&apos;s dated market pack is unavailable.</strong><p>NotZero will not render conclusions against a different dataset version.</p></section>;
+  const citationLedger = buildCitationLedger(report, ledger, pack);
   const supportedStrengths = report.counts.current + report.counts.transferable;
   const possessive = subjectLabel ? `${subjectLabel}'s` : "Your";
   const shortestBridge = report.findings.find((finding) => finding.group === "small_bridge") ?? report.findings.find((finding) => finding.group === "transferable") ?? report.findings[0];
   const visibleFindings = filter === "all" ? report.findings : report.findings.filter((finding) => filterGroups[filter].includes(finding.group));
+  const shortestClaimReceipts = claimReceipts(shortestBridge.evidenceClaimIds);
+  const shortestRelationshipReceipts = relationshipReceipts(shortestBridge);
+  const walkthroughReceipt = report.walkthrough ? citationLedger.byKey.get(personalReceiptKey(report.walkthrough.artifactReference)) : undefined;
   const filterOptions: { id: FindingFilter; label: string; count: number }[] = [
     { id: "all", label: "All conclusions", count: report.findings.length },
     { id: "strengths", label: "Supported strengths", count: supportedStrengths },
@@ -40,6 +216,32 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
     { id: "gaps", label: "Genuine gaps", count: report.counts.genuineGap },
     { id: "unknowns", label: "Unknowns", count: report.counts.insufficientEvidence },
   ];
+
+  function openReceipt(receipt: CitationReceipt, trigger: HTMLButtonElement) {
+    receiptTriggerRef.current = trigger;
+    setActiveReceipt(receipt);
+  }
+
+  function closeReceipt() {
+    setActiveReceipt(null);
+    requestAnimationFrame(() => receiptTriggerRef.current?.focus());
+  }
+
+  function claimReceipts(claimIds: string[]) {
+    return claimIds.flatMap((claimId) => ledger.claims.find((claim) => claim.id === claimId)?.references ?? []).map((reference) => citationLedger.byKey.get(personalReceiptKey(reference))).filter((receipt): receipt is CitationReceipt => Boolean(receipt));
+  }
+
+  function relationshipReceipts(finding: BridgeFinding) {
+    return finding.relationshipEvidence.map((source) => citationLedger.byKey.get(externalReceiptKey(source.sourceId))).filter((receipt): receipt is CitationReceipt => Boolean(receipt));
+  }
+
+  function uniqueReceipts(receipts: CitationReceipt[]) {
+    return [...new Map(receipts.map((receipt) => [receipt.id, receipt])).values()];
+  }
+
+  function markers(receipts: CitationReceipt[]) {
+    return uniqueReceipts(receipts).map((receipt) => <CitationMarker receipt={receipt} onOpen={openReceipt} key={receipt.id} />);
+  }
 
   return (
     <section className="bridge-report" aria-labelledby="bridge-report-title">
@@ -72,10 +274,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
       </div>
 
       <section className="shortest-bridge" aria-labelledby="shortest-bridge-title">
-        <div className="shortest-bridge-heading"><p className="eyebrow">Your shortest bridge</p><h4 id="shortest-bridge-title">{shortestBridge.title}</h4><p>{shortestBridge.explanation}</p></div>
+        <div className="shortest-bridge-heading"><p className="eyebrow">Your shortest bridge</p><h4 id="shortest-bridge-title">{shortestBridge.title}</h4><p>{shortestBridge.explanation}<span className="inline-citations">{markers([...shortestClaimReceipts, ...shortestRelationshipReceipts])}</span></p></div>
         <div className="shortest-bridge-path">
-          <div><span>Keep</span><p>{shortestBridge.existingCapability}</p></div>
-          <div><span>Add</span><p>{shortestBridge.newConcepts.join(", ") || shortestBridge.modernCounterpart}</p></div>
+          <div><span>Keep</span><p>{shortestBridge.existingCapability}<span className="inline-citations">{markers(shortestClaimReceipts)}</span></p></div>
+          <div><span>Add</span><p>{shortestBridge.newConcepts.join(", ") || shortestBridge.modernCounterpart}<span className="inline-citations">{markers(shortestRelationshipReceipts)}</span></p></div>
           <div><span>Prove</span><p>{shortestBridge.recommendedAction}</p></div>
         </div>
       </section>
@@ -83,7 +285,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
       <section className="next-steps" aria-labelledby="next-steps-title">
         <p className="eyebrow">Your next moves</p>
         <h4 id="next-steps-title">Three steps, ordered by learning delta</h4>
-        <ol>{report.nextSteps.map((step) => <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><p>{step.whyNow}</p><small>Proof: {step.proof}</small></div></li>)}</ol>
+        <ol>{report.nextSteps.map((step) => <li key={step.rank}><span>{step.rank}</span><div><strong>{step.title}</strong><p>{step.whyNow}<span className="inline-citations">{markers(claimReceipts(step.buildsOn))}</span></p><small>Proof: {step.proof}</small></div></li>)}</ol>
       </section>
 
       <section className="upgrade-challenge" aria-labelledby="challenge-title">
@@ -103,11 +305,15 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
           const requirement = pack.requirements.find((item) => item.id === finding.currentRequirementId);
           const claims = finding.evidenceClaimIds.map((id) => ledger.claims.find((claim) => claim.id === id)).filter((claim) => claim !== undefined);
           const evidenceCount = claims.reduce((count, claim) => count + claim.references.length, 0) + finding.relationshipEvidence.length;
+          const personalReceipts = claimReceipts(finding.evidenceClaimIds);
+          const marketAndTechnicalReceipts = relationshipReceipts(finding);
+          const findingReceipts = uniqueReceipts([...personalReceipts, ...marketAndTechnicalReceipts]);
+          const artifactReceipt = finding.artifactReference ? citationLedger.byKey.get(personalReceiptKey(finding.artifactReference)) : undefined;
           return (
             <details className="bridge-finding" data-group={finding.group} key={finding.id}>
               <summary>
                 <span className="finding-index" aria-hidden="true">{String(report.findings.indexOf(finding) + 1).padStart(2, "0")}</span>
-                <div><span>{groupLabel[finding.group]}{finding.relationshipType ? ` · ${humanize(finding.relationshipType)}` : ""}</span><strong>{finding.title}</strong></div>
+                <div><span>{groupLabel[finding.group]}{finding.relationshipType ? ` · ${humanize(finding.relationshipType)}` : ""}</span><strong>{finding.title}</strong><span className="summary-citations">{markers(findingReceipts)}</span></div>
                 <small aria-label={`${finding.confidence} confidence`}>{finding.confidence} confidence</small>
               </summary>
               <div className="finding-body">
@@ -126,10 +332,10 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
                 <details className="finding-receipts">
                   <summary>{evidenceCount} evidence items · Why this conclusion?</summary>
                   <div className="finding-receipts-body">
-                    <p className="finding-explanation">{finding.explanation}</p>
+                    <p className="finding-explanation">{finding.explanation}<span className="inline-citations">{markers(findingReceipts)}</span></p>
                     <div className="finding-evidence"><strong>{subjectLabel ? `Evidence from ${subjectLabel}'s materials` : "Evidence from your materials"}</strong>{claims.map((claim) => <div key={claim.id}><p><b>{claim.title}</b> {claim.statement}</p>{claim.references.map((reference) => <code key={`${claim.id}-${reference.locator.path}-${reference.locator.value}`}>{reference.locator.path} · {humanize(reference.locator.kind)}: {reference.locator.value}</code>)}</div>)}</div>
-                    {requirement && <div className="market-frequency"><strong>{requirement.mentionCount} of {pack.sources.length}</strong><span>reviewed postings explicitly mentioned {requirement.name.toLowerCase()}</span></div>}
-                    {finding.artifactReference && <blockquote className="finding-artifact"><p>&ldquo;{finding.artifactReference.excerpt}&rdquo;</p><cite>{finding.artifactReference.locator.path} · {humanize(finding.artifactReference.locator.kind)}: {finding.artifactReference.locator.value}</cite></blockquote>}
+                    {requirement && <div className="market-frequency"><strong>{requirement.mentionCount} of {pack.sources.length}</strong><span>reviewed postings explicitly mentioned {requirement.name.toLowerCase()} <span className="inline-citations">{markers(marketAndTechnicalReceipts.filter((receipt) => receipt.kind === "market"))}</span></span></div>}
+                    {finding.artifactReference && <blockquote className="finding-artifact"><p>&ldquo;{finding.artifactReference.excerpt}&rdquo; {artifactReceipt && <span className="inline-citations">{markers([artifactReceipt])}</span>}</p><cite>{finding.artifactReference.locator.path} · {humanize(finding.artifactReference.locator.kind)}: {finding.artifactReference.locator.value}</cite></blockquote>}
                     <div className="why-used"><strong>Why this practice is used</strong><p>{finding.whyItIsUsed}</p></div>
                     {finding.manualStepsChanged.length > 0 && <div className="manual-change"><strong>What the newer practice changes</strong><ul>{finding.manualStepsChanged.map((item) => <li key={item}>{item}</li>)}</ul></div>}
                     <div className="finding-provenance"><span className={`comparison-state state-${finding.comparisonState}`}>{finding.comparisonState}</span><div>{finding.relationshipEvidence.map((source) => <a href={source.url} target="_blank" rel="noreferrer" key={source.sourceId}>{source.sourceKind === "official_documentation" ? "Official documentation" : "Market source"}</a>)}</div></div>
@@ -149,7 +355,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
           <span className={`comparison-state state-${report.walkthrough.comparisonState}`}>{report.walkthrough.comparisonState}</span>
         </div>
         <div className="walkthrough-grid">
-          <div className="walkthrough-observed"><span>{subjectLabel ? `Observed in ${subjectLabel}'s project` : "In your project"}</span><p>{report.walkthrough.observedImplementation}</p><code>{report.walkthrough.artifactReference.locator.path} · {report.walkthrough.artifactReference.locator.value}</code></div>
+          <div className="walkthrough-observed"><span>{subjectLabel ? `Observed in ${subjectLabel}'s project` : "In your project"}</span><p>{report.walkthrough.observedImplementation} {walkthroughReceipt && <span className="inline-citations">{markers([walkthroughReceipt])}</span>}</p><code>{report.walkthrough.artifactReference.locator.path} · {report.walkthrough.artifactReference.locator.value}</code></div>
           <div className="walkthrough-counterpart"><span>Modern counterpart</span><p>{report.walkthrough.modernCounterpart}</p>{report.walkthrough.illustrativeSketch && <pre><code>{report.walkthrough.illustrativeSketch}</code></pre>}</div>
         </div>
         <div className="walkthrough-delta"><div><strong>What transfers</strong><ul>{report.walkthrough.whatTransfers.map((item) => <li key={item}>{item}</li>)}</ul></div><div><strong>What remains new</strong><ul>{report.walkthrough.whatIsNew.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
@@ -164,6 +370,23 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
           <div><h5>Limits</h5><ul>{[...pack.limitations, ...report.limitations].map((item) => <li key={item}>{item}</li>)}</ul></div>
         </div>
       </details>
+
+      {activeReceipt && <div className="receipt-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeReceipt(); }}>
+        <aside className="receipt-panel" ref={receiptPanelRef} role="dialog" aria-modal="true" aria-labelledby="receipt-panel-title">
+          <header><div><p className="eyebrow">Evidence {activeReceipt.number}</p><h4 id="receipt-panel-title">{activeReceipt.title}</h4></div><button type="button" ref={receiptCloseRef} onClick={closeReceipt} aria-label="Close evidence receipt">Close</button></header>
+          <div className="receipt-panel-meta"><span>{activeReceipt.sourceName}</span><span>{activeReceipt.date}</span>{activeReceipt.evidenceClass && <span>{activeReceipt.evidenceClass}</span>}{activeReceipt.confidence && <span>{activeReceipt.confidence} confidence</span>}</div>
+          {activeReceipt.kind === "personal" ? <>
+            <blockquote><p>&ldquo;{activeReceipt.excerpt}&rdquo;</p></blockquote>
+            <code>{activeReceipt.path} · {activeReceipt.locator}</code>
+            {activeReceipt.confidenceBasis && <div className="receipt-section"><strong>Why this supports the conclusion</strong><p>{activeReceipt.confidenceBasis}</p></div>}
+          </> : <>
+            <div className="receipt-section"><strong>{activeReceipt.kind === "market" ? "Dated market observation" : "Reviewed technical source"}</strong><p>{activeReceipt.excerpt}</p></div>
+            {activeReceipt.kind === "market" && <dl><div><dt>Employer</dt><dd>{activeReceipt.employer}</dd></div><div><dt>Role</dt><dd>{activeReceipt.roleTitle}</dd></div><div><dt>Location</dt><dd>{activeReceipt.location}</dd></div><div><dt>Observed</dt><dd>{activeReceipt.date}</dd></div></dl>}
+            {activeReceipt.url && <a href={activeReceipt.url} target="_blank" rel="noreferrer">Open reviewed source</a>}
+          </>}
+          {activeReceipt.limitation && <div className="receipt-limit"><strong>Limit</strong><p>{activeReceipt.limitation}</p></div>}
+        </aside>
+      </div>}
 
       <footer className="report-print-footer">
         <span>Analysis {report.analysisVersion}</span>

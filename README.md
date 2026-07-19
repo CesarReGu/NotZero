@@ -28,6 +28,7 @@ Phases 1 through 5 are complete as technical foundations for the deterministic s
 - visible verified, illustrative, and conceptual comparison states;
 - a decision-first report with a validated conclusion, four large count tiles, the shortest bridge, and the next actions before the detailed role map;
 - collapsed conclusions that reveal the connection and learning delta first, with evidence receipts, exact locators, counts, sources, and limits on demand;
+- numbered citation markers with hover and keyboard previews, plus a focused receipt panel for submitted evidence, dated market observations, and reviewed technical sources;
 - an end-of-report evidence appendix instead of a permanent wall of provenance text;
 - a print-to-PDF action that renders the same validated result with a report cover, expanded evidence, and version footer;
 - result filters that preserve the complete narrative as the default view;

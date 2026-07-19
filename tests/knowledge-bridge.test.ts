@@ -3,6 +3,7 @@ import test from "node:test";
 import { alexBridgeReport, buildPreparedBridgeReport } from "../lib/bridge/prepared-report";
 import { alexEvidenceLedger } from "../lib/fixtures/alex-ledger";
 import { softwareBackendPracticePack } from "../lib/market/current-practice";
+import { buildCitationLedger } from "../components/knowledge-bridge-report";
 
 test("the current-practice pack has reciprocal sources and exact mention counts", () => {
   const pack = softwareBackendPracticePack;
@@ -37,4 +38,13 @@ test("the prepared report rejects a missing evidence claim", () => {
     claims: alexEvidenceLedger.claims.filter((claim) => claim.id !== "claim-runtime-config"),
   };
   assert.throws(() => buildPreparedBridgeReport(changedLedger), /claim-runtime-config/);
+});
+
+test("citation receipts are numbered once and retain inspectable source details", () => {
+  const citationLedger = buildCitationLedger(alexBridgeReport, alexEvidenceLedger, softwareBackendPracticePack);
+  assert.deepEqual(citationLedger.receipts.map((receipt) => receipt.number), citationLedger.receipts.map((_, index) => index + 1));
+  assert.equal(new Set(citationLedger.receipts.map((receipt) => receipt.id)).size, citationLedger.receipts.length);
+  assert.ok(citationLedger.receipts.some((receipt) => receipt.kind === "personal" && receipt.path === "alex-api/src/config.ts" && receipt.excerpt.length > 0));
+  assert.ok(citationLedger.receipts.some((receipt) => receipt.kind === "market" && receipt.employer && receipt.location && receipt.url));
+  assert.ok(citationLedger.receipts.some((receipt) => receipt.kind === "technical" && receipt.sourceName && receipt.url));
 });

@@ -226,11 +226,11 @@ Readers scan a result; they do not study it line by line. The report is restruct
 
 Keep the trust layer, change its posture: the same pattern readers know from cited AI answers and reference works. Numbered markers in the text, a preview on hover or focus, the full receipt one interaction deeper.
 
-- [ ] **P0:** Number every evidence receipt once across the report in order of first appearance and render superscript citation markers after the sentences they support.
-- [ ] **P0:** On hover or keyboard focus, a marker shows a compact preview: source name, evidence class, date, and a one-line excerpt. Click, tap, or Enter opens the full receipt panel. Escape closes it and returns focus to the marker.
-- [ ] **P0:** The full receipt panel shows the verbatim excerpt, the path and locator in monospace, the evidence class, the confidence label with its basis, and the specific limitation. Market receipts show employer, role, location, observation date, and the source link.
-- [ ] **P0:** Keep every conclusion's evidence reachable within two interactions.
-- [ ] **P0:** Make markers and panels fully keyboard- and touch-operable, with accessible names such as “Evidence 3: study plan, 2022”. Hover-only behavior is not acceptable.
+- [x] **P0:** Number every evidence receipt once across the report in order of first appearance and render superscript citation markers after the sentences they support.
+- [x] **P0:** On hover or keyboard focus, a marker shows a compact preview: source name, evidence class, date, and a one-line excerpt. Click, tap, or Enter opens the full receipt panel. Escape closes it and returns focus to the marker.
+- [x] **P0:** The full receipt panel shows the verbatim excerpt, the path and locator in monospace, the evidence class, the confidence label with its basis, and the specific limitation. Market receipts show employer, role, location, observation date, and the source link.
+- [x] **P0:** Keep every conclusion's evidence reachable within two interactions.
+- [x] **P0:** Make markers and panels fully keyboard- and touch-operable, with accessible names such as “Evidence 3: study plan, 2022”. Hover-only behavior is not acceptable.
 - [ ] **P0:** Add a one-line trust strip under the headline: claims verified against the submitted files, dated market sources used, pack version and observation window, and the analysis pipeline (GPT-5.6 plus server validation). Each segment opens the matching panel.
 - [ ] **P1:** Add a `Why this conclusion?` control on the headline and on each next step that opens the combined reasoning receipt for that specific statement.
 
