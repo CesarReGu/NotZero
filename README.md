@@ -130,7 +130,7 @@ Run the complete release verification, including dependency-license metadata and
 npm run verify
 ```
 
-The route tests render the production worker and verify the landing, demo, Method, Privacy, and health routes.
+The route tests render the production worker and verify the landing, demo, Method, Privacy, and health routes. Adapter tests also run deterministic mocked-model scenarios for a complete custom report, weak evidence, summary-only evidence, invented citations, missing market coverage, malformed schema output, and model transport failure.
 
 For a release candidate, clone the repository into a clean directory, follow **Local setup**, run `npm run verify`, and exercise the hosted demo without an authenticated session. The deployment must return the same prepared findings and source receipts as the checked-in fixture.
 
@@ -150,7 +150,7 @@ lib/fixtures/        Parsed deterministic scenario data
 db/                  Runtime D1 schema definitions
 drizzle/             Hosted D1 migrations
 fixtures/alex/       Fictional source artifacts used by the prepared scenario
-tests/               Production-rendered route tests
+tests/               Production-rendered routes and deterministic model scenarios
 worker/              Cloudflare-compatible application entry point
 ```
 
