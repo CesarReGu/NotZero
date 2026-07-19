@@ -150,3 +150,7 @@ Do not add real academic records, employer-owned code, credentials, private fixt
 The application uses the open-source dependencies recorded in `package-lock.json`. `unpdf` provides MIT-licensed, serverless-compatible PDF text extraction. `tsx` is an MIT-licensed development dependency used for typed adapter tests. The interface uses system fonts. The social preview image was generated specifically for NotZero during this build and is stored at `public/og.png`.
 
 Product, design, trust, and roadmap context is available in `docs/` and `ROADMAP.md`.
+
+## License
+
+NotZero is available under the [MIT License](LICENSE).
