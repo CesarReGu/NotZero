@@ -10,6 +10,7 @@ import {
   softwareBackendPracticePack,
   technicalSourceById,
 } from "@/lib/market/current-practice";
+import { deriveRequirementCoverage } from "@/lib/bridge/coverage";
 
 const pack = softwareBackendPracticePack;
 
@@ -59,7 +60,7 @@ export function buildPreparedBridgeReport(ledger: EvidenceLedger = alexEvidenceL
   const configReference = claimReference(ledger, "claim-runtime-config");
   const testReference = claimReference(ledger, "claim-local-test");
 
-  const report = knowledgeBridgeReportSchema.parse({
+  const reportWithoutCoverage = knowledgeBridgeReportSchema.parse({
     id: "bridge-alex-backend-2026-v1",
     schemaVersion: "knowledge-bridge-report.v1",
     analysisVersion: "phase-4",
@@ -243,6 +244,10 @@ export function buildPreparedBridgeReport(ledger: EvidenceLedger = alexEvidenceL
     ],
   });
 
+  const report = knowledgeBridgeReportSchema.parse({
+    ...reportWithoutCoverage,
+    requirementCoverage: deriveRequirementCoverage(reportWithoutCoverage.findings, pack),
+  });
   return validateReportReferences(report, ledger);
 }
 

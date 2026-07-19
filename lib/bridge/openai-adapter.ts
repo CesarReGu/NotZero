@@ -10,6 +10,7 @@ import {
   type KnowledgeBridgeReport,
 } from "@/lib/domain/schemas";
 import { requirementById, technicalSourceById } from "@/lib/market/current-practice";
+import { deriveRequirementCoverage } from "@/lib/bridge/coverage";
 
 export const BRIDGE_PROMPT_VERSION = "bridge-comparison.v1";
 export const BRIDGE_REPORT_SCHEMA_VERSION = "knowledge-bridge-report.v2";
@@ -176,7 +177,7 @@ export function validateBridgeModelOutput(args: { output: unknown; ledger: Evide
     genuineGap: findings.filter((item) => item.group === "genuine_gap").length,
     insufficientEvidence: findings.filter((item) => item.group === "insufficient_evidence").length,
   };
-  return knowledgeBridgeReportSchema.parse({ id: `bridge-${crypto.randomUUID()}`, schemaVersion: BRIDGE_REPORT_SCHEMA_VERSION, analysisVersion: args.analysisVersion, analysisMode: "live_gpt_5_6", ledgerId: args.ledger.id, currentPracticePackId: args.pack.id, datasetVersion: args.pack.datasetVersion, generatedAt: new Date().toISOString(), findings, counts, nextSteps: model.nextSteps, upgradeChallenge: model.upgradeChallenge, walkthrough, walkthroughUnavailableReason: model.walkthroughUnavailableReason ?? undefined, limitations: model.limitations });
+  return knowledgeBridgeReportSchema.parse({ id: `bridge-${crypto.randomUUID()}`, schemaVersion: BRIDGE_REPORT_SCHEMA_VERSION, analysisVersion: args.analysisVersion, analysisMode: "live_gpt_5_6", ledgerId: args.ledger.id, currentPracticePackId: args.pack.id, datasetVersion: args.pack.datasetVersion, generatedAt: new Date().toISOString(), findings, counts, requirementCoverage: deriveRequirementCoverage(findings, args.pack), nextSteps: model.nextSteps, upgradeChallenge: model.upgradeChallenge, walkthrough, walkthroughUnavailableReason: model.walkthroughUnavailableReason ?? undefined, limitations: model.limitations });
 }
 
 export async function compareWithGpt56(args: { apiKey: string; model: string; ledger: EvidenceLedger; pack: CurrentPracticePack; analysisVersion: string; fetcher?: typeof fetch }) {

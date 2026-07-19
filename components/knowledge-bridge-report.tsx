@@ -12,6 +12,8 @@ const groupLabel: Record<BridgeFinding["group"], string> = {
   insufficient_evidence: "Insufficient evidence",
 };
 
+const coverageLabel = { ...groupLabel, not_assessed: "Not assessed" } as const;
+
 function humanize(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -205,6 +207,9 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
   const supportedStrengths = report.counts.current + report.counts.transferable;
   const possessive = subjectLabel ? `${subjectLabel}'s` : "Your";
   const shortestBridge = report.findings.find((finding) => finding.group === "small_bridge") ?? report.findings.find((finding) => finding.group === "transferable") ?? report.findings[0];
+  const requirementCoverage = report.requirementCoverage ?? [];
+  const supportedRequirementCount = requirementCoverage.filter((item) => item.group === "current" || item.group === "transferable").length;
+  const notAssessedCount = requirementCoverage.filter((item) => item.group === "not_assessed").length;
   const visibleFindings = filter === "all" ? report.findings : report.findings.filter((finding) => filterGroups[filter].includes(finding.group));
   const shortestClaimReceipts = claimReceipts(shortestBridge.evidenceClaimIds);
   const shortestRelationshipReceipts = relationshipReceipts(shortestBridge);
@@ -243,6 +248,18 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
     return uniqueReceipts(receipts).map((receipt) => <CitationMarker receipt={receipt} onOpen={openReceipt} key={receipt.id} />);
   }
 
+  function goToFinding(findingId: string | null) {
+    if (!findingId) return;
+    setFilter("all");
+    requestAnimationFrame(() => {
+      const finding = document.getElementById(`role-map-${findingId}`) as HTMLDetailsElement | null;
+      if (!finding) return;
+      finding.open = true;
+      finding.focus({ preventScroll: true });
+      finding.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   return (
     <section className="bridge-report" aria-labelledby="bridge-report-title">
       <header className="bridge-report-header">
@@ -273,6 +290,18 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
         <div data-group="insufficient_evidence"><strong>{report.counts.insufficientEvidence}</strong><span>Unknowns</span><small>More evidence would change the answer</small></div>
       </div>
 
+      {requirementCoverage.length > 0 && <figure className="coverage-figure" aria-labelledby="coverage-caption">
+        <div className="coverage-strip" role="list" aria-label="Coverage across reviewed requirements">
+          {requirementCoverage.map((item) => {
+            const requirement = pack.requirements.find((candidate) => candidate.id === item.requirementId);
+            if (!requirement) return null;
+            const label = `${requirement.name}: ${coverageLabel[item.group]}, ${item.evidenceCount} supporting evidence ${item.evidenceCount === 1 ? "claim" : "claims"}`;
+            return <button type="button" role="listitem" data-group={item.group} aria-label={label} title={label} onClick={() => goToFinding(item.findingId)} key={item.requirementId}><span aria-hidden="true" /></button>;
+          })}
+        </div>
+        <figcaption id="coverage-caption"><strong>Supported foundations: {supportedRequirementCount} of {requirementCoverage.length} reviewed requirements.</strong><span>{notAssessedCount > 0 ? `${notAssessedCount} ${notAssessedCount === 1 ? "requirement was" : "requirements were"} not assessed from this evidence set.` : "Every reviewed requirement received an evidence-based conclusion."}</span></figcaption>
+      </figure>}
+
       <section className="shortest-bridge" aria-labelledby="shortest-bridge-title">
         <div className="shortest-bridge-heading"><p className="eyebrow">Your shortest bridge</p><h4 id="shortest-bridge-title">{shortestBridge.title}</h4><p>{shortestBridge.explanation}<span className="inline-citations">{markers([...shortestClaimReceipts, ...shortestRelationshipReceipts])}</span></p></div>
         <div className="shortest-bridge-path">
@@ -296,6 +325,21 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
       <div className="bridge-findings">
         <p className="eyebrow">Role map</p>
         <h4>{report.findings.length} evidence-based conclusions</h4>
+        {requirementCoverage.length > 0 && <figure className="market-demand" aria-labelledby="market-demand-caption">
+          <figcaption id="market-demand-caption"><strong>What appeared across the reviewed roles</strong><span>Exact posting counts from the dated market pack. The shortest bridge is highlighted.</span></figcaption>
+          <div className="market-demand-rows" role="list">
+            {requirementCoverage.map((item) => {
+              const requirement = pack.requirements.find((candidate) => candidate.id === item.requirementId);
+              if (!requirement) return null;
+              const sources = requirement.sourceIds.map((sourceId) => pack.sources.find((source) => source.id === sourceId)).filter((source) => source !== undefined);
+              const sourceSummary = sources.map((source) => `${source.employer}, ${source.roleTitle}, ${source.observedAt}`).join("; ");
+              const label = `${requirement.name}: ${requirement.mentionCount} of ${pack.sources.length} reviewed postings. ${coverageLabel[item.group]}. Sources: ${sourceSummary}`;
+              return <button type="button" role="listitem" className={requirement.id === shortestBridge.currentRequirementId ? "is-priority" : ""} aria-label={label} title={label} onClick={() => goToFinding(item.findingId)} key={requirement.id}>
+                <span className="demand-name">{requirement.name}</span><span className="demand-group" data-group={item.group}>{coverageLabel[item.group]}</span><span className="demand-track" aria-hidden="true"><span style={{ width: `${(requirement.mentionCount / pack.sources.length) * 100}%` }} /></span><strong>{requirement.mentionCount} of {pack.sources.length}</strong>
+              </button>;
+            })}
+          </div>
+        </figure>}
         <div className="finding-filters" aria-label="Filter conclusions">
           {filterOptions.map((option) => <button type="button" aria-pressed={filter === option.id} onClick={() => setFilter(option.id)} key={option.id}>{option.label}<span>{option.count}</span></button>)}
         </div>
@@ -310,11 +354,11 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel }: { re
           const findingReceipts = uniqueReceipts([...personalReceipts, ...marketAndTechnicalReceipts]);
           const artifactReceipt = finding.artifactReference ? citationLedger.byKey.get(personalReceiptKey(finding.artifactReference)) : undefined;
           return (
-            <details className="bridge-finding" data-group={finding.group} key={finding.id}>
+            <details className="bridge-finding" id={`role-map-${finding.id}`} tabIndex={-1} data-group={finding.group} key={finding.id}>
               <summary>
                 <span className="finding-index" aria-hidden="true">{String(report.findings.indexOf(finding) + 1).padStart(2, "0")}</span>
                 <div><span>{groupLabel[finding.group]}{finding.relationshipType ? ` · ${humanize(finding.relationshipType)}` : ""}</span><strong>{finding.title}</strong><span className="summary-citations">{markers(findingReceipts)}</span></div>
-                <small aria-label={`${finding.confidence} confidence`}>{finding.confidence} confidence</small>
+                <small className="confidence-label" aria-label={`${finding.confidence} confidence`}><span aria-hidden="true">{[0, 1, 2].map((dot) => <i data-filled={dot < ({ low: 1, medium: 2, high: 3 }[finding.confidence])} key={dot} />)}</span>{finding.confidence}</small>
               </summary>
               <div className="finding-body">
                 <div className="finding-connection">

@@ -4,6 +4,8 @@ import { alexBridgeReport, buildPreparedBridgeReport } from "../lib/bridge/prepa
 import { alexEvidenceLedger } from "../lib/fixtures/alex-ledger";
 import { softwareBackendPracticePack } from "../lib/market/current-practice";
 import { buildCitationLedger } from "../components/knowledge-bridge-report";
+import { deriveRequirementCoverage } from "../lib/bridge/coverage";
+import { knowledgeBridgeReportSchema } from "../lib/domain/schemas";
 
 test("the current-practice pack has reciprocal sources and exact mention counts", () => {
   const pack = softwareBackendPracticePack;
@@ -27,6 +29,7 @@ test("the prepared report exercises every result group and exactly three next st
   ]));
   assert.deepEqual(report.nextSteps.map((step) => step.rank), [1, 2, 3]);
   assert.equal(report.upgradeChallenge.acceptanceCriteria.length, 4);
+  assert.equal(report.requirementCoverage?.length, softwareBackendPracticePack.requirements.length);
   assert.equal(report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
   assert.equal(report.walkthrough.comparisonState, "illustrative");
   assert.ok(report.findings.every((finding) => finding.whyItIsUsed.length > 0));
@@ -47,4 +50,15 @@ test("citation receipts are numbered once and retain inspectable source details"
   assert.ok(citationLedger.receipts.some((receipt) => receipt.kind === "personal" && receipt.path === "alex-api/src/config.ts" && receipt.excerpt.length > 0));
   assert.ok(citationLedger.receipts.some((receipt) => receipt.kind === "market" && receipt.employer && receipt.location && receipt.url));
   assert.ok(citationLedger.receipts.some((receipt) => receipt.kind === "technical" && receipt.sourceName && receipt.url));
+});
+
+test("requirement coverage is complete, discrete, and derived from validated findings", () => {
+  const coverage = deriveRequirementCoverage(alexBridgeReport.findings, softwareBackendPracticePack);
+  assert.equal(coverage.length, softwareBackendPracticePack.requirements.length);
+  assert.equal(new Set(coverage.map((item) => item.requirementId)).size, coverage.length);
+  assert.equal(coverage.filter((item) => item.findingId).length, alexBridgeReport.findings.length);
+  assert.equal(coverage.filter((item) => item.group === "current" || item.group === "transferable").length, 2);
+  assert.equal(coverage.filter((item) => item.group === "not_assessed").length, 3);
+  assert.throws(() => deriveRequirementCoverage([alexBridgeReport.findings[0], { ...alexBridgeReport.findings[1], currentRequirementId: alexBridgeReport.findings[0].currentRequirementId }], softwareBackendPracticePack), /More than one finding/);
+  assert.throws(() => knowledgeBridgeReportSchema.parse({ ...alexBridgeReport, requirementCoverage: alexBridgeReport.requirementCoverage?.map((item, index) => index === 0 ? { ...item, evidenceCount: item.evidenceCount + 1 } : item) }), /Requirement coverage must match/);
 });

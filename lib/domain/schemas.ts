@@ -231,6 +231,12 @@ export const knowledgeBridgeReportSchema = z.object({
     genuineGap: z.number().int().nonnegative(),
     insufficientEvidence: z.number().int().nonnegative(),
   }),
+  requirementCoverage: z.array(z.object({
+    requirementId: z.string().min(1),
+    findingId: z.string().min(1).nullable(),
+    group: z.union([resultGroupSchema, z.literal("not_assessed")]),
+    evidenceCount: z.number().int().nonnegative(),
+  })).min(1).optional(),
   nextSteps: z.array(prioritizedNextStepSchema).length(3),
   upgradeChallenge: upgradeChallengeSchema,
   walkthrough: projectWalkthroughSchema.optional(),
@@ -243,6 +249,25 @@ export const knowledgeBridgeReportSchema = z.object({
       path: ["walkthrough"],
       message: "Provide either a project walkthrough or a reason it is unavailable.",
     });
+  }
+  if (report.requirementCoverage) {
+    const seenRequirements = new Set<string>();
+    const seenFindings = new Set<string>();
+    for (const [index, coverage] of report.requirementCoverage.entries()) {
+      if (seenRequirements.has(coverage.requirementId)) context.addIssue({ code: "custom", path: ["requirementCoverage", index, "requirementId"], message: "Requirement coverage must be unique." });
+      seenRequirements.add(coverage.requirementId);
+      if (!coverage.findingId) {
+        if (coverage.group !== "not_assessed" || coverage.evidenceCount !== 0) context.addIssue({ code: "custom", path: ["requirementCoverage", index], message: "Unassessed coverage cannot claim a group or evidence." });
+        continue;
+      }
+      if (seenFindings.has(coverage.findingId)) context.addIssue({ code: "custom", path: ["requirementCoverage", index, "findingId"], message: "A finding can cover only one requirement." });
+      seenFindings.add(coverage.findingId);
+      const finding = report.findings.find((item) => item.id === coverage.findingId);
+      if (!finding || finding.currentRequirementId !== coverage.requirementId || finding.group !== coverage.group || new Set(finding.evidenceClaimIds).size !== coverage.evidenceCount) {
+        context.addIssue({ code: "custom", path: ["requirementCoverage", index], message: "Requirement coverage must match the validated finding." });
+      }
+    }
+    for (const finding of report.findings) if (!seenFindings.has(finding.id)) context.addIssue({ code: "custom", path: ["requirementCoverage"], message: `Finding ${finding.id} is missing from requirement coverage.` });
   }
 });
 
