@@ -6,7 +6,7 @@ NotZero connects academic knowledge and past projects with current professional 
 
 ## Current status
 
-Phases 1 through 5 are complete for the deterministic software judge path. Phase 6 verification and submission preparation are in progress. The runnable application includes:
+Phases 1 through 5 are complete as technical foundations for the deterministic software judge path. Phase 6 now focuses on completing the live custom Knowledge Bridge and replacing the evidence-dense report with a decision-ready experience. Final verification and submission move to Phase 7. The runnable application currently includes:
 
 - a public landing page with the approved product message;
 - persistent navigation to Method, Privacy, and the prepared demo;

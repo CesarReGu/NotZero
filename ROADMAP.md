@@ -138,7 +138,7 @@ The submitted judge path remains the software scenario. The underlying evidence 
 - [x] **P1:** Add filters for result type without hiding the complete narrative.
 - [x] **P1:** Keep print/export out of the hackathon flow because it adds a second document surface without improving the judge path.
 
-**Exit criterion:** A judge can understand the result in 15 seconds and inspect the evidence for any conclusion in one interaction.
+**Implementation note:** The first trust-rich report is complete, but user review found that its evidence density prevents 15-second comprehension. Phase 6 keeps these contracts as foundations and replaces the presentation hierarchy.
 
 ## Phase 5: Cost, abuse, and operational controls
 
@@ -155,9 +155,66 @@ The submitted judge path remains the software scenario. The underlying evidence 
 
 **Exit criterion:** The public demo cannot create unbounded spend, and judges can exercise every submitted feature without payment or reconstruction.
 
-## Phase 6: Verification and submission
+## Phase 6: Decision-ready product and complete custom bridge
+
+**Target:** July 19–20
+
+**Product question:** Why should someone use NotZero instead of uploading the same documents to a general AI model?
+
+NotZero must earn its place through a repeatable product contract. It connects bounded personal evidence to a controlled, dated current-practice pack; validates every important reference; distinguishes demonstrated knowledge from exposure and inference; calculates the smallest defensible learning delta; and turns one existing project into a concrete proof task. A fluent answer without those controls is not a NotZero result.
+
+### Complete the real service
+
+- [ ] **P0:** Generalize the Knowledge Bridge report schema beyond `prepared_fixture`, Alex-specific identifiers, and hard-coded prepared findings.
+- [ ] **P0:** Implement a second schema-constrained GPT-5.6 stage that compares a validated evidence ledger with one supported current-practice pack and proposes findings, relationships, next steps, and a project challenge.
+- [ ] **P0:** Validate the second-stage output server-side:
+  - every evidence claim ID resolves in the submitted ledger;
+  - every requirement and market source resolves in the selected dated pack;
+  - every relationship uses the approved directional taxonomy;
+  - project-specific claims contain a real locator from the submitted artifact;
+  - comparison states remain verified, illustrative, or conceptual;
+  - exactly three prioritized next steps are present; and
+  - unsupported conclusions become unknown or insufficient evidence.
+- [ ] **P0:** Make the custom software path return the complete report, not only an evidence ledger, when the field and target match the supported software pack.
+- [ ] **P0:** Keep unsupported fields honest. They may receive a validated evidence ledger, but no market bridge until an appropriate reviewed pack exists.
+- [ ] **P0:** Remove hard-coded names, locations, counts, and software-pack assumptions from reusable report components.
+- [ ] **P0:** Add deterministic and mocked-model fixtures for a successful custom report, weak evidence, summary-only evidence, invented citations, missing market coverage, schema failure, and model failure.
+- [ ] **P0:** Configure the server-side deployment secret, enable the bounded live GPT-5.6 path, and verify one fictional custom upload from ingestion through final report.
+
+### Replace the report hierarchy
+
+- [ ] **P0:** Put the decision brief before the evidence ledger. The first viewport must answer:
+  1. What useful foundation do I already have?
+  2. What is the highest-leverage bridge for my target?
+  3. What should I do next with work I have already completed?
+- [ ] **P0:** Create a compact `Your shortest bridge` section with three plain-language parts: **Keep**, **Add**, and **Prove**. Do not add a readiness percentage.
+- [ ] **P0:** Place the three prioritized next moves and existing-project challenge immediately after the decision brief.
+- [ ] **P0:** Present the broader role map as scannable collapsed rows for strengths, bridges, gaps, and unknowns. Nothing opens by default solely because it is a bridge.
+- [ ] **P0:** Move the evidence ledger, raw excerpts, paths, market counts, confidence rationale, and methodology into progressive disclosure.
+- [ ] **P0:** Use citation-like evidence controls such as `2 evidence items` or `Why this conclusion?` that reveal an inline panel or drawer. Keep evidence reachable within two interactions.
+- [ ] **P0:** Keep uncertainty visible in the collapsed state without showing every limitation and source receipt at once.
+- [ ] **P0:** Use readable primary copy at normal body size. Reserve small monospaced text for source metadata inside expanded evidence views.
+- [ ] **P0:** Add an evidence-review checkpoint where the user can reject an inferred claim or correct source context before the market comparison runs.
+
+### Prove product value
+
+- [ ] **P0:** Evaluate Alex and one fictional custom upload against five value criteria:
+  - exact grounding in the user's own work;
+  - dated current-practice evidence;
+  - validated and inspectable provenance;
+  - a smaller learning delta than a generic gap list; and
+  - a concrete proof task that reuses an existing project.
+- [ ] **P0:** Require every recommended action to name the existing knowledge it reuses, the genuinely new concept, why the new practice is used, and what artifact will prove the bridge.
+- [ ] **P0:** If the system cannot produce a project-grounded bridge, say what evidence is missing instead of filling the report with generic advice.
+- [ ] **P1:** Let the user choose a different supported bridge priority and recompute the three-step plan without re-uploading unchanged evidence.
+
+**Exit criterion:** A fictional custom software upload produces the complete validated service promised on the homepage. Within 15 seconds, a user can explain what carries forward, the one bridge worth building first, and the concrete next action. Evidence remains available on demand without dominating the result.
+
+## Phase 7: Final verification and submission
 
 **Target:** July 20–21
+
+The initial clean-environment, license, security, and README checks were completed early. Repeat affected checks after Phase 6 and do not record the video until the redesigned live result is frozen.
 
 - [x] **P0:** Run lint, type-check, tests, and production build from a clean checkout.
 - [x] **P0:** Follow the README from a clean environment and correct every missing step.
@@ -186,8 +243,10 @@ The submitted judge path remains the software scenario. The underlying evidence 
 |---|---|---|
 | 0:00–0:20 | Empathy | Open an intimidating junior job listing full of unfamiliar tools. Say, “The job post looks unfamiliar. Your knowledge doesn't.” |
 | 0:20–0:40 | Input | Select the prepared graduate profile and target role. |
-| 0:40–1:45 | Product | Open one exact project artifact. Show what it demonstrates, a labeled modern counterpart, one genuine gap, and the evidence behind each finding. |
-| 1:45–2:20 | Action | Show the learning delta and the project upgrade challenge. |
+| 0:40–1:05 | Decision brief | Show what already carries, the shortest bridge, and the recommended proof task. |
+| 1:05–1:40 | Product | Open one bridge, reveal its exact project artifact, and compare it with a labeled modern counterpart. |
+| 1:40–2:00 | Trust | Open the citation-like evidence control, show one source receipt, then close it to restore the simple report. |
+| 2:00–2:20 | Action | Show the three-step learning delta and the existing-project upgrade challenge. |
 | 2:20–2:45 | GPT-5.6 | Explain structured evidence extraction, relationship reasoning, provenance, and uncertainty. |
 | 2:45–3:00 | Codex and close | Describe how Codex helped build and refine the pipeline and interface. End with “You are not starting from zero.” |
 
