@@ -226,6 +226,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
   const shortestClaimReceipts = claimReceipts(shortestBridge.evidenceClaimIds);
   const shortestRelationshipReceipts = relationshipReceipts(shortestBridge);
   const walkthroughReceipt = report.walkthrough ? citationLedger.byKey.get(personalReceiptKey(report.walkthrough.artifactReference)) : undefined;
+  const walkthroughSource = report.walkthrough ? ledger.sources.find((source) => source.id === report.walkthrough?.artifactReference.sourceId) : undefined;
   const filterOptions: { id: FindingFilter; label: string; count: number }[] = [
     { id: "all", label: "All conclusions", count: report.findings.length },
     { id: "strengths", label: "Supported strengths", count: supportedStrengths },
@@ -387,10 +388,13 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
               </summary>
               <div className="finding-body">
                 <div className="finding-summary-grid">
-                  <div><span>What you already have</span><p>{finding.existingCapability}</p>{finding.transferableConcepts.length > 0 && <small>Transfers: {finding.transferableConcepts.join(", ")}</small>}</div>
-                  <div><span>What current practice changes</span><p>{finding.modernCounterpart}</p>{finding.relationshipType && <small>Relationship: {humanize(finding.relationshipType)}</small>}{finding.manualStepsChanged.length > 0 && <small>Changes: {finding.manualStepsChanged.join(", ")}</small>}</div>
-                  <div><span>What is actually new</span>{finding.newConcepts.length > 0 ? <ul>{finding.newConcepts.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No distinct new concept was established.</p>}</div>
-                  <div className="finding-action"><span>Smallest useful proof</span><p>{finding.recommendedAction}</p></div>
+                  <div className="finding-bridge-graphic" role="group" aria-label={`${finding.existingCapability} ${finding.relationshipType ? humanize(finding.relationshipType) : "compared with"} ${finding.modernCounterpart}`}>
+                    <article className="bridge-node bridge-node-evidence"><span>What you already have</span><p>{finding.existingCapability}</p>{finding.transferableConcepts.length > 0 && <small>Transfers: {finding.transferableConcepts.join(", ")}</small>}</article>
+                    <div className="bridge-rule" aria-hidden="true"><span>{finding.relationshipType ? humanize(finding.relationshipType) : "compare with"}</span><i /></div>
+                    <article className="bridge-node bridge-node-current"><span>What current practice changes</span><p>{finding.modernCounterpart}</p>{finding.manualStepsChanged.length > 0 && <small>Changes: {finding.manualStepsChanged.join(", ")}</small>}</article>
+                  </div>
+                  <div className="finding-delta-card"><span>What is actually new</span>{finding.newConcepts.length > 0 ? <ul>{finding.newConcepts.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No distinct new concept was established.</p>}</div>
+                  <div className="finding-action finding-delta-card"><span>Smallest useful proof</span><p>{finding.recommendedAction}</p></div>
                 </div>
                 <details className="finding-receipts">
                   <summary>{evidenceCount} evidence items · Why this conclusion?</summary>
@@ -417,9 +421,19 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
           <div><p className="eyebrow">Project-grounded walkthrough</p><h4 id="walkthrough-title">{report.walkthrough.title}</h4></div>
           <span className={`comparison-state state-${report.walkthrough.comparisonState}`}>{report.walkthrough.comparisonState}</span>
         </div>
-        <div className="walkthrough-grid">
-          <div className="walkthrough-observed"><span>{subjectLabel ? `Observed in ${subjectLabel}'s project` : "In your project"}</span><p>{report.walkthrough.observedImplementation} {walkthroughReceipt && <span className="inline-citations">{markers([walkthroughReceipt])}</span>}</p><code>{report.walkthrough.artifactReference.locator.path} · {report.walkthrough.artifactReference.locator.value}</code></div>
-          <div className="walkthrough-counterpart"><span>Modern counterpart</span><p>{report.walkthrough.modernCounterpart}</p>{report.walkthrough.illustrativeSketch && <pre><code>{report.walkthrough.illustrativeSketch}</code></pre>}</div>
+        <div className="walkthrough-grid" role="group" aria-label="Dated project and current-practice comparison">
+          <article className="walkthrough-observed">
+            <header><span>In your project</span><time dateTime={walkthroughSource?.date}>{walkthroughSource?.date ?? "Date unavailable"}</time></header>
+            <blockquote><p>&ldquo;{report.walkthrough.artifactReference.excerpt}&rdquo; {walkthroughReceipt && <span className="inline-citations">{markers([walkthroughReceipt])}</span>}</p></blockquote>
+            <p>{report.walkthrough.observedImplementation}</p>
+            <code>{report.walkthrough.artifactReference.locator.path} · {report.walkthrough.artifactReference.locator.value}</code>
+          </article>
+          <div className="walkthrough-rule" aria-hidden="true"><span>{humanize(report.walkthrough.relationshipType)}</span><i /></div>
+          <article className="walkthrough-counterpart">
+            <header><span>Current practice</span><time dateTime={pack.observedThrough}>{pack.observedThrough}</time></header>
+            <p>{report.walkthrough.modernCounterpart}</p>
+            {report.walkthrough.illustrativeSketch && <pre><code>{report.walkthrough.illustrativeSketch}</code></pre>}
+          </article>
         </div>
         <div className="walkthrough-delta"><div><strong>What transfers</strong><ul>{report.walkthrough.whatTransfers.map((item) => <li key={item}>{item}</li>)}</ul></div><div><strong>What remains new</strong><ul>{report.walkthrough.whatIsNew.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
         <p className="finding-limit">Limit: {report.walkthrough.limitations[0]}</p>
