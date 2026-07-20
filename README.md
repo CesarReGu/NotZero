@@ -34,6 +34,7 @@ The software-graduate vertical slice now includes the decision-ready report, evi
 - numbered citation markers with hover and keyboard previews, plus a focused receipt panel for submitted evidence, dated market observations, and reviewed technical sources;
 - an end-of-report evidence appendix instead of a permanent wall of provenance text;
 - a print-to-PDF action that renders the same validated result with a report cover, expanded evidence, and version footer;
+- a client-generated 1200 by 630 PNG bridge card containing summary fields only, with no evidence excerpts, paths, or file names;
 - result filters that preserve the complete narrative as the default view;
 - distinct loading, empty, partial, error, limit-reached, and completed states;
 - keyboard focus management, visible focus indicators, responsive report layouts, and a clear reset action;

@@ -278,7 +278,7 @@ Rejected forms, recorded so they stay rejected: pie and donut charts (angle judg
 - [ ] **P0:** Add “Download your report (PDF)” using a print stylesheet and the browser's print-to-PDF path: a cover page with the decision brief and counts, the findings with citation numbers, the next moves and challenge, a numbered evidence-reference appendix, and a footer with analysis version, dates, pack version, and the standard disclaimer. Verified in Chrome and Edge at A4 and Letter sizes.
 - [x] **P0:** The downloaded document renders from the same validated payload as the screen, with no regeneration, so its conclusions match exactly.
 - [x] **P0:** Downloads work in the logged-out judge context and for the prepared scenario.
-- [ ] **P1:** Add “Save your bridge card”: a 1200 by 630 pixel PNG rendered entirely client-side with the headline conclusion, counts, shortest bridge, and first next move. No excerpts, paths, or file names appear on the card, and nothing is uploaded anywhere.
+- [x] **P1:** Add “Save your bridge card”: a 1200 by 630 pixel PNG rendered entirely client-side with the headline conclusion, counts, shortest bridge, and first next move. No excerpts, paths, or file names appear on the card, and nothing is uploaded anywhere.
 
 ### Prove product value
 

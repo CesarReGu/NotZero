@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { BridgeFinding, CurrentPracticePack, EvidenceLedger, KnowledgeBridgeReport } from "@/lib/domain/schemas";
 import { currentPracticePackById } from "@/lib/market/current-practice";
+import { downloadBridgeCard } from "@/lib/bridge/card";
 
 const groupLabel: Record<BridgeFinding["group"], string> = {
   current: "Current",
@@ -187,6 +188,7 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
   const pack = currentPracticePackById(report.currentPracticePackId);
   const [filter, setFilter] = useState<FindingFilter>("all");
   const [activeReceipt, setActiveReceipt] = useState<CitationReceipt | null>(null);
+  const [cardStatus, setCardStatus] = useState("");
   const receiptTriggerRef = useRef<HTMLButtonElement | null>(null);
   const receiptCloseRef = useRef<HTMLButtonElement | null>(null);
   const receiptPanelRef = useRef<HTMLElement | null>(null);
@@ -246,6 +248,15 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
   function closeReceipt() {
     setActiveReceipt(null);
     requestAnimationFrame(() => receiptTriggerRef.current?.focus());
+  }
+
+  async function saveBridgeCard() {
+    try {
+      await downloadBridgeCard(report, pack!);
+      setCardStatus("Bridge card saved. It contains summary fields only.");
+    } catch {
+      setCardStatus("This browser could not save the bridge card.");
+    }
   }
 
   function claimReceipts(claimIds: string[]) {
@@ -355,7 +366,8 @@ export function KnowledgeBridgeReportView({ report, ledger, subjectLabel, reveal
 
       <div className="report-actions screen-only">
         <button id="download-report" type="button" className="button button-secondary" onClick={() => window.print()}>Download report (PDF)</button>
-        <span>Choose Save as PDF in the print dialog. The downloaded report uses this validated result.</span>
+        <button type="button" className="button button-secondary" onClick={() => void saveBridgeCard()}>Save bridge card (PNG)</button>
+        <span role="status">{cardStatus || "PDF uses this validated result. The PNG includes summary fields only, with no excerpts, paths, or file names."}</span>
       </div>
 
       <details className="difference-method screen-only">
