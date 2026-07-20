@@ -25,6 +25,10 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase,
     title: { default: title, template: "%s | NotZero" },
     description,
+    icons: {
+      icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+      apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    },
     openGraph: {
       title,
       description,

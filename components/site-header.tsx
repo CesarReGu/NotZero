@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { NotZeroMark } from "@/components/notzero-mark";
 
 export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="page-shell header-inner">
         <Link className="wordmark" href="/" aria-label="NotZero home">
-          Not<span>Zero</span><small>career bridge</small>
+          <NotZeroMark className="wordmark-mark" />
+          <span className="wordmark-text">Not<span>Zero</span></span>
         </Link>
         <nav aria-label="Primary navigation">
           <Link href="/#how-it-works">How it works</Link>
