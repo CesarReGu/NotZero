@@ -29,9 +29,9 @@ type JobPollBody = {
   message?: string;
 };
 
-// Temporary diagnostics for the live pipeline. Set this to false (or comment
-// out the two guarded render blocks below) when the next debugging pass is done.
-const DEBUG_DOWNLOAD_LOG = true;
+// Temporary diagnostics for the live pipeline. Keep this disabled in the
+// submission build. Set it to true for a short local debugging pass only.
+const DEBUG_DOWNLOAD_LOG = false;
 const DEBUG_LOG_STORAGE = "notzero.debug.log.v1";
 const DEBUG_LOG_LIMIT = 240;
 type ClientDebugEvent = { at: string; event: string; data: Record<string, unknown> };
@@ -332,7 +332,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         setCapability({
           liveAnalysisEnabled: Boolean(body.liveAnalysisEnabled),
           allowUserKeys: body.allowUserKeys !== false,
-          model: typeof body.model === "string" ? body.model : "gpt-5.4-mini",
+          model: typeof body.model === "string" ? body.model : "ChatGPT",
         });
       })
       .catch(() => { /* The panel copy falls back to the keyless description. */ });
@@ -838,9 +838,9 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
                     <div className="live-key-copy">
                       <strong>Live analysis</strong>
                       {apiKey ? (
-                        <p>Your OpenAI API key <code>{maskedKey(apiKey)}</code> stays in this browser tab and travels only with your analysis requests. The pipeline uses GPT-5.4 nano for bounded evidence extraction and GPT-5.4 mini for current-practice search, comparison, and bridge writing.</p>
+                        <p>Your OpenAI API key <code>{maskedKey(apiKey)}</code> stays in this browser tab and travels only with your analysis requests. ChatGPT handles bounded evidence extraction, current-practice search, comparison, and bridge writing through schema-constrained stages.</p>
                       ) : capability?.liveAnalysisEnabled ? (
-                        <p>This deployment already runs a staged live analysis with its own server-side key, within daily limits. Adding your own key is optional and moves usage to your OpenAI account.</p>
+                        <p>This deployment supports staged live analysis within daily limits. Add your OpenAI API key to enable the build button and keep this run tied to your account.</p>
                       ) : (
                         <p>The full report uses a staged OpenAI API pipeline and needs your API key. Without one, NotZero validates and inspects your files but draws no conclusions from them.</p>
                       )}
@@ -868,6 +868,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
                     {fileSelectionError && <p className="upload-selection-error" role="alert">{fileSelectionError}</p>}
                     {evidenceFiles.length > 0 && <p className="upload-selection-status" aria-live="polite">{evidenceFiles.length} {evidenceFiles.length === 1 ? "file" : "files"} ready for one staged analysis.</p>}
                     <FileRows items={evidenceFiles} onRemove={removeFile} />
+                    <p className="upload-example-link"><a href="https://github.com/CesarReGu/NotZero/raw/main/examplesfinalad/ProyectTest.zip" target="_blank" rel="noreferrer">Download the complete fictional example for a live test</a></p>
                   </div>
                   <div className="custom-context">
                     <h3>Where you are</h3>
@@ -902,9 +903,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
 
               <div className="step-actions intake-actions">
                 <p className="intake-disclaimer">NotZero interprets the materials and market sources available to it. It does not certify mastery or guarantee job eligibility.</p>
-                <button className="button button-primary" type="button" disabled={loading || (mode === "custom" && (!customEvidenceComplete() || !customContextComplete()))} onClick={analyze}>
-                  {loading ? "Building the Knowledge Bridge…" : mode === "prepared" ? "Build Alex's Knowledge Bridge" : apiKey || capability?.liveAnalysisEnabled ? "Build my Knowledge Bridge" : "Validate my evidence"}
-                </button>
+                <div className="intake-submit">
+                  {mode === "custom" && (!apiKey || !customEvidenceComplete()) && <p className="intake-readiness" role="status">Add your OpenAI API key and at least one evidence file to enable the build.</p>}
+                  <button className="button button-primary" type="button" disabled={loading || (mode === "custom" && (!apiKey || !customEvidenceComplete() || !customContextComplete()))} onClick={analyze}>
+                    {loading ? "Building the Knowledge Bridge…" : mode === "prepared" ? "Build Alex's Knowledge Bridge" : "Build my Knowledge Bridge"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1001,12 +1005,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             <ul>
               <li>It stays in this browser tab and is sent only with your analysis requests over HTTPS. NotZero never writes it to its database or logs.</li>
               <li>While your analysis is running it is held in server memory so the job can keep moving between polls. That copy is dropped when the job finishes or you reset, and within an hour at the latest.</li>
-               <li>The server uses it for schema-constrained calls. GPT-5.4 nano extracts evidence, and GPT-5.4 mini handles current-posting search, comparison, and the guided program.</li>
+                <li>The server uses it for schema-constrained ChatGPT calls that extract evidence, compare current practice, and write the guided program.</li>
               <li>Closing the tab or selecting Remove forgets the browser copy. The server copy is dropped when the job finishes or you reset.</li>
             </ul>
             <h5>Cost and account</h5>
             <ul>
-               <li>The calls run on your OpenAI platform account at API rates. Routing simple extraction and search to smaller models reduces cost; larger uploads and live web search cost more.</li>
+               <li>The calls run on your OpenAI platform account at API rates. Larger evidence sets and live web search use more tokens.</li>
               <li>No ChatGPT subscription is required or used. Create a key in the API keys section of platform.openai.com.</li>
             </ul>
           </div>

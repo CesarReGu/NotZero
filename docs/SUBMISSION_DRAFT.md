@@ -28,7 +28,7 @@ The missing piece is often the relationship. A student may already understand co
 
 ## What it does
 
-The submitted vertical slice supports a recent software graduate targeting a junior backend, full-stack, or DevOps-adjacent role. The user provides dated curriculum evidence, supporting academic material, one bounded project or professional task, and a target context.
+The submitted vertical slice supports a recent software graduate targeting a junior backend, full-stack, or DevOps-adjacent role. The user provides dated curriculum evidence, supporting academic material, one bounded project or professional task, and a location. The field and closest target role are inferred from the evidence.
 
 NotZero produces:
 
@@ -47,13 +47,15 @@ NotZero uses TypeScript, React, a Next-compatible App Router through Vinext, Vit
 
 GPT-5.6 is integrated in three typed, server-side stages. The first extracts evidence claims with exact source references. The second compares the validated ledger with a conservatively selected, versioned current-practice pack. The third writes the guided program: the vocabulary translation, code counterparts whose observed side is quoted server-side from verified references, and the phased curriculum. Strict JSON Schema output is validated again by deterministic application code. Unknown claim IDs, invented excerpts or locators, unsupported relationship references, unlisted learning resources, and misstated market dates or counts are rejected or repaired before display, with any repair recorded in the report limitations.
 
-The prepared Alex scenario is deterministic and fictional so judges can complete the full experience without an account, private data, or model availability. The custom live path is bounded by file, token, request, cache, and spending limits and requires server-side deployment credentials.
+The prepared Alex scenario is deterministic and fictional so judges can complete the full experience without an account, private data, or model availability. The custom live path is bounded by file, token, request, cache, and spending limits and asks the visitor to provide an OpenAI API key before the build action is enabled.
 
 ## How Codex was used
 
 Codex was the primary development collaborator throughout the build. It helped translate the product brief into domain contracts, implement and test both GPT-5.6 stages, design the evidence and relationship model, build the decision-first report, refine the landing animation, enforce privacy and operational limits, audit dependencies and repository contents, and publish dated working revisions.
 
 The collaboration was not limited to code generation. Codex repeatedly reviewed the roadmap against the product north star, tested failure modes, challenged unsupported claims, and turned owner feedback into versioned implementation batches.
+
+From the beginning, ChatGPT helped find reliable study-method research, shape the roadmap, and implement the product's core pillars. It also helped resolve blocking bugs during live testing, including unresolved evidence excerpts, unsupported source relationships, and oversized requests that stalled the analysis.
 
 ## Challenges
 

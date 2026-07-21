@@ -26,12 +26,14 @@ The evidence model is multidisciplinary, with field, target, location, and juris
 
 1. Open the public NotZero site.
 2. Select **Try the graduate demo**.
-3. Continue through Evidence, Target context, and Review and analyze.
+3. Continue through Evidence, location, and Review and analyze.
 4. Expand an evidence claim and confirm that its source receipt and limitation are visible.
 5. Review the report counts and open the runtime-configuration bridge.
 6. Inspect the exact project locator, illustrative modern counterpart, market sources, learning delta, three next steps, and upgrade challenge.
 
 The prepared scenario requires no login, payment, upload, API key, or ChatGPT subscription.
+
+Judges who want to test the custom path can [download the fictional ProyectTest example as a ZIP](https://github.com/CesarReGu/NotZero/raw/main/examplesfinalad/ProyectTest.zip), attach its readable files together, and add their own OpenAI API key when prompted. The prepared scenario remains the recommended no-key walkthrough.
 
 ## Video narration plan
 

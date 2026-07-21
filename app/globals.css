@@ -390,6 +390,8 @@ html.is-scrolled .site-header { box-shadow: 0 8px 28px rgba(17,22,42,.09); }
 .custom-context > p { max-width: 72ch; margin: 0 0 1rem; color: var(--muted-ink); font-size: .84rem; }
 .intake-actions { align-items: center; }
 .intake-disclaimer { max-width: 58ch; margin: 0; color: var(--muted-ink); font-size: .74rem; line-height: 1.5; }
+.intake-submit { display: grid; justify-items: end; gap: .45rem; }
+.intake-readiness { max-width: 34ch; margin: 0; color: var(--muted-ink); font-size: .68rem; line-height: 1.4; text-align: right; }
 .intake-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; border: 1px solid var(--rule); border-radius: 8px; background: #f8f9fc; padding: .65rem 1rem; }
 .intake-summary-context { display: flex; align-items: center; gap: .75rem; }
 .intake-summary-context p { margin: 0; color: var(--muted-ink); font-size: .82rem; }
@@ -432,6 +434,8 @@ html.is-scrolled .site-header { box-shadow: 0 8px 28px rgba(17,22,42,.09); }
 .combined-upload-field input[type="file"]::file-selector-button { min-height: 40px; margin-right: .55rem; border: 1px solid #aeb5cd; border-radius: 6px; background: #fff; padding: .45rem .75rem; cursor: pointer; color: var(--ink); font-weight: 800; }
 .upload-selection-status { margin: -.35rem 0 0; color: var(--evergreen-dark); font-family: var(--font-mono); font-size: .68rem; font-weight: 800; }
 .upload-selection-error { margin: -.35rem 0 0; color: #8f1d2c; font-size: .76rem; font-weight: 700; }
+.upload-example-link { margin: 0; font-size: .72rem; line-height: 1.4; }
+.upload-example-link a { color: var(--evergreen); text-decoration: underline; text-underline-offset: 2px; }
 .live-key-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .85rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--evergreen); border-radius: 7px; background: var(--paper-raised); padding: 1rem 1.15rem; }
 .live-key-panel[data-state="ready"] { border-left-color: var(--group-current); }
 .live-key-copy strong { display: block; margin-bottom: .2rem; font-size: .82rem; }
