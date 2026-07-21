@@ -24,5 +24,6 @@ OPENAI_BUILD_WEEK_REQUIREMENTS.md
 
 # Logs and local tooling
 *.log
+tmp/
 .DS_Store
 Thumbs.db
