@@ -1,6 +1,6 @@
 import type { EvidenceLedger, KnowledgeBridgeReport } from "@/lib/domain/schemas";
 
-export type AnalysisState = "idle" | "loading" | "review" | "empty" | "partial" | "error" | "limit" | "completed";
+export type AnalysisState = "idle" | "loading" | "empty" | "partial" | "error" | "limit" | "completed";
 
 const limitCodes = new Set([
   "curriculum_count", "supporting_count", "project_count", "request_size", "total_size", "file_size", "total_text",

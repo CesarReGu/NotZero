@@ -20,7 +20,7 @@ NotZero makes that transfer visible. A user provides a curriculum, supporting ac
 
 The report groups findings into current knowledge, transferable foundations, small bridges, genuine gaps, and insufficient evidence. Each conclusion can expose its source, artifact location, market evidence, limitation, and recommended proof task. The judge scenario follows a fictional 2022 software graduate and includes a project-grounded bridge from manual runtime configuration to an illustrative containerization upgrade.
 
-The evidence model is multidisciplinary, with field, target, location, and jurisdiction context. The submitted current-practice pack remains deliberately limited to software development. Law, nursing, accounting, and other fields require their own reviewed source packs and safety rules before NotZero presents conclusions for them.
+The evidence model is multidisciplinary, with field, target, location, and jurisdiction context. Software development is the only human-reviewed current-practice pack, and it is the one that can carry a verified label. For any other field NotZero generates an explicitly illustrative reference: GPT-5.6 locates job postings by web search and the counts are computed over those located postings, or over representative role archetypes when a live search finds too few. A generated reference is always labeled generated, capped below verified, and shown with a provenance banner. It is a labeled starting point, not authoritative guidance, and law, nursing, accounting, and other regulated fields still require their own reviewed sources and safety rules before their conclusions can be relied on.
 
 ## Testing instructions
 

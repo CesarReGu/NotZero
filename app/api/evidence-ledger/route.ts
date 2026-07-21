@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { currentPracticePackSchema, evidenceLedgerSchema, knowledgeBridgeReportSchema, locationContextSchema, type CurrentPracticePack, type EvidenceSourceType, type FieldContext } from "@/lib/domain/schemas";
+import { currentPracticePackSchema, evidenceLedgerSchema, knowledgeBridgeReportSchema, locationContextSchema, type CurrentPracticePack, type EvidenceSourceType } from "@/lib/domain/schemas";
 import { readServerConfig, type ServerConfig } from "@/lib/config/server";
 import { EvidenceInputError, extractEvidenceFile, type ExtractedSource } from "@/lib/evidence/files";
 import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 import { extractWithGpt56 } from "@/lib/evidence/openai-adapter";
 import { alexEvidenceLedger } from "@/lib/fixtures/alex-ledger";
 import { alexBridgeReport } from "@/lib/bridge/prepared-report";
-import { applyEvidenceReview, reviewedLedger } from "@/lib/bridge/review";
 import { BRIDGE_PROMPT_VERSION, BRIDGE_REPORT_SCHEMA_VERSION, compareWithGpt56 } from "@/lib/bridge/openai-adapter";
 import { enrichWithSolutionLayer, SOLUTION_PROMPT_VERSION } from "@/lib/bridge/solution-adapter";
 import { selectCurrentPracticePack } from "@/lib/market/current-practice";
@@ -14,7 +13,7 @@ import { finalizeGeneratedReport, generateGroundedPracticePack, GROUNDED_PACK_PR
 import { JOB_POSTINGS_SCAN_PROMPT_VERSION } from "@/lib/market/job-postings-adapter";
 import { advanceJob, initialJobState, isTerminal, jobProgressStep, retryJob, type Job, type StageRunners } from "@/lib/analysis/job";
 import { analysisCacheKey, operationalSession } from "@/lib/operations/session";
-import { acquireJobLease, createJob, deleteSessionCache, deleteSessionJobs, getCachedResult, getJob, getSessionCachedResult, putCachedResult, recallJobKey, recordSessionRequest, rememberJobKey, reserveLiveAnalysis, saveJob } from "@/lib/operations/store";
+import { acquireJobLease, createJob, deleteSessionCache, deleteSessionJobs, forgetJobKey, getCachedResult, getJob, putCachedResult, recallJobKey, recordSessionRequest, rememberJobKey, reserveLiveAnalysis, saveJob } from "@/lib/operations/store";
 import { scheduleBackground } from "@/lib/operations/runtime";
 
 export const runtime = "nodejs";
@@ -44,18 +43,6 @@ function files(form: FormData, key: string) {
   return form.getAll(key).filter((value): value is File => value instanceof File && value.size > 0);
 }
 
-function excludedClaims(form: FormData) {
-  let parsed: unknown;
-  try { parsed = JSON.parse(text(form, "excludedClaimIds") || "[]"); } catch { throw new EvidenceInputError("invalid_review", "The evidence review selection is invalid."); }
-  if (!Array.isArray(parsed) || parsed.length > 100 || parsed.some((id) => typeof id !== "string" || id.length < 1 || id.length > 200)) throw new EvidenceInputError("invalid_review", "The evidence review selection is invalid.");
-  return [...new Set(parsed)] as string[];
-}
-
-function assertKnownExclusions(excludedClaimIds: string[], ledger: { claims: Array<{ id: string }> }) {
-  const known = new Set(ledger.claims.map((claim) => claim.id));
-  if (excludedClaimIds.some((id) => !known.has(id))) throw new EvidenceInputError("invalid_review", "The evidence review referenced a claim outside this validated ledger.", 400);
-}
-
 async function extractGroup(inputFiles: File[], sourceType: EvidenceSourceType, startIndex: number) {
   const sources: ExtractedSource[] = [];
   const warnings: string[] = [];
@@ -83,43 +70,6 @@ function resolveApiKey(request: Request, config: ServerConfig) {
   }
   const serverKey = config.liveAnalysisEnabled ? process.env.OPENAI_API_KEY : undefined;
   return { apiKey: serverKey ?? null, usingServerKey: Boolean(serverKey), live: Boolean(serverKey) };
-}
-
-/**
- * Translates an upstream OpenAI failure into an actionable response instead of
- * a generic 502. Key problems are the visitor's to fix; anything else stays a
- * safe analysis failure.
- */
-function mapModelError(error: unknown): never {
-  if (error instanceof Error) {
-    if (/status 401|status 403/.test(error.message)) {
-      throw new EvidenceInputError("invalid_api_key", "OpenAI rejected the API key. Check that the key is active and has access to the configured model.", 401);
-    }
-    if (/status 429/.test(error.message)) {
-      throw new EvidenceInputError("openai_quota", "OpenAI reported a rate or spending limit for this API key. Check the key's usage limits and try again.", 400);
-    }
-  }
-  throw error;
-}
-
-/**
- * Chooses the current-practice pack for a field. A curated pack wins when the
- * field matches one; otherwise, when a key is available, NotZero synthesizes a
- * pack for that field with GPT-5.6 (labeled generated) so any field returns a
- * full result. Without a key, or when generation fails for a non-key reason, the
- * analysis stays at the honest evidence ledger. Key and quota failures surface so
- * the visitor can fix them.
- */
-async function resolvePracticePack(fieldContext: FieldContext, apiKey: string | null, config: ServerConfig): Promise<CurrentPracticePack | null> {
-  const curated = selectCurrentPracticePack(fieldContext);
-  if (curated) return curated;
-  if (!apiKey) return null;
-  try {
-    return await generateGroundedPracticePack({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, fieldContext, enableJobSearch: config.jobSearchEnabled });
-  } catch (error) {
-    if (error instanceof Error && /status 401|status 403|status 429/.test(error.message)) mapModelError(error);
-    return null;
-  }
 }
 
 /**
@@ -163,6 +113,10 @@ async function advanceLeasedJob(jobId: string, sessionHash: string, apiKey: stri
     const storedPack = next.state.pack?.generated ? next.state.pack : undefined;
     await putCachedResult(next.state.cacheKey, sessionHash, JSON.stringify({ ledger: next.state.ledger, report: next.state.report, pack: storedPack }), Date.now(), config.cacheTtlSeconds);
   }
+  // A completed job has no more model work, so drop any in-memory visitor key
+  // now rather than holding it until the hourly sweep. A failed job keeps its
+  // key so a retry does not have to re-supply it.
+  if (next.status === "completed") forgetJobKey(jobId);
   return next;
 }
 
@@ -275,7 +229,6 @@ export async function POST(request: Request) {
     if (contentLength > EVIDENCE_LIMITS.totalBytes + 1_000_000) throw new EvidenceInputError("request_size", "The complete request must be smaller than 9 MB.", 413);
     const form = await request.formData();
     if (text(form, "mode") === "prepared") {
-      if (text(form, "deferComparison") === "true") return json({ status: "review", analysisId: "prepared", ledger: alexEvidenceLedger });
       return json({ status: "completed", ledger: alexEvidenceLedger, report: alexBridgeReport });
     }
 
@@ -286,51 +239,6 @@ export async function POST(request: Request) {
     const now = Date.now();
     const usage = await recordSessionRequest(session.hash, now, config.sessionRequestLimit);
     if (!usage.allowed) throw new EvidenceInputError("request_limit", "This anonymous session has reached its daily analysis-request limit. Try again after the daily window resets.", 429);
-
-    if (text(form, "action") === "compare") {
-      const analysisId = text(form, "analysisId");
-      const excludedClaimIds = excludedClaims(form);
-      if (analysisId === "prepared") {
-        assertKnownExclusions(excludedClaimIds, alexEvidenceLedger);
-        const pack = selectCurrentPracticePack(alexEvidenceLedger.fieldContext);
-        if (!pack) throw new EvidenceInputError("unsupported_field", "A reviewed current-practice pack is not available for this evidence context.", 422);
-        const reviewed = applyEvidenceReview(alexEvidenceLedger, alexBridgeReport, excludedClaimIds, pack);
-        return json({ status: reviewed.report ? "completed" : "partial", ...reviewed }, 200, setCookie);
-      }
-      if (!/^[a-f0-9]{64}$/.test(analysisId)) throw new EvidenceInputError("invalid_review", "This evidence review has expired or is invalid.", 400);
-      const cached = await getSessionCachedResult(analysisId, session.hash, now);
-      if (!cached) throw new EvidenceInputError("review_expired", "This evidence review expired. Upload the evidence again to restart safely.", 410);
-      const stored = JSON.parse(cached.responseJson) as { ledger?: unknown; report?: unknown };
-      const originalLedger = evidenceLedgerSchema.parse(stored.ledger ?? stored);
-      assertKnownExclusions(excludedClaimIds, originalLedger);
-      const ledger = reviewedLedger(originalLedger, excludedClaimIds);
-      if (ledger.claims.length === 0) return json({ status: "partial", ledger }, 200, setCookie);
-      const curatedPack = selectCurrentPracticePack(ledger.fieldContext);
-      if (stored.report && curatedPack) {
-        const reviewed = applyEvidenceReview(originalLedger, knowledgeBridgeReportSchema.parse(stored.report), excludedClaimIds, curatedPack);
-        return json({ status: reviewed.report ? "completed" : "partial", ...reviewed }, 200, setCookie);
-      }
-      if (!keyContext.apiKey) throw new EvidenceInputError("live_disabled", "Live GPT-5.6 comparison needs an OpenAI API key. Add your key and try again.", 503);
-      const reviewHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(excludedClaimIds.sort().join("\n"))).then((value) => Buffer.from(value).toString("hex"));
-      const variantKey = `${analysisId}:${reviewHash}`;
-      const cachedVariant = await getSessionCachedResult(variantKey, session.hash, now);
-      if (cachedVariant) {
-        const variant = JSON.parse(cachedVariant.responseJson) as { ledger?: unknown; report?: unknown; pack?: unknown };
-        return json({ status: "completed", ledger: evidenceLedgerSchema.parse(variant.ledger), report: knowledgeBridgeReportSchema.parse(variant.report), pack: variant.pack ? currentPracticePackSchema.parse(variant.pack) : undefined }, 200, setCookie, "hit");
-      }
-      if (keyContext.usingServerKey) {
-        const reservation = await reserveLiveAnalysis(session.hash, now, config.sessionLiveLimit, config.globalLiveLimit, `live-comparison:${config.analysisVersion}`);
-        if (!reservation.allowed) throw new EvidenceInputError(reservation.reason, reservation.reason === "session_limit" ? "This anonymous session has reached its daily live-analysis limit." : "Live analysis is temporarily paused by the deployment-wide spending circuit breaker.", 429);
-      }
-      const pack = await resolvePracticePack(ledger.fieldContext, keyContext.apiKey, config);
-      if (!pack) return json({ status: "partial", ledger }, 200, setCookie);
-      const baseReport = await compareWithGpt56({ apiKey: keyContext.apiKey, model: config.model, reasoningEffort: config.reasoningEffort, ledger, pack, analysisVersion: config.analysisVersion }).catch(mapModelError);
-      let report = (await enrichWithSolutionLayer({ apiKey: keyContext.apiKey, model: config.model, reasoningEffort: config.reasoningEffort, ledger, report: baseReport, pack })).report;
-      if (pack.generated) report = finalizeGeneratedReport(report, pack);
-      const storedPack = pack.generated ? pack : undefined;
-      await putCachedResult(variantKey, session.hash, JSON.stringify({ ledger, report, pack: storedPack }), now, config.cacheTtlSeconds);
-      return json({ status: "completed", ledger, report, pack: storedPack }, 200, setCookie, "miss");
-    }
 
     // The visitor supplies only where they are. The field and target role are
     // inferred from the evidence during extraction, so the answer is never typed
@@ -394,7 +302,6 @@ export async function POST(request: Request) {
         await createJob(job, now, config.cacheTtlSeconds);
         return jobResponse(job, setCookie, "hit");
       }
-      if (text(form, "deferComparison") === "true" && ledger.claims.length > 0) return json({ status: "review", analysisId: cacheKey, ledger }, 200, setCookie, "hit");
       return json({ status: "cached", ledger, report, pack }, 200, setCookie, "hit");
     }
 

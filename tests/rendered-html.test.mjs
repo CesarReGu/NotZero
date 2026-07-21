@@ -123,29 +123,6 @@ test("prepared fixture becomes a provenance-aware evidence ledger", async () => 
   assert.ok(body.report.codeBridges.every((bridge) => bridge.comparisonState !== "verified"));
 });
 
-test("prepared evidence can be reviewed before the comparison without another upload", async () => {
-  const reviewForm = new FormData();
-  reviewForm.set("mode", "prepared");
-  reviewForm.set("deferComparison", "true");
-  const reviewResponse = await request("/api/evidence-ledger", { method: "POST", body: reviewForm });
-  assert.equal(reviewResponse.status, 200);
-  const review = await reviewResponse.json();
-  assert.equal(review.status, "review");
-  assert.equal(review.report, undefined);
-  assert.ok(review.ledger.claims.length > 1);
-
-  const compareForm = new FormData();
-  compareForm.set("action", "compare");
-  compareForm.set("analysisId", review.analysisId);
-  compareForm.set("excludedClaimIds", JSON.stringify([review.ledger.claims[0].id]));
-  const compareResponse = await request("/api/evidence-ledger", { method: "POST", body: compareForm });
-  assert.equal(compareResponse.status, 200);
-  const compared = await compareResponse.json();
-  assert.equal(compared.status, "completed");
-  assert.equal(compared.ledger.claims.some((claim) => claim.id === review.ledger.claims[0].id), false);
-  assert.ok(compared.report.findings.every((finding) => !finding.evidenceClaimIds.includes(review.ledger.claims[0].id)));
-});
-
 function customEvidenceForm() {
   const form = new FormData();
   form.set("mode", "custom");

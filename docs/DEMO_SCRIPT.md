@@ -18,13 +18,13 @@ Narration:
 
 > NotZero reads dated academic work and a bounded project, extracts only what the evidence supports, and compares that foundation with a reviewed current-practice pack. The mechanism can serve multiple fields, while this submitted vertical slice is deliberately validated for recent software graduates.
 
-## 0:40 to 1:05. Evidence review
+## 0:40 to 1:05. Evidence, on the record
 
-On screen: open Alex's prepared profile, continue through the target, build the bridge, and pause at the evidence checkpoint. Open one claim, then leave every claim included.
+On screen: open Alex's prepared profile, continue through the target, and build the bridge in one step. When the report lands, open the evidence appendix and one claim's excerpt.
 
 Narration:
 
-> Alex is fictional, so judges can test the complete path without an account or private upload. Before comparison, the user reviews each extracted claim. They can reject an inference, and the comparison runs only on the included evidence without another upload.
+> Alex is fictional, so judges can test the complete path without an account or private upload. There is no busywork between upload and result. Every conclusion stays traceable: the report carries the full evidence ledger, and each claim shows its evidence class, confidence, and the exact excerpt it rests on, quoted verbatim from the file.
 
 ## 1:05 to 1:35. Decision first
 

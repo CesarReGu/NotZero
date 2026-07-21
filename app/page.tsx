@@ -84,7 +84,7 @@ export default function Home() {
         <div className="page-shell method-band-grid">
           <div data-animate="1"><p className="eyebrow">Why re-running it matters</p><h2>The answer carries a date, because the market it reads does.</h2></div>
           <div data-animate="2">
-            <p>Most study plans get written once and then age quietly on a page. NotZero measures your evidence against job postings and documentation gathered the week it runs. Bring the same project back in six months and the shortest bridge can change, because the tools teams reach for will have moved. A fixed course cannot do that. It repeats the answer it was given, long after the answer stopped being current.</p>
+            <p>Most study plans get written once and then age quietly on a page. NotZero measures your evidence against dated job postings and documentation, each carrying the day it was observed, and it re-derives the answer every run: the reviewed software pack is re-observed on a schedule, and a field without a reviewed pack is compared against postings located live at that moment. Bring the same project back once the sources have moved and the shortest bridge can change, because the tools teams reach for will have moved. A fixed course cannot do that. It repeats the answer it was given, long after the answer stopped being current.</p>
             <p className="living-band-close">This is the part a static website cannot copy: a plan built from what your field is asking for today, dated so you always know how fresh it is.</p>
           </div>
         </div>

@@ -179,8 +179,6 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   // straight to the report view.
   const [pack, setPack] = useState<CurrentPracticePack | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
-  const [analysisId, setAnalysisId] = useState("");
-  const [excludedClaimIds, setExcludedClaimIds] = useState<string[]>([]);
   const [revealStep, setRevealStep] = useState(-1);
   const [error, setError] = useState("");
   const [openFile, setOpenFile] = useState<OpenFile | null>(null);
@@ -271,28 +269,6 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   useEffect(() => () => revealTimersRef.current.forEach((timer) => window.clearTimeout(timer)), []);
 
   useEffect(() => { apiKeyRef.current = apiKey; }, [apiKey]);
-
-  // On load, resume a live job left running by a previous visit (a refresh, a
-  // closed tab, or navigation away and back). The server kept the job going, so
-  // the first poll restores its current progress or finished result. The restore
-  // happens in an async callback (like the capability probe below) so the mount
-  // effect stays free of a synchronous cascading render and hydration mismatch.
-  useEffect(() => {
-    const storedJobId = readPersistedJobId();
-    if (!storedJobId) return;
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (cancelled) return;
-      setMode("custom");
-      setJobId(storedJobId);
-      setLiveStep(0);
-      setAnalysisState("loading");
-      startPolling(storedJobId);
-    });
-    return () => { cancelled = true; };
-    // Runs once on mount; the poll loop is keyed by a token, not deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Stop any running poll loop when the component unmounts so it does not keep
   // fetching after the page is gone. The server job is unaffected and resumes on
@@ -402,8 +378,6 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setLedger(null);
     setReport(null);
     setPack(null);
-    setAnalysisId("");
-    setExcludedClaimIds([]);
     setJobId("");
     setLiveStep(0);
     setJobFailure("");
@@ -555,6 +529,30 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     startPolling(jobId, true);
   }
 
+  // On load, resume a live job left running by a previous visit (a refresh, a
+  // closed tab, or navigation away and back). The server kept the job going, so
+  // the first poll restores its current progress or finished result. The restore
+  // happens in an async callback (like the capability probe) so the mount effect
+  // stays free of a synchronous cascading render and hydration mismatch. It is
+  // declared here, after startPolling, so the poll loop it starts is already in
+  // scope.
+  useEffect(() => {
+    const storedJobId = readPersistedJobId();
+    if (!storedJobId) return;
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      setMode("custom");
+      setJobId(storedJobId);
+      setLiveStep(0);
+      setAnalysisState("loading");
+      startPolling(storedJobId);
+    });
+    return () => { cancelled = true; };
+    // Runs once on mount; the poll loop is keyed by a token, not deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function analyze() {
     stopPolling();
     clearRevealTimers();
@@ -633,36 +631,6 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     }
   }
 
-  async function compareReviewedEvidence() {
-    if (!ledger || !analysisId) return;
-    setAnalysisState("loading");
-    setError("");
-    try {
-      const form = new FormData();
-      form.set("action", "compare");
-      form.set("analysisId", analysisId);
-      form.set("excludedClaimIds", JSON.stringify(excludedClaimIds));
-      const response = await fetch("/api/evidence-ledger", {
-        method: "POST",
-        body: form,
-        headers: mode === "custom" && apiKey ? { "X-OpenAI-Key": apiKey } : undefined,
-      });
-      const body = await response.json() as { ledger?: EvidenceLedger; report?: KnowledgeBridgeReport; pack?: CurrentPracticePack; message?: string; error?: string };
-      if (!response.ok || !body.ledger) {
-        if (isLimitFailure(response.status, body.error)) { setError(body.message || "The comparison limit was reached."); setAnalysisState("limit"); return; }
-        throw new Error(body.message || "The reviewed evidence could not be compared.");
-      }
-      setLedger(body.ledger);
-      setReport(body.report ?? null);
-      setPack(body.pack ?? null);
-      setAnalysisState(classifyAnalysisResult(body.ledger, body.report));
-      if (body.report) playReveal();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The reviewed evidence could not be compared.");
-      setAnalysisState("error");
-    }
-  }
-
   async function resetAnalysis() {
     stopPolling();
     clearRevealTimers();
@@ -676,8 +644,6 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setLedger(null);
     setReport(null);
     setPack(null);
-    setAnalysisId("");
-    setExcludedClaimIds([]);
     setJobId("");
     setLiveStep(0);
     setJobFailure("");
@@ -850,7 +816,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
                   {(capability?.allowUserKeys ?? true) && <button type="button" className="button button-secondary" onClick={(event) => openKeyPanel(event.currentTarget)}>Add your OpenAI API key</button>}
                 </>
               ) : (
-                <p>This runs on the server and keeps going if you navigate away, refresh, or close the tab. Return any time to pick up where it is. Each stage is marked complete only after a validated result returns.</p>
+                <p>This runs on the server, so you can navigate away, refresh, or close the tab and return to pick up from the last completed stage. It also keeps advancing between polls on its own, and each stage is marked complete only after a validated result returns.</p>
               )}
             </div>
             <AnalysisPipeline loading={liveStep <= 0} revealStep={liveStep} />
@@ -880,7 +846,6 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             )}
           </div>}
           {analysisState === "partial" && <div className="analysis-state analysis-partial" role="status" ref={statusRef} tabIndex={-1}><strong>Your evidence ledger is ready. The market bridge is still incomplete.</strong><p>Review the extracted claims below. A current-practice comparison could not be completed for this field and context in this run.</p></div>}
-          {analysisState === "review" && ledger && <section className="evidence-review" aria-labelledby="evidence-review-title"><p className="eyebrow">Evidence checkpoint</p><h3 id="evidence-review-title">Keep only the claims that reflect your experience</h3><p>Every extracted claim is included by default. Exclude anything that feels unsupported, then build the market comparison from the remaining evidence.</p><p className="detected-field" role="note"><span>Read from your evidence</span> <strong>{ledger.fieldContext.field}</strong> — closest current role: <strong>{ledger.fieldContext.targetTitle}</strong></p><fieldset><legend>Claims to include</legend>{ledger.claims.map((claim) => { const excluded = excludedClaimIds.includes(claim.id); return <label key={claim.id}><input type="checkbox" checked={!excluded} onChange={() => setExcludedClaimIds((items) => excluded ? items.filter((id) => id !== claim.id) : [...items, claim.id])} /><span><strong>{claim.title}</strong><small>{claim.evidenceClass.replaceAll("_", " ")} · {claim.confidence} confidence</small><p>{claim.statement}</p></span></label>; })}</fieldset><div className="evidence-review-actions"><span>{ledger.claims.length - excludedClaimIds.length} of {ledger.claims.length} claims included</span><button className="button button-primary" type="button" onClick={compareReviewedEvidence} disabled={excludedClaimIds.length === ledger.claims.length}>Compare included evidence</button></div></section>}
           {analysisState === "completed" && !revealing && <div className="analysis-state analysis-complete screen-only" role="status" ref={statusRef} tabIndex={-1}><strong>The Knowledge Bridge is ready.</strong><p>Start with the verdict, then open any conclusion to inspect its evidence and learning delta.</p></div>}
 
           {ledger && <div className="prepared-result" data-reveal-state={revealing ? "playing" : "complete"} ref={resultRef} tabIndex={-1}>
@@ -916,9 +881,10 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
           <div className="key-facts">
             <h5>What happens with the key</h5>
             <ul>
-              <li>It stays in this browser tab and is sent only with your analysis requests over HTTPS. NotZero never stores or logs it.</li>
+              <li>It stays in this browser tab and is sent only with your analysis requests over HTTPS. NotZero never writes it to its database or logs.</li>
+              <li>While your analysis is running it is held in server memory so the job can keep moving between polls. That copy is dropped when the job finishes or you reset, and within an hour at the latest.</li>
               <li>The server uses it for three schema-constrained GPT-5.6 Luna calls: evidence extraction, market comparison, and the guided program.</li>
-              <li>Closing the tab or selecting Remove forgets the key.</li>
+              <li>Closing the tab or selecting Remove forgets the browser copy. The server copy is dropped when the job finishes or you reset.</li>
             </ul>
             <h5>Cost and account</h5>
             <ul>

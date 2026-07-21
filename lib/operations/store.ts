@@ -254,10 +254,14 @@ export async function deleteSessionJobs(sessionHash: string) {
   const database = getOperationalDatabase();
   if (!database) {
     const memory = memoryState();
-    for (const [key, value] of memory.jobs) if (value.sessionHash === sessionHash) memory.jobs.delete(key);
+    for (const [key, value] of memory.jobs) if (value.sessionHash === sessionHash) { forgetJobKey(key); memory.jobs.delete(key); }
     return;
   }
   await ensureDatabase(database);
+  // Drop any in-memory visitor key for these jobs at reset time, rather than
+  // leaving it for the hourly sweep, so a reset forgets the key at that moment.
+  const rows = await database.prepare("SELECT job_id FROM analysis_jobs WHERE session_hash = ?").bind(sessionHash).all();
+  for (const row of (rows.results ?? []) as Array<{ job_id?: unknown }>) if (typeof row.job_id === "string") forgetJobKey(row.job_id);
   await database.prepare("DELETE FROM analysis_jobs WHERE session_hash = ?").bind(sessionHash).run();
 }
 
