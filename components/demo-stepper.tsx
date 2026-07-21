@@ -929,7 +929,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
               )}
             </div>
             <AnalysisPipeline loading={liveStep <= 0} revealStep={liveStep} />
-            {DEBUG_DOWNLOAD_LOG && <div className="analysis-debug-actions"><span>Temporary diagnostics are on for this run.</span><button type="button" className="button button-secondary" onClick={downloadDebugLog}>Download log ({debugEvents.length})</button></div>}
+            {DEBUG_DOWNLOAD_LOG && <div className="analysis-debug-actions"><span>Temporary diagnostics are on for this run.</span><button type="button" className="button button-secondary" onClick={downloadDebugLog}>Download Log ({debugEvents.length})</button></div>}
           </div>}
           {analysisState === "error" && <div className="analysis-state analysis-error" role="alert" ref={statusRef} tabIndex={-1}>
             <strong>We could not complete the analysis.</strong>
@@ -942,7 +942,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             ) : (
               <span>Your selected files remain in this browser so you can correct the issue and try again.</span>
             )}
-            {DEBUG_DOWNLOAD_LOG && <div className="analysis-debug-actions"><span>Include this redacted trace when reporting the failure.</span><button type="button" className="button button-secondary" onClick={downloadDebugLog}>Download log ({debugEvents.length})</button></div>}
+            {DEBUG_DOWNLOAD_LOG && <div className="analysis-debug-actions"><span>Include this redacted trace when reporting the failure.</span><button type="button" className="button button-secondary" onClick={downloadDebugLog}>Download Log ({debugEvents.length})</button></div>}
           </div>}
           {analysisState === "limit" && <div className="analysis-state analysis-limit" role="alert" ref={statusRef} tabIndex={-1}><strong>This evidence set is outside the prototype limits.</strong><p>{error}</p><span>Reduce the bounded evidence set and try again.</span></div>}
           {analysisState === "empty" && <div className="analysis-state analysis-empty" role="status" ref={statusRef} tabIndex={-1}>
