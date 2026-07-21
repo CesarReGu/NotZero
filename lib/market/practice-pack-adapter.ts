@@ -11,6 +11,7 @@ import {
 } from "@/lib/domain/schemas";
 import { validatePracticePack } from "@/lib/market/current-practice";
 import type { ReasoningEffort } from "@/lib/config/server";
+import type { ModelTraceSink } from "@/lib/openai/trace";
 import { isTerminalKeyError, readResponseOutputText, requestResponses } from "@/lib/openai/responses";
 import { scanJobPostingsWithGpt56, type JobPostingScan } from "@/lib/market/job-postings-adapter";
 
@@ -323,6 +324,7 @@ export async function generatePracticePackWithGpt56(args: {
   fieldContext: FieldContext;
   fetcher?: typeof fetch;
   now?: Date;
+  trace?: ModelTraceSink;
 }): Promise<CurrentPracticePack> {
   const fetcher = args.fetcher ?? fetch;
   const body = JSON.stringify({
@@ -346,7 +348,7 @@ export async function generatePracticePackWithGpt56(args: {
 
   for (let attempt = 0; attempt < PRACTICE_PACK_ATTEMPTS; attempt += 1) {
     try {
-      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "practice-pack generation", body });
+      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "practice-pack generation", body, trace: args.trace });
       const model = generatedPackSchema.parse(JSON.parse(readResponseOutputText(raw)));
       return assembleGeneratedPack(model, args.fieldContext, args.now);
     } catch (error) {
@@ -543,6 +545,7 @@ export async function synthesizeGroundedPack(args: {
   reasoningEffort?: ReasoningEffort;
   scan: JobPostingScan;
   fetcher?: typeof fetch;
+  trace?: ModelTraceSink;
 }): Promise<CurrentPracticePack> {
   const fetcher = args.fetcher ?? fetch;
   const fieldContext: FieldContext = { field: args.scan.field, targetTitle: args.scan.targetTitle, location: args.scan.location };
@@ -569,7 +572,7 @@ export async function synthesizeGroundedPack(args: {
 
   for (let attempt = 0; attempt < PRACTICE_PACK_ATTEMPTS; attempt += 1) {
     try {
-      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "grounded practice-pack synthesis", body });
+      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "grounded practice-pack synthesis", body, trace: args.trace });
       const grounded = groundedSynthesisSchema.parse(JSON.parse(readResponseOutputText(raw)));
       return assembleGroundedPack(args.scan, grounded, fieldContext);
     } catch (error) {
@@ -596,25 +599,28 @@ export async function generateGroundedPracticePack(args: {
   enableJobSearch?: boolean;
   fetcher?: typeof fetch;
   now?: Date;
+  searchModel?: string;
+  searchReasoningEffort?: ReasoningEffort;
+  trace?: ModelTraceSink;
 }): Promise<CurrentPracticePack> {
   if (args.enableJobSearch !== false) {
     let scan: JobPostingScan | null = null;
     try {
-      scan = await scanJobPostingsWithGpt56({ apiKey: args.apiKey, model: args.model, reasoningEffort: args.reasoningEffort, fieldContext: args.fieldContext, fetcher: args.fetcher, now: args.now });
+      scan = await scanJobPostingsWithGpt56({ apiKey: args.apiKey, model: args.searchModel ?? args.model, reasoningEffort: args.searchReasoningEffort ?? "low", fieldContext: args.fieldContext, fetcher: args.fetcher, now: args.now, trace: args.trace });
     } catch (error) {
       if (isTerminalKeyError(error)) throw error;
       scan = null;
     }
     if (scan) {
       try {
-        return await synthesizeGroundedPack({ apiKey: args.apiKey, model: args.model, reasoningEffort: args.reasoningEffort, scan, fetcher: args.fetcher });
+        return await synthesizeGroundedPack({ apiKey: args.apiKey, model: args.model, reasoningEffort: args.reasoningEffort, scan, fetcher: args.fetcher, trace: args.trace });
       } catch (error) {
         if (isTerminalKeyError(error)) throw error;
         // A non-key grounded failure falls through to the archetype pack below.
       }
     }
   }
-  return generatePracticePackWithGpt56({ apiKey: args.apiKey, model: args.model, reasoningEffort: args.reasoningEffort, fieldContext: args.fieldContext, fetcher: args.fetcher, now: args.now });
+  return generatePracticePackWithGpt56({ apiKey: args.apiKey, model: args.model, reasoningEffort: args.reasoningEffort, fieldContext: args.fieldContext, fetcher: args.fetcher, now: args.now, trace: args.trace });
 }
 
 const downgradeComparisonState = (state: ComparisonState): ComparisonState => (state === "verified" ? "illustrative" : state);

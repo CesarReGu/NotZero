@@ -9,6 +9,11 @@ export async function GET() {
     liveAnalysisEnabled: config.liveAnalysisEnabled,
     allowUserKeys: config.allowUserKeys,
     model: config.model,
+    fastModel: config.fastModel,
+    searchModel: config.searchModel,
+    reasoningEffort: config.reasoningEffort,
+    fastReasoningEffort: config.fastReasoningEffort,
+    searchReasoningEffort: config.searchReasoningEffort,
     operationalControls: {
       sessionRequestLimit: config.sessionRequestLimit,
       sessionLiveLimit: config.sessionLiveLimit,

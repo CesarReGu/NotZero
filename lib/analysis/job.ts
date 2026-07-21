@@ -6,7 +6,8 @@ import type {
   LocationContext,
 } from "@/lib/domain/schemas";
 import type { ExtractedSource } from "@/lib/evidence/files";
-import { isRetryableModelError, isTerminalKeyError, OpenAiRequestError } from "@/lib/openai/responses";
+import { isAutoRetryableModelError, isTerminalKeyError, OpenAiRequestError } from "@/lib/openai/responses";
+import type { ModelTraceEvent } from "@/lib/openai/trace";
 
 /**
  * The live analysis is a persistent, resumable server-side job rather than a
@@ -27,11 +28,13 @@ export type JobOutcome = "report" | "ledger_only";
 // The order stages run in. `done` is terminal.
 export const JOB_STAGE_SEQUENCE: readonly JobStage[] = ["extract", "pack", "compare", "solve", "done"] as const;
 
-// Each stage gets a small number of automatic attempts for transient failures
-// (a truncated response, a 5xx). A key or spending problem never retries; a
-// persistent malformed result stops after the first attempt and is recorded so
-// the visitor can retry it themselves without repeating earlier stages.
+// Each stage gets a small number of automatic attempts for transport failures
+// and recoverable formatting slips. A token-limit truncation or request timeout
+// is recorded immediately because resending the same paid request can consume
+// the same budget again. A visitor can retry after the route or evidence is
+// changed, without repeating earlier stages.
 export const MAX_STAGE_ATTEMPTS = 2;
+export const MAX_DEBUG_TRACE_EVENTS = 80;
 
 export type JobErrorCode =
   | "key_or_quota"
@@ -66,6 +69,7 @@ export type JobState = {
   outcome?: JobOutcome;
   error?: JobError | null;
   attempts: Partial<Record<JobStage, number>>;
+  debugTrace: ModelTraceEvent[];
 };
 
 export type Job = {
@@ -112,6 +116,7 @@ export function initialJobState(input: {
     inputWarnings: input.inputWarnings,
     attempts: {},
     error: null,
+    debugTrace: [],
   };
 }
 
@@ -192,7 +197,7 @@ export async function advanceJob(job: Job, runners: StageRunners, now: number): 
     const attempts = (state.attempts[stage] ?? 0) + 1;
     state.attempts = { ...state.attempts, [stage]: attempts };
     const recorded = stageError(stage, error);
-    const canAutoRetry = recorded.retryable && isRetryableModelError(error) && attempts < MAX_STAGE_ATTEMPTS;
+    const canAutoRetry = recorded.retryable && isAutoRetryableModelError(error) && attempts < MAX_STAGE_ATTEMPTS;
     if (canAutoRetry) {
       // Leave the job on the same stage; the next advance retries it. No earlier
       // stage is repeated because their outputs are already checkpointed.

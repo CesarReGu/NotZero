@@ -10,7 +10,7 @@ import {
   type Job,
   type StageRunners,
 } from "../lib/analysis/job";
-import { isRetryableModelError, isTerminalKeyError, ModelOutputError, OpenAiRequestError, readResponseOutputText, requestResponses } from "../lib/openai/responses";
+import { isAutoRetryableModelError, isRetryableModelError, isTerminalKeyError, ModelOutputError, OpenAiRequestError, readResponseOutputText, requestResponses } from "../lib/openai/responses";
 import {
   acquireJobLease,
   createJob,
@@ -68,6 +68,8 @@ test("a truncated response is a retryable model error, not an opaque failure", (
     assert.ok(error instanceof ModelOutputError);
     assert.equal(error.reason, "incomplete");
     assert.equal(error.retryable, true);
+    assert.equal(error.autoRetryable, false);
+    assert.equal(isAutoRetryableModelError(error), false);
     assert.equal(isRetryableModelError(error), true);
   }
 });
@@ -86,6 +88,12 @@ test("a refusal is a non-retryable model error", () => {
 test("upstream 5xx is retryable and a bare 429 is not", () => {
   assert.equal(isRetryableModelError(new Error("OpenAI analysis failed with status 503.")), true);
   assert.equal(isRetryableModelError(new Error("OpenAI analysis failed with status 429.")), false);
+});
+
+test("a request timeout is surfaced for manual retry instead of an automatic resend", () => {
+  const error = new OpenAiRequestError("timed out", 408, "request_timeout", true);
+  assert.equal(error.retryable, true);
+  assert.equal(isAutoRetryableModelError(error), false);
 });
 
 // --- Rate-limit vs. quota handling in the shared request helper -------------
@@ -124,6 +132,31 @@ test("a rate limit that never clears is surfaced as retryable, not a terminal ke
     () => requestResponses({ fetcher, apiKey: "k", body: "{}", label: "pack", sleep: async () => {}, maxRateLimitRetries: 2 }),
     (error: unknown) => error instanceof OpenAiRequestError && error.retryable === true && isRetryableModelError(error) && !isTerminalKeyError(error),
   );
+});
+
+test("model diagnostics capture status and usage without response content", async () => {
+  const events: Array<Record<string, unknown>> = [];
+  const raw = await requestResponses({
+    fetcher: async () => jsonResponse({
+      id: "resp_debug",
+      status: "incomplete",
+      incomplete_details: { reason: "max_output_tokens" },
+      output: [],
+      usage: { input_tokens: 120, output_tokens: 32000, total_tokens: 32120, output_tokens_details: { reasoning_tokens: 30000 } },
+    }),
+    apiKey: "k",
+    body: JSON.stringify({ model: "gpt-5.6-luna", reasoning: { effort: "medium" }, max_output_tokens: 32000, input: "private prompt", text: { format: { type: "json_schema" } } }),
+    label: "debug-stage",
+    trace: (event) => events.push(event),
+  });
+  assert.equal((raw as { status?: string }).status, "incomplete");
+  const response = events.find((event) => event.kind === "response");
+  assert.equal(response?.responseStatus, "incomplete");
+  assert.equal(response?.incompleteReason, "max_output_tokens");
+  assert.equal(response?.usage && (response.usage as { reasoningTokens?: number }).reasoningTokens, 30000);
+  assert.equal((events.find((event) => event.kind === "request") as { maxOutputTokens?: number })?.maxOutputTokens, 32000);
+  assert.equal("private prompt" in response!, false);
+  assert.equal(events.some((event) => event.kind === "request" && event.requestBytes), true);
 });
 
 test("a stalled rate limit fails the stage as retryable, distinct from a rejected key", async () => {

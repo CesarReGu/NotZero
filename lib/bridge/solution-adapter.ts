@@ -14,6 +14,7 @@ import {
 } from "@/lib/domain/schemas";
 import type { ReasoningEffort } from "@/lib/config/server";
 import { readResponseOutputText, requestResponses } from "@/lib/openai/responses";
+import type { ModelTraceSink } from "@/lib/openai/trace";
 
 export const SOLUTION_PROMPT_VERSION = "solution-layer.v1";
 // The roadmap with curriculum modules and exercises is the largest structured
@@ -413,6 +414,7 @@ export async function solveWithGpt56(args: {
   report: KnowledgeBridgeReport;
   pack: CurrentPracticePack;
   fetcher?: typeof fetch;
+  trace?: ModelTraceSink;
 }): Promise<SolutionLayer> {
   const fetcher = args.fetcher ?? fetch;
   const condensedFindings = args.report.findings.map((finding) => ({
@@ -430,6 +432,7 @@ export async function solveWithGpt56(args: {
     fetcher,
     apiKey: args.apiKey,
     label: "solution layer",
+    trace: args.trace,
     body: JSON.stringify({
       model: args.model,
       prompt_cache_key: "notzero-solution-layer-v1",
@@ -482,6 +485,7 @@ export async function enrichWithSolutionLayer(args: {
   report: KnowledgeBridgeReport;
   pack: CurrentPracticePack;
   fetcher?: typeof fetch;
+  trace?: ModelTraceSink;
 }): Promise<{ report: KnowledgeBridgeReport; enriched: boolean }> {
   // One retry: schema-constrained output plus validation makes a second attempt
   // worthwhile, while keeping the spend bounded.

@@ -15,6 +15,8 @@ import { advanceJob, initialJobState, isTerminal, jobProgressStep, retryJob, typ
 import { analysisCacheKey, operationalSession } from "@/lib/operations/session";
 import { acquireJobLease, createJob, deleteSessionCache, deleteSessionJobs, forgetJobKey, getCachedResult, getJob, putCachedResult, recallJobKey, recordSessionRequest, rememberJobKey, reserveLiveAnalysis, saveJob } from "@/lib/operations/store";
 import { scheduleBackground } from "@/lib/operations/runtime";
+import { MAX_DEBUG_TRACE_EVENTS } from "@/lib/analysis/job";
+import type { ModelTraceEvent, ModelTraceSink } from "@/lib/openai/trace";
 
 export const runtime = "nodejs";
 
@@ -78,19 +80,19 @@ function resolveApiKey(request: Request, config: ServerConfig) {
  * recorded on the job and can be retried, instead of silently leaving the field
  * without a comparison.
  */
-function buildRunners(apiKey: string, config: ServerConfig): StageRunners {
+function buildRunners(apiKey: string, config: ServerConfig, trace?: ModelTraceSink): StageRunners {
   return {
     extract: ({ sources, locationContext, inputWarnings }) =>
-      extractWithGpt56({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, locationContext, sources, inputWarnings }),
+      extractWithGpt56({ apiKey, model: config.fastModel, reasoningEffort: config.fastReasoningEffort, locationContext, sources, inputWarnings, trace }),
     resolvePack: async (ledger) => {
       const curated = selectCurrentPracticePack(ledger.fieldContext);
       if (curated) return curated;
-      return generateGroundedPracticePack({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, fieldContext: ledger.fieldContext, enableJobSearch: config.jobSearchEnabled });
+      return generateGroundedPracticePack({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, searchModel: config.searchModel, searchReasoningEffort: config.searchReasoningEffort, fieldContext: ledger.fieldContext, enableJobSearch: config.jobSearchEnabled, trace });
     },
     compare: ({ ledger, pack }) =>
-      compareWithGpt56({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, ledger, pack, analysisVersion: config.analysisVersion }),
+      compareWithGpt56({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, ledger, pack, analysisVersion: config.analysisVersion, trace }),
     solve: async ({ ledger, baseReport, pack }) => {
-      let report = (await enrichWithSolutionLayer({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, ledger, report: baseReport, pack })).report;
+      let report = (await enrichWithSolutionLayer({ apiKey, model: config.model, reasoningEffort: config.reasoningEffort, ledger, report: baseReport, pack, trace })).report;
       if (pack.generated) report = finalizeGeneratedReport(report, pack);
       return report;
     },
@@ -107,17 +109,25 @@ async function advanceLeasedJob(jobId: string, sessionHash: string, apiKey: stri
   if (!acquired) return null;
   const job = await getJob(jobId, sessionHash, Date.now());
   if (!job || isTerminal(job)) return job;
-  const next = await advanceJob(job, buildRunners(apiKey, config), Date.now());
-  await saveJob(next, Date.now(), config.cacheTtlSeconds);
-  if (next.status === "completed" && next.state.report && next.state.cacheKey) {
-    const storedPack = next.state.pack?.generated ? next.state.pack : undefined;
-    await putCachedResult(next.state.cacheKey, sessionHash, JSON.stringify({ ledger: next.state.ledger, report: next.state.report, pack: storedPack }), Date.now(), config.cacheTtlSeconds);
+  const trace: ModelTraceEvent[] = [];
+  const next = await advanceJob(job, buildRunners(apiKey, config, (event) => trace.push(event)), Date.now());
+  const withTrace = trace.length === 0 ? next : {
+    ...next,
+    state: {
+      ...next.state,
+      debugTrace: [...(job.state.debugTrace ?? []), ...trace].slice(-MAX_DEBUG_TRACE_EVENTS),
+    },
+  };
+  await saveJob(withTrace, Date.now(), config.cacheTtlSeconds);
+  if (withTrace.status === "completed" && withTrace.state.report && withTrace.state.cacheKey) {
+    const storedPack = withTrace.state.pack?.generated ? withTrace.state.pack : undefined;
+    await putCachedResult(withTrace.state.cacheKey, sessionHash, JSON.stringify({ ledger: withTrace.state.ledger, report: withTrace.state.report, pack: storedPack }), Date.now(), config.cacheTtlSeconds);
   }
   // A completed job has no more model work, so drop any in-memory visitor key
   // now rather than holding it until the hourly sweep. A failed job keeps its
   // key so a retry does not have to re-supply it.
-  if (next.status === "completed") forgetJobKey(jobId);
-  return next;
+  if (withTrace.status === "completed") forgetJobKey(jobId);
+  return withTrace;
 }
 
 /**
@@ -136,7 +146,7 @@ async function driveJobInBackground(jobId: string, sessionHash: string, apiKey: 
 
 /** Shapes a job into the client contract. Progress and stage drive the pipeline UI. */
 function jobResponse(job: Job, setCookie: string | null, cacheStatus?: "hit" | "miss") {
-  const base = { jobId: job.id, stage: job.stage, progress: jobProgressStep(job) };
+  const base = { jobId: job.id, stage: job.stage, progress: jobProgressStep(job), debugTrace: job.state.debugTrace ?? [] };
   if (job.status === "failed") {
     return json({ ...base, status: "failed", error: job.state.error, ledger: job.state.ledger }, 200, setCookie, cacheStatus);
   }
@@ -275,8 +285,8 @@ export async function POST(request: Request) {
       analysisVersion: config.analysisVersion,
       promptVersions: ["evidence-extraction.v1", JOB_POSTINGS_SCAN_PROMPT_VERSION, GROUNDED_PACK_PROMPT_VERSION, BRIDGE_PROMPT_VERSION, SOLUTION_PROMPT_VERSION, "evidence-review.v1"],
       reportSchemaVersion: BRIDGE_REPORT_SCHEMA_VERSION,
-      model: config.model,
-      reasoningEffort: config.reasoningEffort,
+      model: `${config.fastModel}|${config.searchModel}|${config.model}`,
+      reasoningEffort: `${config.fastReasoningEffort}|${config.searchReasoningEffort}|${config.reasoningEffort}`,
       // Whether this request can run the live stages, regardless of whose key
       // enables them. Keyless preflight results must never satisfy a later
       // request that brings a key.

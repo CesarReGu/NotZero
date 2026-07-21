@@ -13,10 +13,12 @@
  * degrading the whole analysis into a confusing partial result.
  */
 
+import { createTraceEvent, safeTraceMessage, type ModelTraceSink } from "@/lib/openai/trace";
+
 export type ModelOutputReason = "incomplete" | "refusal" | "empty";
 
 export class ModelOutputError extends Error {
-  constructor(message: string, public reason: ModelOutputReason, public retryable: boolean) {
+  constructor(message: string, public reason: ModelOutputReason, public retryable: boolean, public autoRetryable = true) {
     super(message);
     this.name = "ModelOutputError";
   }
@@ -45,6 +47,9 @@ const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 // that wait so a single call stays well inside a stage lease.
 const DEFAULT_MAX_RATE_LIMIT_RETRIES = 3;
 const MAX_BACKOFF_MS = 4_000;
+// A stage lease is 180 seconds. Stop a stuck upstream request before that lease
+// expires so a second driver cannot start the same model call and spend twice.
+export const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
 
 const sleepReal = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, Math.max(0, ms)));
 
@@ -95,6 +100,49 @@ function retryDelayMs(response: Response, attempt: number): number {
   return Math.min(MAX_BACKOFF_MS, base + jitter);
 }
 
+function requestShape(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { model?: unknown; reasoning?: { effort?: unknown }; input?: unknown; max_output_tokens?: unknown; tools?: Array<{ type?: unknown }> };
+    const input = typeof parsed.input === "string" ? parsed.input.length : JSON.stringify(parsed.input ?? "").length;
+    return {
+      model: typeof parsed.model === "string" ? parsed.model : undefined,
+      reasoningEffort: typeof parsed.reasoning?.effort === "string" ? parsed.reasoning.effort : undefined,
+      inputCharacters: input,
+      maxOutputTokens: typeof parsed.max_output_tokens === "number" ? parsed.max_output_tokens : undefined,
+      tools: Array.isArray(parsed.tools) ? parsed.tools.map((tool) => typeof tool?.type === "string" ? tool.type : "unknown") : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function responseShape(body: unknown) {
+  const parsed = (body ?? {}) as {
+    id?: unknown;
+    status?: unknown;
+    incomplete_details?: { reason?: unknown } | null;
+    output?: Array<{ type?: unknown; content?: Array<{ type?: unknown; text?: unknown }> } | null> | null;
+    usage?: { input_tokens?: unknown; output_tokens?: unknown; total_tokens?: unknown; output_tokens_details?: { reasoning_tokens?: unknown } } | null;
+  };
+  const outputItems = Array.isArray(parsed.output) ? parsed.output : [];
+  const content = outputItems.flatMap((item) => Array.isArray(item?.content) ? item.content : []);
+  const outputTextCharacters = content.reduce((total, item) => total + (typeof item?.text === "string" ? item.text.length : 0), 0);
+  const usage = parsed.usage;
+  return {
+    responseId: typeof parsed.id === "string" ? parsed.id : undefined,
+    responseStatus: typeof parsed.status === "string" ? parsed.status : undefined,
+    incompleteReason: typeof parsed.incomplete_details?.reason === "string" ? parsed.incomplete_details.reason : undefined,
+    outputItemTypes: outputItems.flatMap((item) => typeof item?.type === "string" ? [item.type] : []).concat(content.flatMap((item) => typeof item?.type === "string" ? [item.type] : [])),
+    outputTextCharacters,
+    usage: usage ? {
+      inputTokens: typeof usage.input_tokens === "number" ? usage.input_tokens : undefined,
+      outputTokens: typeof usage.output_tokens === "number" ? usage.output_tokens : undefined,
+      reasoningTokens: typeof usage.output_tokens_details?.reasoning_tokens === "number" ? usage.output_tokens_details.reasoning_tokens : undefined,
+      totalTokens: typeof usage.total_tokens === "number" ? usage.total_tokens : undefined,
+    } : undefined,
+  };
+}
+
 /**
  * The one place every stage sends a Responses API request. It returns the parsed
  * JSON body on success and, on failure, either waits out a transient rate limit
@@ -110,16 +158,47 @@ export async function requestResponses(args: {
   label: string;
   sleep?: (ms: number) => Promise<void>;
   maxRateLimitRetries?: number;
+  timeoutMs?: number;
+  trace?: ModelTraceSink;
 }): Promise<unknown> {
   const sleep = args.sleep ?? sleepReal;
   const maxRetries = args.maxRateLimitRetries ?? DEFAULT_MAX_RATE_LIMIT_RETRIES;
+  const timeoutMs = args.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const shape = requestShape(args.body);
   for (let attempt = 0; ; attempt += 1) {
-    const response = await args.fetcher(OPENAI_RESPONSES_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
-      body: args.body,
-    });
-    if (response.ok) return await response.json();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const startedAt = Date.now();
+    args.trace?.(createTraceEvent({ kind: "request", label: args.label, model: shape.model, reasoningEffort: shape.reasoningEffort, attempt: attempt + 1, requestBytes: args.body.length, inputCharacters: shape.inputCharacters, maxOutputTokens: shape.maxOutputTokens, tools: shape.tools }));
+    let response: Response;
+    try {
+      response = await args.fetcher(OPENAI_RESPONSES_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
+        body: args.body,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        const message = `OpenAI ${args.label} timed out after ${timeoutMs}ms.`;
+        args.trace?.(createTraceEvent({ kind: "error", label: args.label, model: shape.model, reasoningEffort: shape.reasoningEffort, attempt: attempt + 1, durationMs: Date.now() - startedAt, errorCode: "request_timeout", retryable: true, message }));
+        throw new OpenAiRequestError(message, 408, "request_timeout", true);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+    if (response.ok) {
+      try {
+        const parsed = await response.json();
+        args.trace?.(createTraceEvent({ kind: "response", label: args.label, model: shape.model, reasoningEffort: shape.reasoningEffort, attempt: attempt + 1, status: response.status, durationMs: Date.now() - startedAt, ...responseShape(parsed) }));
+        return parsed;
+      } catch (error) {
+        const message = error instanceof Error ? safeTraceMessage(error.message) : "OpenAI returned an unreadable response.";
+        args.trace?.(createTraceEvent({ kind: "error", label: args.label, model: shape.model, reasoningEffort: shape.reasoningEffort, attempt: attempt + 1, status: response.status, durationMs: Date.now() - startedAt, errorCode: "invalid_json", retryable: true, message }));
+        throw new ModelOutputError("OpenAI returned an unreadable response.", "empty", true);
+      }
+    }
 
     const status = response.status;
     const raw = await response.text().catch(() => "");
@@ -128,6 +207,7 @@ export async function requestResponses(args: {
 
     if (rateLimited && attempt < maxRetries) {
       const wait = retryDelayMs(response, attempt);
+      args.trace?.(createTraceEvent({ kind: "retry", label: args.label, model: shape.model, reasoningEffort: shape.reasoningEffort, attempt: attempt + 1, status, durationMs: Date.now() - startedAt, waitMs: Math.round(wait), errorCode: code ?? type ?? "rate_limit", retryable: true, message: "Waiting before retrying a transient rate limit." }));
       console.warn(`[NotZero] ${args.label} rate-limited (429 ${code ?? type ?? "rate_limit"}); waiting ${Math.round(wait)}ms then retrying (${attempt + 1}/${maxRetries}).`);
       await sleep(wait);
       continue;
@@ -146,6 +226,7 @@ export async function requestResponses(args: {
       codeLabel,
       status >= 500 || rateLimited,
     );
+    args.trace?.(createTraceEvent({ kind: "error", label: args.label, model: shape.model, reasoningEffort: shape.reasoningEffort, attempt: attempt + 1, status, durationMs: Date.now() - startedAt, errorCode: codeLabel, retryable: error.retryable, message: safeTraceMessage(error.message) }));
     console.warn(`[NotZero] ${args.label} failed: ${status}${detail}.`);
     throw error;
   }
@@ -191,10 +272,11 @@ export function readResponseOutputText(body: unknown): string {
     const reason = parsed.incomplete_details?.reason ?? "unknown";
     throw new ModelOutputError(
       reason === "max_output_tokens"
-        ? "The model reached its output-token limit before completing the structured result. This is usually transient and safe to retry."
+        ? "The model reached its output-token limit before completing the structured result. Retry after the model route or output budget changes."
         : `The model stopped before completing the structured result (${reason}).`,
       "incomplete",
       true,
+      false,
     );
   }
 
@@ -218,9 +300,9 @@ export function readResponseOutputText(body: unknown): string {
 }
 
 /**
- * True when an error is worth another attempt with the same inputs: a truncated
- * or empty structured result, or a retryable upstream status (429 is excluded on
- * purpose because it means a rate or spending limit the caller must surface).
+ * True when a caller may try the request again: a truncated or empty structured
+ * result, or a retryable upstream status. The job driver applies the stricter
+ * {@link isAutoRetryableModelError} policy before resending paid work.
  */
 export function isRetryableModelError(error: unknown): boolean {
   if (error instanceof ModelOutputError) return error.retryable;
@@ -233,4 +315,17 @@ export function isRetryableModelError(error: unknown): boolean {
     return /failed with status 5\d\d\b/.test(error.message);
   }
   return false;
+}
+
+/**
+ * Whether the job driver may resend the same paid stage automatically. A
+ * truncated structured response is retryable by a person after changing the
+ * route or input, but resending it unchanged can burn the same budget again.
+ * Request timeouts are treated the same way because the upstream may still
+ * have consumed tokens even though this worker stopped waiting.
+ */
+export function isAutoRetryableModelError(error: unknown): boolean {
+  if (error instanceof ModelOutputError) return error.retryable && error.autoRetryable;
+  if (error instanceof OpenAiRequestError) return error.retryable && error.code !== "request_timeout";
+  return isRetryableModelError(error);
 }

@@ -7,6 +7,7 @@ import { KnowledgeBridgeReportView } from "@/components/knowledge-bridge-report"
 import { classifyAnalysisResult, isLimitFailure, type AnalysisState } from "@/lib/analysis/outcome";
 import { deriveEvidenceMix } from "@/lib/evidence/mix";
 import { COUNTRIES, DEFAULT_COUNTRY_CODE, OTHER_COUNTRY_CODE, composeLocation, countryByCode } from "@/lib/geo/regions";
+import type { ModelTraceEvent } from "@/lib/openai/trace";
 
 type DemoStepperProps = { scenario: PreparedScenario };
 type Mode = "prepared" | "custom";
@@ -22,12 +23,24 @@ type JobPollBody = {
   ledger?: EvidenceLedger;
   report?: KnowledgeBridgeReport;
   pack?: CurrentPracticePack;
-  error?: { code?: string; message?: string; stage?: string } | string;
+  debugTrace?: ModelTraceEvent[];
+  error?: { code?: string; message?: string; stage?: string; retryable?: boolean } | string;
   message?: string;
 };
 
+// Temporary diagnostics for the live pipeline. Set this to false (or comment
+// out the two guarded render blocks below) when the next debugging pass is done.
+const DEBUG_DOWNLOAD_LOG = true;
+const DEBUG_LOG_STORAGE = "notzero.debug.log.v1";
+const DEBUG_LOG_LIMIT = 240;
+type ClientDebugEvent = { at: string; event: string; data: Record<string, unknown> };
+
+function debugNow() {
+  return Date.now();
+}
+
 // The visitor's OpenAI key lives in this tab only. It is sent with each
-// analysis request so the server can run the three GPT-5.6 calls, and it is
+// analysis request so the server can run the staged model calls, and it is
 // never persisted server-side.
 const KEY_STORAGE = "notzero.openai.key";
 
@@ -217,6 +230,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [liveStep, setLiveStep] = useState(0);
   const [jobFailure, setJobFailure] = useState<string>("");
   const [needsKey, setNeedsKey] = useState(false);
+  const [debugEvents, setDebugEvents] = useState<ClientDebugEvent[]>([]);
   // A monotonically increasing token that invalidates a running poll loop when
   // the analysis is reset, the mode changes, or the component unmounts.
   const pollTokenRef = useRef(0);
@@ -226,6 +240,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const resultRef = useRef<HTMLDivElement>(null);
   const revealTimersRef = useRef<number[]>([]);
   const fileTextCacheRef = useRef(new Map<string, string>());
+  const debugEventsRef = useRef<ClientDebugEvent[]>([]);
   const fileTriggerRef = useRef<HTMLButtonElement | null>(null);
   const fileCloseRef = useRef<HTMLButtonElement | null>(null);
   const filePanelRef = useRef<HTMLElement | null>(null);
@@ -236,6 +251,74 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const country = countryByCode(countryCode);
   const regionLabel = country?.regionLabel ?? "State, province, or region";
   const { location, jurisdiction, countryName } = composeLocation({ country, customCountry, region, city, openToRemote });
+
+  useEffect(() => {
+    if (!DEBUG_DOWNLOAD_LOG) return;
+    try {
+      const stored = JSON.parse(window.sessionStorage.getItem(DEBUG_LOG_STORAGE) ?? "[]") as unknown;
+      if (Array.isArray(stored)) {
+        const restored = stored.filter((item): item is ClientDebugEvent => Boolean(item && typeof item === "object" && typeof (item as ClientDebugEvent).at === "string" && typeof (item as ClientDebugEvent).event === "string" && typeof (item as ClientDebugEvent).data === "object")).slice(-DEBUG_LOG_LIMIT);
+        Promise.resolve().then(() => {
+          debugEventsRef.current = restored;
+          setDebugEvents(restored);
+        });
+      }
+    } catch {
+      // A diagnostics log must never affect the analysis flow.
+    }
+  }, []);
+
+  function debugLog(event: string, data: Record<string, unknown> = {}) {
+    if (!DEBUG_DOWNLOAD_LOG) return;
+    const next = [...debugEventsRef.current, { at: new Date().toISOString(), event, data }].slice(-DEBUG_LOG_LIMIT);
+    debugEventsRef.current = next;
+    setDebugEvents(next);
+    try { window.sessionStorage.setItem(DEBUG_LOG_STORAGE, JSON.stringify(next)); } catch { /* The in-memory log remains available for this tab. */ }
+  }
+
+  function clearDebugLog() {
+    debugEventsRef.current = [];
+    setDebugEvents([]);
+    try { window.sessionStorage.removeItem(DEBUG_LOG_STORAGE); } catch { /* Nothing to clear. */ }
+  }
+
+  function summarizeJobBody(body: JobPollBody) {
+    const errorBody = typeof body.error === "object" && body.error ? body.error : undefined;
+    return {
+      status: body.status ?? null,
+      stage: body.stage ?? null,
+      progress: typeof body.progress === "number" ? body.progress : null,
+      jobId: body.jobId ?? null,
+      needsKey: Boolean(body.needsKey),
+      hasLedger: Boolean(body.ledger),
+      hasReport: Boolean(body.report),
+      hasPack: Boolean(body.pack),
+      error: errorBody ? { code: errorBody.code ?? null, message: errorBody.message ?? null, stage: errorBody.stage ?? null, retryable: errorBody.retryable ?? null } : typeof body.error === "string" ? body.error : null,
+      message: body.message ?? null,
+      serverTraceCount: body.debugTrace?.length ?? 0,
+      serverTrace: body.debugTrace?.slice(-12) ?? [],
+    };
+  }
+
+  function downloadDebugLog() {
+    if (!DEBUG_DOWNLOAD_LOG) return;
+    const payload = {
+      format: "notzero-debug-log.v1",
+      generatedAt: new Date().toISOString(),
+      note: "Redacted client lifecycle and server model-call metadata. Prompts, uploaded text, response content, API keys, and cookies are intentionally omitted.",
+      app: { mode, analysisState, jobId: jobId || null, liveStep, needsKey, error: error || null, jobFailure: jobFailure || null },
+      events: debugEventsRef.current,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `notzero-debug-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
 
   // Asked once, when the visitor first opens the custom path: whether this
   // deployment already has server-side live analysis and accepts visitor keys.
@@ -477,6 +560,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     }
     if (body.status === "failed") {
       const message = typeof body.error === "object" ? body.error?.message : undefined;
+      debugLog("job.failed", summarizeJobBody(body));
       setJobFailure(message || body.message || "The analysis could not be completed. Your progress is saved and can be retried.");
       setAnalysisState("error");
       return true;
@@ -489,11 +573,14 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     let retry = retryFirst;
     while (pollTokenRef.current === token) {
       let response: Response;
+      const requestStartedAt = debugNow();
       try {
         const query = retry ? `jobId=${encodeURIComponent(id)}&retry=1` : `jobId=${encodeURIComponent(id)}`;
+        debugLog("poll.request", { jobId: id, retry, keyPresent: Boolean(apiKeyRef.current) });
         response = await fetch(`/api/evidence-ledger?${query}`, { headers: apiKeyRef.current ? { "X-OpenAI-Key": apiKeyRef.current } : undefined });
       } catch {
         // A transient network error must not lose the job: wait and poll again.
+        debugLog("poll.network_error", { jobId: id, retry, elapsedMs: debugNow() - requestStartedAt });
         await delay(POLL_INTERVAL_MS);
         continue;
       }
@@ -508,7 +595,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
       }
       let body: JobPollBody;
       try { body = await response.json() as JobPollBody; }
-      catch { await delay(POLL_INTERVAL_MS); continue; }
+      catch {
+        debugLog("poll.invalid_response", { jobId: id, httpStatus: response.status, elapsedMs: debugNow() - requestStartedAt });
+        await delay(POLL_INTERVAL_MS);
+        continue;
+      }
+      debugLog("poll.response", { httpStatus: response.status, elapsedMs: debugNow() - requestStartedAt, ...summarizeJobBody(body) });
       if (pollTokenRef.current !== token) return;
       if (!response.ok) {
         const code = typeof body.error === "string" ? body.error : undefined;
@@ -522,6 +614,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
 
   function retryJobAnalysis() {
     if (!jobId) return;
+    debugLog("job.retry_requested", { jobId, stage: liveStep });
     setJobFailure("");
     setError("");
     setNeedsKey(false);
@@ -565,6 +658,19 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     setRevealStep(-1);
     setLiveStep(0);
     setAnalysisState("loading");
+    clearDebugLog();
+    debugLog("analysis.started", {
+      mode,
+      keyPresent: Boolean(apiKey),
+      locationPresent: Boolean(location),
+      fileCounts: { curriculum: curriculum.length, supporting: supporting.length, project: project.length },
+      fileBytes: {
+        curriculum: curriculum.reduce((sum, file) => sum + file.size, 0),
+        supporting: supporting.reduce((sum, file) => sum + file.size, 0),
+        project: project.reduce((sum, file) => sum + file.size, 0),
+      },
+      extensions: [...curriculum, ...supporting, ...project].map((file) => file.name.split(".").pop()?.toLowerCase() ?? "unknown"),
+    });
     try {
       const form = new FormData();
       form.set("mode", mode);
@@ -576,12 +682,14 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         supporting.forEach((file) => form.append("supporting", file));
         project.forEach((file) => form.append("project", file));
       }
+      const requestStartedAt = debugNow();
       const response = await fetch("/api/evidence-ledger", {
         method: "POST",
         body: form,
         headers: mode === "custom" && apiKey ? { "X-OpenAI-Key": apiKey } : undefined,
       });
       const body = await response.json() as JobPollBody;
+      debugLog("analysis.initial_response", { httpStatus: response.status, elapsedMs: debugNow() - requestStartedAt, ...summarizeJobBody(body) });
       if (!response.ok) {
         const code = typeof body.error === "string" ? body.error : undefined;
         if (isLimitFailure(response.status, code)) {
@@ -626,6 +734,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
       }
       throw new Error(body.message || "The analysis could not be started.");
     } catch (caught) {
+      debugLog("analysis.client_error", { message: caught instanceof Error ? caught.message : "unknown error" });
       setError(caught instanceof Error ? caught.message : "The evidence could not be analyzed.");
       setAnalysisState("error");
     }
@@ -725,11 +834,11 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
                     <div className="live-key-copy">
                       <strong>Live analysis</strong>
                       {apiKey ? (
-                        <p>Your OpenAI API key <code>{maskedKey(apiKey)}</code> stays in this browser tab and travels only with your analysis requests. It powers three GPT-5.6 Luna calls: evidence extraction, market comparison, and the guided program.</p>
+                        <p>Your OpenAI API key <code>{maskedKey(apiKey)}</code> stays in this browser tab and travels only with your analysis requests. The pipeline uses GPT-5.4 nano for extraction, GPT-5.4 mini for optional posting search, and GPT-5.6 Luna for the comparison and guided bridge.</p>
                       ) : capability?.liveAnalysisEnabled ? (
-                        <p>This deployment already runs live GPT-5.6 Luna analysis with its own server-side key, within daily limits. Adding your own key is optional and moves usage to your OpenAI account.</p>
+                        <p>This deployment already runs a staged live analysis with its own server-side key, within daily limits. Adding your own key is optional and moves usage to your OpenAI account.</p>
                       ) : (
-                        <p>The full report is generated by GPT-5.6 Luna through the OpenAI API and needs your API key. Without one, NotZero validates and inspects your files but draws no conclusions from them.</p>
+                        <p>The full report uses a staged OpenAI API pipeline and needs your API key. Without one, NotZero validates and inspects your files but draws no conclusions from them.</p>
                       )}
                     </div>
                     <div className="live-key-actions">
@@ -820,6 +929,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
               )}
             </div>
             <AnalysisPipeline loading={liveStep <= 0} revealStep={liveStep} />
+            {DEBUG_DOWNLOAD_LOG && <div className="analysis-debug-actions"><span>Temporary diagnostics are on for this run.</span><button type="button" className="button button-secondary" onClick={downloadDebugLog}>Download log ({debugEvents.length})</button></div>}
           </div>}
           {analysisState === "error" && <div className="analysis-state analysis-error" role="alert" ref={statusRef} tabIndex={-1}>
             <strong>We could not complete the analysis.</strong>
@@ -832,6 +942,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             ) : (
               <span>Your selected files remain in this browser so you can correct the issue and try again.</span>
             )}
+            {DEBUG_DOWNLOAD_LOG && <div className="analysis-debug-actions"><span>Include this redacted trace when reporting the failure.</span><button type="button" className="button button-secondary" onClick={downloadDebugLog}>Download log ({debugEvents.length})</button></div>}
           </div>}
           {analysisState === "limit" && <div className="analysis-state analysis-limit" role="alert" ref={statusRef} tabIndex={-1}><strong>This evidence set is outside the prototype limits.</strong><p>{error}</p><span>Reduce the bounded evidence set and try again.</span></div>}
           {analysisState === "empty" && <div className="analysis-state analysis-empty" role="status" ref={statusRef} tabIndex={-1}>
@@ -883,12 +994,12 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             <ul>
               <li>It stays in this browser tab and is sent only with your analysis requests over HTTPS. NotZero never writes it to its database or logs.</li>
               <li>While your analysis is running it is held in server memory so the job can keep moving between polls. That copy is dropped when the job finishes or you reset, and within an hour at the latest.</li>
-              <li>The server uses it for three schema-constrained GPT-5.6 Luna calls: evidence extraction, market comparison, and the guided program.</li>
+               <li>The server uses it for schema-constrained calls. GPT-5.4 nano extracts evidence, GPT-5.4 mini can search current postings, and GPT-5.6 Luna handles the comparison and guided program.</li>
               <li>Closing the tab or selecting Remove forgets the browser copy. The server copy is dropped when the job finishes or you reset.</li>
             </ul>
             <h5>Cost and account</h5>
             <ul>
-              <li>The calls run on your OpenAI platform account at API rates. A typical evidence set costs well under one US dollar with GPT-5.6 Luna; larger uploads cost more.</li>
+               <li>The calls run on your OpenAI platform account at API rates. Routing simple extraction and search to smaller models reduces cost; larger uploads and live web search cost more.</li>
               <li>No ChatGPT subscription is required or used. Create a key in the API keys section of platform.openai.com.</li>
             </ul>
           </div>

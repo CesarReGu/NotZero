@@ -13,6 +13,7 @@ import { requirementById, technicalSourceById } from "@/lib/market/current-pract
 import { deriveRequirementCoverage } from "@/lib/bridge/coverage";
 import type { ReasoningEffort } from "@/lib/config/server";
 import { readResponseOutputText, requestResponses } from "@/lib/openai/responses";
+import type { ModelTraceSink } from "@/lib/openai/trace";
 
 export const BRIDGE_PROMPT_VERSION = "bridge-comparison.v1";
 export const BRIDGE_REPORT_SCHEMA_VERSION = "knowledge-bridge-report.v2";
@@ -185,9 +186,9 @@ export function validateBridgeModelOutput(args: { output: unknown; ledger: Evide
   return knowledgeBridgeReportSchema.parse({ id: `bridge-${crypto.randomUUID()}`, schemaVersion: BRIDGE_REPORT_SCHEMA_VERSION, analysisVersion: args.analysisVersion, analysisMode: "live_gpt_5_6", ledgerId: args.ledger.id, currentPracticePackId: args.pack.id, datasetVersion: args.pack.datasetVersion, generatedAt: new Date().toISOString(), findings, counts, requirementCoverage: deriveRequirementCoverage(findings, args.pack), nextSteps: model.nextSteps, upgradeChallenge: model.upgradeChallenge, walkthrough, roleProfiles: args.pack.roleProfiles, walkthroughUnavailableReason: model.walkthroughUnavailableReason ?? undefined, limitations: model.limitations });
 }
 
-export async function compareWithGpt56(args: { apiKey: string; model: string; reasoningEffort?: ReasoningEffort; ledger: EvidenceLedger; pack: CurrentPracticePack; analysisVersion: string; fetcher?: typeof fetch }) {
+export async function compareWithGpt56(args: { apiKey: string; model: string; reasoningEffort?: ReasoningEffort; ledger: EvidenceLedger; pack: CurrentPracticePack; analysisVersion: string; fetcher?: typeof fetch; trace?: ModelTraceSink }) {
   const fetcher = args.fetcher ?? fetch;
-  const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "bridge comparison", body: JSON.stringify({
+  const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "bridge comparison", trace: args.trace, body: JSON.stringify({
     model: args.model,
     prompt_cache_key: "notzero-bridge-comparison-v1",
     reasoning: { effort: args.reasoningEffort ?? "medium" },

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { FieldContext } from "@/lib/domain/schemas";
 import type { ReasoningEffort } from "@/lib/config/server";
 import { OpenAiRequestError, readResponseOutputText, requestResponses } from "@/lib/openai/responses";
+import type { ModelTraceSink } from "@/lib/openai/trace";
 
 /**
  * The first half of a generated current-practice pack: a live scan of real,
@@ -189,6 +190,7 @@ export async function scanJobPostingsWithGpt56(args: {
   fieldContext: FieldContext;
   fetcher?: typeof fetch;
   now?: Date;
+  trace?: ModelTraceSink;
 }): Promise<JobPostingScan | null> {
   const fetcher = args.fetcher ?? fetch;
   const retrievedAt = (args.now ?? new Date()).toISOString().slice(0, 10);
@@ -214,7 +216,7 @@ export async function scanJobPostingsWithGpt56(args: {
 
   for (let attempt = 0; attempt < SCAN_ATTEMPTS; attempt += 1) {
     try {
-      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "job-postings scan", body });
+      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "job-postings scan", body, trace: args.trace });
       const model = scanModelSchema.parse(JSON.parse(readResponseOutputText(raw)));
       const scan = normalizeScan(model, args.fieldContext, retrievedAt);
       return scan.postings.length >= MIN_SCANNED_POSTINGS ? scan : null;

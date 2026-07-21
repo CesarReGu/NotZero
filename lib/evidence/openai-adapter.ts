@@ -2,6 +2,7 @@ import { evidenceLedgerSchema, evidenceModelOutputSchema, fieldContextSchema, ty
 import type { ExtractedSource } from "@/lib/evidence/files";
 import type { ReasoningEffort } from "@/lib/config/server";
 import { ModelOutputError, readResponseOutputText, requestResponses } from "@/lib/openai/responses";
+import type { ModelTraceSink } from "@/lib/openai/trace";
 
 // The domain ledger caps a reference excerpt at 800 characters. The strict output
 // schema cannot express that bound, so the model can occasionally quote more,
@@ -123,6 +124,7 @@ export async function extractWithGpt56(args: {
   sources: ExtractedSource[];
   inputWarnings: string[];
   fetcher?: typeof fetch;
+  trace?: ModelTraceSink;
 }): Promise<EvidenceLedger> {
   const fetcher = args.fetcher ?? fetch;
   const evidencePayload = args.sources.map((source) => ({
@@ -135,6 +137,7 @@ export async function extractWithGpt56(args: {
     fetcher,
     apiKey: args.apiKey,
     label: "analysis",
+    trace: args.trace,
     body: JSON.stringify({
       model: args.model,
       prompt_cache_key: "notzero-evidence-extraction-v1",

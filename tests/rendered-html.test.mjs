@@ -87,6 +87,11 @@ test("health route exposes safe configuration state without secrets", async () =
     liveAnalysisEnabled: false,
     allowUserKeys: true,
     model: "gpt-5.6-luna",
+    fastModel: "gpt-5.4-nano",
+    searchModel: "gpt-5.4-mini",
+    reasoningEffort: "medium",
+    fastReasoningEffort: "low",
+    searchReasoningEffort: "low",
     operationalControls: {
       sessionRequestLimit: 8,
       sessionLiveLimit: 3,

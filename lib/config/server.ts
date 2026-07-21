@@ -9,10 +9,16 @@ export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
 
 const serverConfigSchema = z.object({
   OPENAI_API_KEY: z.preprocess(emptyAsUnset, z.string().min(1).optional()),
-  // GPT-5.6 Luna: the cost-efficient GPT-5.6 variant. The bare "gpt-5.6" alias
-  // routes to Sol, so the variant is named explicitly.
+  // GPT-5.6 Luna is reserved for the comparison and guided-program stages.
   NOTZERO_MODEL: z.string().min(1).default("gpt-5.6-luna"),
-  NOTZERO_REASONING_EFFORT: reasoningEffortSchema.default("max"),
+  // GPT-5.4 nano handles extraction and classification. GPT-5.4 mini handles
+  // current-posting search. Both are official API model IDs, not ChatGPT UI
+  // labels, and both support the Responses API and structured outputs.
+  NOTZERO_FAST_MODEL: z.string().min(1).default("gpt-5.4-nano"),
+  NOTZERO_SEARCH_MODEL: z.string().min(1).default("gpt-5.4-mini"),
+  NOTZERO_REASONING_EFFORT: reasoningEffortSchema.default("medium"),
+  NOTZERO_FAST_REASONING_EFFORT: reasoningEffortSchema.default("low"),
+  NOTZERO_SEARCH_REASONING_EFFORT: reasoningEffortSchema.default("low"),
   NOTZERO_ENABLE_LIVE_ANALYSIS: z.enum(["true", "false"]).default("false"),
   // Grounds generated (non-curated) packs in real postings found by GPT-5.6 web
   // search. When off, those fields still work but fall back to representative
@@ -32,7 +38,11 @@ const serverConfigSchema = z.object({
 
 export type ServerConfig = {
   model: string;
+  fastModel: string;
+  searchModel: string;
   reasoningEffort: ReasoningEffort;
+  fastReasoningEffort: ReasoningEffort;
+  searchReasoningEffort: ReasoningEffort;
   liveAnalysisEnabled: boolean;
   jobSearchEnabled: boolean;
   allowUserKeys: boolean;
@@ -57,7 +67,11 @@ export function readServerConfig(environment = process.env): ServerConfig {
 
   return {
     model: result.data.NOTZERO_MODEL,
+    fastModel: result.data.NOTZERO_FAST_MODEL,
+    searchModel: result.data.NOTZERO_SEARCH_MODEL,
     reasoningEffort: result.data.NOTZERO_REASONING_EFFORT,
+    fastReasoningEffort: result.data.NOTZERO_FAST_REASONING_EFFORT,
+    searchReasoningEffort: result.data.NOTZERO_SEARCH_REASONING_EFFORT,
     liveAnalysisEnabled: result.data.NOTZERO_ENABLE_LIVE_ANALYSIS === "true",
     jobSearchEnabled: result.data.NOTZERO_ENABLE_JOB_SEARCH === "true",
     allowUserKeys: result.data.NOTZERO_ALLOW_USER_KEYS === "true",
