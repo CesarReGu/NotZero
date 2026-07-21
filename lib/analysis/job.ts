@@ -6,7 +6,7 @@ import type {
   LocationContext,
 } from "@/lib/domain/schemas";
 import type { ExtractedSource } from "@/lib/evidence/files";
-import { isRetryableModelError } from "@/lib/openai/responses";
+import { isRetryableModelError, isTerminalKeyError, OpenAiRequestError } from "@/lib/openai/responses";
 
 /**
  * The live analysis is a persistent, resumable server-side job rather than a
@@ -35,6 +35,7 @@ export const MAX_STAGE_ATTEMPTS = 2;
 
 export type JobErrorCode =
   | "key_or_quota"
+  | "rate_limited"
   | "model_output"
   | "unsupported_field"
   | "analysis_failed";
@@ -114,12 +115,17 @@ export function initialJobState(input: {
   };
 }
 
-/** A key or spending problem is the visitor's to fix and must never be retried. */
-function isTerminalKeyError(error: unknown): boolean {
-  return error instanceof Error && /status 40[13]\b|status 429\b/.test(error.message);
-}
-
 function stageError(stage: JobStage, error: unknown): JobError {
+  // Separate the three things OpenAI collapses into a bare 4xx so the reader is
+  // told what to actually do. A rejected key, denied access, or exhausted quota
+  // is theirs to fix first; a rate limit that outlived the built-in backoff is
+  // transient, so it is recorded as retryable with wait-and-retry guidance.
+  if (error instanceof OpenAiRequestError) {
+    if (error.status === 401) return { code: "key_or_quota", message: "OpenAI rejected the API key (401). Check that the key is active and pasted correctly, then retry.", stage, retryable: false };
+    if (error.status === 403) return { code: "key_or_quota", message: "OpenAI denied access (403). The key's organization may lack access to this model or the web-search tool, or it needs verification at platform.openai.com. Grant access — or turn job search off — and retry.", stage, retryable: false };
+    if (error.status === 429 && !error.retryable) return { code: "key_or_quota", message: "OpenAI reported an exhausted quota or spending limit (429 insufficient_quota). Add billing or raise the usage limit on the key's account, then retry.", stage, retryable: false };
+    if (error.status === 429) return { code: "rate_limited", message: "OpenAI is rate-limiting these requests (429). The analysis already waited and retried, but the per-minute limit held. Wait a minute and retry; a higher usage tier or a lower reasoning effort avoids it.", stage, retryable: true };
+  }
   if (isTerminalKeyError(error)) {
     return { code: "key_or_quota", message: "OpenAI rejected the key or reported a rate or spending limit. Check the key's access and usage limits, then retry.", stage, retryable: false };
   }

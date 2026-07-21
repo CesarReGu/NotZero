@@ -11,7 +11,7 @@ import {
 } from "@/lib/domain/schemas";
 import { validatePracticePack } from "@/lib/market/current-practice";
 import type { ReasoningEffort } from "@/lib/config/server";
-import { readResponseOutputText } from "@/lib/openai/responses";
+import { isTerminalKeyError, readResponseOutputText, requestResponses } from "@/lib/openai/responses";
 import { scanJobPostingsWithGpt56, type JobPostingScan } from "@/lib/market/job-postings-adapter";
 
 export const PRACTICE_PACK_PROMPT_VERSION = "practice-pack.v1";
@@ -346,31 +346,18 @@ export async function generatePracticePackWithGpt56(args: {
 
   for (let attempt = 0; attempt < PRACTICE_PACK_ATTEMPTS; attempt += 1) {
     try {
-      const response = await fetcher("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
-        body,
-      });
-      if (!response.ok) throw new Error(`OpenAI practice-pack generation failed with status ${response.status}.`);
-      const model = generatedPackSchema.parse(JSON.parse(readResponseOutputText(await response.json())));
+      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "practice-pack generation", body });
+      const model = generatedPackSchema.parse(JSON.parse(readResponseOutputText(raw)));
       return assembleGeneratedPack(model, args.fieldContext, args.now);
     } catch (error) {
       // Key and spending problems are terminal and must reach the caller so the
       // visitor can fix them. A truncated response, a malformed shape, a 5xx, or
       // an inconsistent assembly can all come out clean on a fresh generation, so
       // they get one more attempt before the failure is recorded and surfaced.
-      const terminal = error instanceof Error && /status 40[13]\b|status 429\b/.test(error.message);
-      if (terminal || attempt === PRACTICE_PACK_ATTEMPTS - 1) throw error;
+      if (isTerminalKeyError(error) || attempt === PRACTICE_PACK_ATTEMPTS - 1) throw error;
     }
   }
   throw new Error("OpenAI practice-pack generation failed.");
-}
-
-// A key or spending problem is the visitor's to fix and must reach them; every
-// other failure in the grounded path degrades to the archetype fallback so a
-// field is never left without a comparison.
-function isTerminalKeyError(error: unknown): boolean {
-  return error instanceof Error && /status 40[13]\b|status 429\b/.test(error.message);
 }
 
 // The grounded synthesis reuses the reading-list and technical-source shapes
@@ -582,13 +569,8 @@ export async function synthesizeGroundedPack(args: {
 
   for (let attempt = 0; attempt < PRACTICE_PACK_ATTEMPTS; attempt += 1) {
     try {
-      const response = await fetcher("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
-        body,
-      });
-      if (!response.ok) throw new Error(`OpenAI grounded practice-pack synthesis failed with status ${response.status}.`);
-      const grounded = groundedSynthesisSchema.parse(JSON.parse(readResponseOutputText(await response.json())));
+      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "grounded practice-pack synthesis", body });
+      const grounded = groundedSynthesisSchema.parse(JSON.parse(readResponseOutputText(raw)));
       return assembleGroundedPack(args.scan, grounded, fieldContext);
     } catch (error) {
       if (isTerminalKeyError(error) || attempt === PRACTICE_PACK_ATTEMPTS - 1) throw error;

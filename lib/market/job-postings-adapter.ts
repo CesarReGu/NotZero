@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { FieldContext } from "@/lib/domain/schemas";
 import type { ReasoningEffort } from "@/lib/config/server";
-import { readResponseOutputText } from "@/lib/openai/responses";
+import { OpenAiRequestError, readResponseOutputText, requestResponses } from "@/lib/openai/responses";
 
 /**
  * The first half of a generated current-practice pack: a live scan of real,
@@ -158,19 +158,29 @@ export function normalizeScan(model: JobPostingScanModelOutput, fieldContext: Fi
   };
 }
 
-// Terminal for the visitor to fix. Never retried, and propagated by the caller.
-function isTerminalKeyError(error: unknown): boolean {
-  return error instanceof Error && /status 40[13]\b|status 429\b/.test(error.message);
-}
-
 const SCAN_ATTEMPTS = 2;
+
+// On the live scan, only a rejected key or an exhausted quota is terminal, and
+// both would already have failed extraction with the same key. A 400 or 403
+// (web search unavailable for this key or model) or a rate limit that outlived
+// its backoff is exactly what the archetype fallback exists for, so it degrades
+// to a null scan rather than failing the whole field. Treating a web-search 403
+// as terminal was the bug that stranded every non-curated field whose key could
+// not use the tool.
+function isTerminalScanError(error: unknown): boolean {
+  if (error instanceof OpenAiRequestError) {
+    return error.status === 401 || (error.status === 429 && error.code === "insufficient_quota");
+  }
+  return error instanceof Error && (/\binsufficient_quota\b/.test(error.message) || /failed with status 401\b/.test(error.message));
+}
 
 /**
  * Runs the live posting scan. Resolves to a usable {@link JobPostingScan} when
  * the web search surfaced at least {@link MIN_SCANNED_POSTINGS} real postings,
  * or to `null` when it did not (an obscure field or location, or web search
- * being unavailable on the model), so the caller can fall back to the archetype
- * pack instead of failing. A rejected key or spending limit is rethrown.
+ * being unavailable for this key or model), so the caller can fall back to the
+ * archetype pack instead of failing. Only a rejected key or an exhausted quota
+ * is rethrown.
  */
 export async function scanJobPostingsWithGpt56(args: {
   apiKey: string;
@@ -204,21 +214,16 @@ export async function scanJobPostingsWithGpt56(args: {
 
   for (let attempt = 0; attempt < SCAN_ATTEMPTS; attempt += 1) {
     try {
-      const response = await fetcher("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
-        body,
-      });
-      if (!response.ok) throw new Error(`OpenAI job-postings scan failed with status ${response.status}.`);
-      const model = scanModelSchema.parse(JSON.parse(readResponseOutputText(await response.json())));
+      const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "job-postings scan", body });
+      const model = scanModelSchema.parse(JSON.parse(readResponseOutputText(raw)));
       const scan = normalizeScan(model, args.fieldContext, retrievedAt);
       return scan.postings.length >= MIN_SCANNED_POSTINGS ? scan : null;
     } catch (error) {
-      // Propagate key and spending problems so the visitor can fix them. A
-      // truncated or malformed response can come out clean on a fresh call, so
-      // it gets one retry; after that the scan is treated as unavailable and the
-      // caller falls back to the archetype pack rather than failing the field.
-      if (isTerminalKeyError(error)) throw error;
+      // Propagate only a rejected key or exhausted quota so the visitor can fix
+      // it. Web search being unavailable, a truncated or malformed response, or
+      // a stubborn rate limit all leave the scan unavailable, so after one retry
+      // the caller falls back to the archetype pack rather than failing the field.
+      if (isTerminalScanError(error)) throw error;
       if (attempt === SCAN_ATTEMPTS - 1) return null;
     }
   }

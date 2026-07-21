@@ -1,7 +1,7 @@
 import { evidenceLedgerSchema, evidenceModelOutputSchema, fieldContextSchema, type EvidenceLedger, type LocationContext } from "@/lib/domain/schemas";
 import type { ExtractedSource } from "@/lib/evidence/files";
 import type { ReasoningEffort } from "@/lib/config/server";
-import { ModelOutputError, readResponseOutputText } from "@/lib/openai/responses";
+import { ModelOutputError, readResponseOutputText, requestResponses } from "@/lib/openai/responses";
 
 // The domain ledger caps a reference excerpt at 800 characters. The strict output
 // schema cannot express that bound, so the model can occasionally quote more,
@@ -131,9 +131,10 @@ export async function extractWithGpt56(args: {
     sourceType: source.metadata.sourceType,
     contentWithLineNumbers: numberedText(source.normalizedText),
   }));
-  const response = await fetcher("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
+  const raw = await requestResponses({
+    fetcher,
+    apiKey: args.apiKey,
+    label: "analysis",
     body: JSON.stringify({
       model: args.model,
       prompt_cache_key: "notzero-evidence-extraction-v1",
@@ -161,8 +162,7 @@ export async function extractWithGpt56(args: {
       max_output_tokens: EXTRACTION_MAX_OUTPUT_TOKENS,
     }),
   });
-  if (!response.ok) throw new Error(`OpenAI analysis failed with status ${response.status}.`);
-  const modelOutput = parseEvidenceModelOutput(JSON.parse(readResponseOutputText(await response.json())));
+  const modelOutput = parseEvidenceModelOutput(JSON.parse(readResponseOutputText(raw)));
   const fieldContext = fieldContextSchema.parse({
     field: modelOutput.field,
     targetTitle: modelOutput.targetTitle,

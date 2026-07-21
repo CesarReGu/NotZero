@@ -10,7 +10,7 @@ import {
   type Job,
   type StageRunners,
 } from "../lib/analysis/job";
-import { isRetryableModelError, ModelOutputError, readResponseOutputText } from "../lib/openai/responses";
+import { isRetryableModelError, isTerminalKeyError, ModelOutputError, OpenAiRequestError, readResponseOutputText, requestResponses } from "../lib/openai/responses";
 import {
   acquireJobLease,
   createJob,
@@ -83,9 +83,61 @@ test("a refusal is a non-retryable model error", () => {
   }
 });
 
-test("upstream 5xx is retryable and 429 is not", () => {
+test("upstream 5xx is retryable and a bare 429 is not", () => {
   assert.equal(isRetryableModelError(new Error("OpenAI analysis failed with status 503.")), true);
   assert.equal(isRetryableModelError(new Error("OpenAI analysis failed with status 429.")), false);
+});
+
+// --- Rate-limit vs. quota handling in the shared request helper -------------
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+}
+
+test("a token rate limit is waited out and retried instead of failing the stage", async () => {
+  let calls = 0;
+  const fetcher: typeof fetch = async () => {
+    calls += 1;
+    if (calls < 3) return jsonResponse({ error: { type: "tokens", code: "rate_limit_exceeded", message: "Rate limit reached" } }, 429);
+    return jsonResponse({ output: [{ content: [{ type: "output_text", text: "ok" }] }] });
+  };
+  const waits: number[] = [];
+  const raw = await requestResponses({ fetcher, apiKey: "k", body: "{}", label: "analysis", sleep: async (ms) => { waits.push(ms); } });
+  assert.equal(readResponseOutputText(raw), "ok");
+  assert.equal(calls, 3);
+  assert.equal(waits.length, 2, "it waited before each retry rather than resending immediately");
+});
+
+test("an exhausted quota (429 insufficient_quota) is terminal, never retried", async () => {
+  let calls = 0;
+  const fetcher: typeof fetch = async () => { calls += 1; return jsonResponse({ error: { type: "insufficient_quota", code: "insufficient_quota", message: "You exceeded your current quota" } }, 429); };
+  await assert.rejects(
+    () => requestResponses({ fetcher, apiKey: "k", body: "{}", label: "analysis", sleep: async () => {} }),
+    (error: unknown) => error instanceof OpenAiRequestError && error.status === 429 && error.retryable === false && isTerminalKeyError(error),
+  );
+  assert.equal(calls, 1, "a billing wall is not a rate limit and must not be resent");
+});
+
+test("a rate limit that never clears is surfaced as retryable, not a terminal key error", async () => {
+  const fetcher: typeof fetch = async () => jsonResponse({ error: { code: "rate_limit_exceeded", type: "tokens" } }, 429);
+  await assert.rejects(
+    () => requestResponses({ fetcher, apiKey: "k", body: "{}", label: "pack", sleep: async () => {}, maxRateLimitRetries: 2 }),
+    (error: unknown) => error instanceof OpenAiRequestError && error.retryable === true && isRetryableModelError(error) && !isTerminalKeyError(error),
+  );
+});
+
+test("a stalled rate limit fails the stage as retryable, distinct from a rejected key", async () => {
+  const runners: StageRunners = {
+    extract: async () => alexEvidenceLedger,
+    resolvePack: async () => { throw new OpenAiRequestError("OpenAI practice-pack generation failed with status 429 (rate_limit_exceeded).", 429, "rate_limit_exceeded", true); },
+    compare: async () => alexBridgeReport,
+    solve: async () => alexBridgeReport,
+  };
+  const job = await drive(newJob(), runners);
+  assert.equal(job.status, "failed");
+  assert.equal(job.stage, "pack");
+  assert.equal(job.state.error?.code, "rate_limited");
+  assert.equal(job.state.error?.retryable, true);
 });
 
 // --- Job state machine ------------------------------------------------------

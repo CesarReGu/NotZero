@@ -12,7 +12,7 @@ import {
 import { requirementById, technicalSourceById } from "@/lib/market/current-practice";
 import { deriveRequirementCoverage } from "@/lib/bridge/coverage";
 import type { ReasoningEffort } from "@/lib/config/server";
-import { readResponseOutputText } from "@/lib/openai/responses";
+import { readResponseOutputText, requestResponses } from "@/lib/openai/responses";
 
 export const BRIDGE_PROMPT_VERSION = "bridge-comparison.v1";
 export const BRIDGE_REPORT_SCHEMA_VERSION = "knowledge-bridge-report.v2";
@@ -187,7 +187,7 @@ export function validateBridgeModelOutput(args: { output: unknown; ledger: Evide
 
 export async function compareWithGpt56(args: { apiKey: string; model: string; reasoningEffort?: ReasoningEffort; ledger: EvidenceLedger; pack: CurrentPracticePack; analysisVersion: string; fetcher?: typeof fetch }) {
   const fetcher = args.fetcher ?? fetch;
-  const response = await fetcher("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({
+  const raw = await requestResponses({ fetcher, apiKey: args.apiKey, label: "bridge comparison", body: JSON.stringify({
     model: args.model,
     prompt_cache_key: "notzero-bridge-comparison-v1",
     reasoning: { effort: args.reasoningEffort ?? "medium" },
@@ -203,6 +203,5 @@ export async function compareWithGpt56(args: { apiKey: string; model: string; re
     text: { format: { type: "json_schema", name: "notzero_bridge_report", strict: true, schema: bridgeOutputJsonSchema } },
     max_output_tokens: BRIDGE_MAX_OUTPUT_TOKENS,
   }) });
-  if (!response.ok) throw new Error(`OpenAI bridge comparison failed with status ${response.status}.`);
-  return validateBridgeModelOutput({ output: JSON.parse(readResponseOutputText(await response.json())), ledger: args.ledger, pack: args.pack, analysisVersion: args.analysisVersion });
+  return validateBridgeModelOutput({ output: JSON.parse(readResponseOutputText(raw)), ledger: args.ledger, pack: args.pack, analysisVersion: args.analysisVersion });
 }

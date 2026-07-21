@@ -13,7 +13,7 @@ import {
   type VocabularyBridge,
 } from "@/lib/domain/schemas";
 import type { ReasoningEffort } from "@/lib/config/server";
-import { readResponseOutputText } from "@/lib/openai/responses";
+import { readResponseOutputText, requestResponses } from "@/lib/openai/responses";
 
 export const SOLUTION_PROMPT_VERSION = "solution-layer.v1";
 // The roadmap with curriculum modules and exercises is the largest structured
@@ -426,9 +426,10 @@ export async function solveWithGpt56(args: {
     newConcepts: finding.newConcepts,
     recommendedAction: finding.recommendedAction,
   }));
-  const response = await fetcher("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${args.apiKey}`, "Content-Type": "application/json" },
+  const raw = await requestResponses({
+    fetcher,
+    apiKey: args.apiKey,
+    label: "solution layer",
     body: JSON.stringify({
       model: args.model,
       prompt_cache_key: "notzero-solution-layer-v1",
@@ -465,8 +466,7 @@ export async function solveWithGpt56(args: {
       max_output_tokens: SOLUTION_MAX_OUTPUT_TOKENS,
     }),
   });
-  if (!response.ok) throw new Error(`OpenAI solution layer failed with status ${response.status}.`);
-  return validateSolutionOutput({ output: JSON.parse(readResponseOutputText(await response.json())), ledger: args.ledger, pack: args.pack });
+  return validateSolutionOutput({ output: JSON.parse(readResponseOutputText(raw)), ledger: args.ledger, pack: args.pack });
 }
 
 /**
