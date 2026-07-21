@@ -52,12 +52,18 @@ test("server-renders the complete prepared-demo intake shell", async () => {
   const html = await response.text();
 
   assert.match(html, /Private, bounded evidence analysis/);
-  assert.match(html, /Evidence/);
-  assert.match(html, /Target context/);
-  assert.match(html, /Review and analyze/);
+  assert.match(html, /Choose the evidence/);
   assert.match(html, /Alex Rivera/);
-  assert.match(html, /Before using your own materials/);
+  assert.match(html, /Ready-made demo profile/);
+  assert.match(html, /study-plan\.md/);
+  assert.match(html, /alex-api\/src\/config\.ts/);
+  assert.match(html, /alex-api\/src\/server\.ts/);
+  assert.match(html, /alex-api\/sql\/schema\.sql/);
+  assert.match(html, /capstone-report\.md/);
+  assert.match(html, /quality-assurance-assignment\.md/);
+  assert.match(html, /href="\/alex-evidence\/study-plan\.md"/);
   assert.match(html, /Use my own documents/);
+  assert.match(html, /Build Alex(?:&#x27;|')s Knowledge Bridge/);
 });
 
 test("server-renders method and privacy explanations", async () => {
@@ -77,8 +83,10 @@ test("health route exposes safe configuration state without secrets", async () =
   const body = await response.json();
   assert.deepEqual(body, {
     status: "ok",
-    analysisVersion: "phase-6",
+    analysisVersion: "phase-7",
     liveAnalysisEnabled: false,
+    allowUserKeys: true,
+    model: "gpt-5.6-luna",
     operationalControls: {
       sessionRequestLimit: 8,
       sessionLiveLimit: 3,
@@ -97,15 +105,22 @@ test("prepared fixture becomes a provenance-aware evidence ledger", async () => 
   const body = await response.json();
   assert.equal(body.status, "completed");
   assert.equal(body.ledger.analysisMode, "prepared_fixture");
-  assert.equal(body.ledger.sources.length, 4);
-  assert.equal(body.ledger.claims.length, 4);
-  assert.equal(body.ledger.claims[2].references[0].locator.path, "alex-api/src/config.ts");
-  assert.equal(body.report.schemaVersion, "knowledge-bridge-report.v1");
+  assert.equal(body.ledger.sources.length, 9);
+  assert.equal(body.ledger.claims.length, 12);
+  assert.ok(body.ledger.claims.some((claim) => claim.references[0].locator.path === "alex-api/src/config.ts"));
+  assert.equal(body.report.schemaVersion, "knowledge-bridge-report.v2");
   assert.equal(body.report.analysisVersion, "phase-4");
-  assert.equal(body.report.findings.length, 5);
+  assert.equal(body.report.findings.length, 7);
   assert.ok(body.report.findings.every((finding) => finding.whyItIsUsed.length > 0));
   assert.deepEqual(body.report.nextSteps.map((step) => step.rank), [1, 2, 3]);
-  assert.equal(body.report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
+
+  // Code bridges carry the report's project grounding: each quotes a real file.
+  assert.equal(body.report.codeBridges.length, 3);
+  assert.deepEqual(
+    body.report.codeBridges.map((bridge) => bridge.observed.path),
+    ["alex-api/src/config.ts", "alex-api/tests/health.test.ts", "alex-api/src/server.ts"],
+  );
+  assert.ok(body.report.codeBridges.every((bridge) => bridge.comparisonState !== "verified"));
 });
 
 test("prepared evidence can be reviewed before the comparison without another upload", async () => {
@@ -134,16 +149,11 @@ test("prepared evidence can be reviewed before the comparison without another up
 function customEvidenceForm() {
   const form = new FormData();
   form.set("mode", "custom");
-  form.set("field", "Business administration");
-  form.set("targetTitle", "Operations analyst");
   form.set("location", "Mexico");
   form.set("jurisdiction", "Mexico");
   form.set("projectType", "project_artifact");
   form.append("curriculum", new File(["Operations management, accounting, statistics, and organizational behavior."], "study-plan.md", { type: "text/markdown" }));
   form.append("project", new File(["Mapped a purchasing workflow and documented approval controls and cycle times."], "process-project.md", { type: "text/markdown" }));
-  form.set("curriculumDates", JSON.stringify(["2023-05-20"]));
-  form.set("supportingDates", JSON.stringify([]));
-  form.set("projectDates", JSON.stringify(["2023-04-10"]));
   return form;
 }
 
@@ -153,7 +163,11 @@ test("custom evidence is validated without inventing claims when live analysis i
   const body = await response.json();
   assert.equal(body.status, "validated");
   assert.equal(body.ledger.analysisMode, "preflight_only");
-  assert.equal(body.ledger.fieldContext.field, "Business administration");
+  // Field and target are never supplied by the user; without a key there is no
+  // extraction call to infer them, so the preflight ledger carries a placeholder
+  // while the user-supplied location flows through.
+  assert.equal(body.ledger.fieldContext.location, "Mexico");
+  assert.equal(body.ledger.fieldContext.field, "Pending analysis");
   assert.equal(body.ledger.sources.length, 2);
   assert.equal(body.ledger.claims.length, 0);
   assert.equal(response.headers.get("x-notzero-cache"), "miss");
@@ -170,6 +184,18 @@ test("custom evidence is validated without inventing claims when live analysis i
   assert.equal((await deleteResponse.json()).status, "cleared");
   const afterDelete = await request("/api/evidence-ledger", { method: "POST", body: customEvidenceForm(), headers: { cookie } });
   assert.equal(afterDelete.headers.get("x-notzero-cache"), "miss");
+});
+
+test("an unknown live job reports not found so the client can start over", async () => {
+  const response = await request("/api/evidence-ledger?jobId=abcdef0123456789", { method: "GET" });
+  assert.equal(response.status, 404);
+  assert.equal((await response.json()).error, "job_not_found");
+});
+
+test("a malformed live-job reference is rejected before any lookup", async () => {
+  const response = await request("/api/evidence-ledger?jobId=nope", { method: "GET" });
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, "invalid_job");
 });
 
 test("duplicate and unsupported evidence are rejected before model analysis", async () => {

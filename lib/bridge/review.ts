@@ -1,5 +1,40 @@
 import { deriveRequirementCoverage } from "@/lib/bridge/coverage";
-import { knowledgeBridgeReportSchema, type CurrentPracticePack, type EvidenceLedger, type KnowledgeBridgeReport } from "@/lib/domain/schemas";
+import { knowledgeBridgeReportSchema, type CurrentPracticePack, type EvidenceLedger, type KnowledgeBridgeReport, type Roadmap } from "@/lib/domain/schemas";
+
+/**
+ * A roadmap edits down to the claims that survived review. A phase that loses
+ * every claim it starts from is dropped, a settled or partial topic that loses
+ * its backing evidence is dropped rather than left asserting support, and the
+ * remaining phases are renumbered. Fewer than two surviving phases is no longer
+ * a roadmap.
+ */
+function reviewedRoadmap(roadmap: Roadmap | undefined, included: Set<string>, vocabularyIds: Set<string>): Roadmap | undefined {
+  if (!roadmap) return undefined;
+  const phases = roadmap.phases
+    .map((phase) => {
+      const startsFromClaimIds = phase.startsFromClaimIds.filter((id) => included.has(id));
+      if (startsFromClaimIds.length === 0) return null;
+      const modules = (phase.modules ?? [])
+        .map((curriculumModule) => {
+          const topics = curriculumModule.topics
+            .map((topic) => ({ ...topic, claimIds: topic.claimIds.filter((id) => included.has(id)) }))
+            .filter((topic) => topic.stance === "new" || topic.claimIds.length > 0);
+          return topics.length >= 3 ? { ...curriculumModule, topics } : null;
+        })
+        .filter((curriculumModule) => curriculumModule !== null);
+      return {
+        ...phase,
+        startsFromClaimIds,
+        vocabularyIds: phase.vocabularyIds.filter((id) => vocabularyIds.has(id)),
+        modules: modules.length > 0 ? modules : undefined,
+        exercises: modules.length > 0 ? phase.exercises : undefined,
+      };
+    })
+    .filter((phase) => phase !== null)
+    .map((phase, index) => ({ ...phase, order: index + 1 }));
+  if (phases.length < 2) return undefined;
+  return { ...roadmap, phases };
+}
 
 export function reviewedLedger(ledger: EvidenceLedger, excludedClaimIds: string[]) {
   const known = new Set(ledger.claims.map((claim) => claim.id));
@@ -46,6 +81,12 @@ export function applyEvidenceReview(ledger: EvidenceLedger, report: KnowledgeBri
   });
   const challengeClaims = report.upgradeChallenge.basedOnClaimIds.filter((id) => included.has(id));
   const walkthrough = report.walkthrough && included.has(report.walkthrough.claimId) ? report.walkthrough : undefined;
+  // A code bridge quotes one claim's artifact, and a vocabulary entry renames
+  // one claim's evidence. Excluding the claim removes the right to show either.
+  const codeBridges = report.codeBridges?.filter((bridge) => included.has(bridge.claimId));
+  const vocabularyBridges = report.vocabularyBridges?.filter((term) => included.has(term.claimId));
+  const roadmap = reviewedRoadmap(report.roadmap, included, new Set((vocabularyBridges ?? []).map((term) => term.id)));
+  const hasProjectGrounding = Boolean(walkthrough) || (codeBridges?.length ?? 0) > 0;
   const counts = {
     current: findings.filter((item) => item.group === "current").length,
     transferable: findings.filter((item) => item.group === "transferable").length,
@@ -63,7 +104,10 @@ export function applyEvidenceReview(ledger: EvidenceLedger, report: KnowledgeBri
     nextSteps,
     upgradeChallenge: { ...report.upgradeChallenge, basedOnClaimIds: challengeClaims.length > 0 ? challengeClaims : [fallbackClaim.id] },
     walkthrough,
-    walkthroughUnavailableReason: walkthrough ? undefined : "The claim supporting the project walkthrough was excluded during evidence review. Include a project claim with a stable locator to restore it.",
+    codeBridges,
+    vocabularyBridges,
+    roadmap,
+    walkthroughUnavailableReason: hasProjectGrounding ? undefined : "The claims supporting the project code comparisons were excluded during evidence review. Include a project claim with a stable locator to restore them.",
   });
   return { ledger: filteredLedger, report: revised };
 }

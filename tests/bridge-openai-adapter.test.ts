@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compareWithGpt56, validateBridgeModelOutput } from "../lib/bridge/openai-adapter";
+import { BRIDGE_MAX_OUTPUT_TOKENS, compareWithGpt56, validateBridgeModelOutput } from "../lib/bridge/openai-adapter";
 import { alexEvidenceLedger } from "../lib/fixtures/alex-ledger";
 import { selectCurrentPracticePack, softwareBackendPracticePack } from "../lib/market/current-practice";
 
@@ -88,7 +88,7 @@ test("the second GPT-5.6 stage hydrates only validated claims and dated pack sou
     },
   });
   assert.equal(requestBody?.prompt_cache_key, "notzero-bridge-comparison-v1");
-  assert.equal(requestBody?.max_output_tokens, 12_000);
+  assert.equal(requestBody?.max_output_tokens, BRIDGE_MAX_OUTPUT_TOKENS);
   assert.equal(report.analysisMode, "live_gpt_5_6");
   assert.equal(report.schemaVersion, "knowledge-bridge-report.v2");
   assert.equal(report.findings.length, 1);

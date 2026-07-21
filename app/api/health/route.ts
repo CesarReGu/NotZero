@@ -7,6 +7,8 @@ export async function GET() {
     status: "ok",
     analysisVersion: config.analysisVersion,
     liveAnalysisEnabled: config.liveAnalysisEnabled,
+    allowUserKeys: config.allowUserKeys,
+    model: config.model,
     operationalControls: {
       sessionRequestLimit: config.sessionRequestLimit,
       sessionLiveLimit: config.sessionLiveLimit,

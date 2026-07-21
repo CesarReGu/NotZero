@@ -10,7 +10,7 @@ import { knowledgeBridgeReportSchema } from "../lib/domain/schemas";
 test("the current-practice pack has reciprocal sources and exact mention counts", () => {
   const pack = softwareBackendPracticePack;
   assert.equal(pack.sources.length, 8);
-  assert.equal(pack.datasetVersion, "software-backend-devops-mx.v1.2026-07-18");
+  assert.equal(pack.datasetVersion, "software-backend-devops-mx.v2.2026-07-18");
 
   for (const requirement of pack.requirements) {
     assert.equal(requirement.mentionCount, requirement.sourceIds.length);
@@ -23,20 +23,30 @@ test("the current-practice pack has reciprocal sources and exact mention counts"
 
 test("the prepared report exercises every result group and exactly three next steps", () => {
   const report = alexBridgeReport;
-  assert.ok(report.walkthrough);
   assert.deepEqual(new Set(report.findings.map((finding) => finding.group)), new Set([
     "current", "transferable", "small_bridge", "genuine_gap", "insufficient_evidence",
   ]));
   assert.deepEqual(report.nextSteps.map((step) => step.rank), [1, 2, 3]);
   assert.equal(report.upgradeChallenge.acceptanceCriteria.length, 4);
   assert.equal(report.requirementCoverage?.length, softwareBackendPracticePack.requirements.length);
-  assert.equal(report.walkthrough.artifactReference.locator.path, "alex-api/src/config.ts");
-  assert.equal(report.walkthrough.comparisonState, "illustrative");
   assert.ok(report.findings.every((finding) => finding.whyItIsUsed.length > 0));
 });
 
+test("code bridges ground the report in the project and never claim to be executed", () => {
+  const bridges = alexBridgeReport.codeBridges ?? [];
+  assert.equal(bridges.length, 3);
+  assert.ok(bridges.some((bridge) => bridge.observed.path === "alex-api/src/config.ts" && bridge.comparisonState === "illustrative"));
+  // Project grounding satisfies the schema invariant even with no walkthrough.
+  assert.equal(alexBridgeReport.walkthroughUnavailableReason, undefined);
+  for (const bridge of bridges) {
+    assert.notEqual(bridge.comparisonState, "verified");
+    assert.ok(bridge.observed.code.length > 0 && bridge.modern.code.length > 0);
+    assert.ok(bridge.whatTransfers.length > 0 && bridge.whatIsNew.length > 0);
+  }
+});
+
 test("the decision headline is derived from validated coverage and the selected requirement", () => {
-  assert.equal(buildDecisionHeadline(alexBridgeReport, softwareBackendPracticePack, "Alex"), "Alex's evidence already connects to 3 of 8 reviewed requirements. The shortest bridge is containerization.");
+  assert.equal(buildDecisionHeadline(alexBridgeReport, softwareBackendPracticePack, "Alex"), "Alex's evidence already connects to 5 of 8 reviewed requirements. The shortest bridge is containerization.");
 });
 
 test("the prepared report rejects a missing evidence claim", () => {
@@ -61,8 +71,8 @@ test("requirement coverage is complete, discrete, and derived from validated fin
   assert.equal(coverage.length, softwareBackendPracticePack.requirements.length);
   assert.equal(new Set(coverage.map((item) => item.requirementId)).size, coverage.length);
   assert.equal(coverage.filter((item) => item.findingId).length, alexBridgeReport.findings.length);
-  assert.equal(coverage.filter((item) => item.group === "current" || item.group === "transferable").length, 2);
-  assert.equal(coverage.filter((item) => item.group === "not_assessed").length, 3);
+  assert.equal(coverage.filter((item) => item.group === "current" || item.group === "transferable").length, 4);
+  assert.equal(coverage.filter((item) => item.group === "not_assessed").length, 1);
   assert.throws(() => deriveRequirementCoverage([alexBridgeReport.findings[0], { ...alexBridgeReport.findings[1], currentRequirementId: alexBridgeReport.findings[0].currentRequirementId }], softwareBackendPracticePack), /More than one finding/);
   assert.throws(() => knowledgeBridgeReportSchema.parse({ ...alexBridgeReport, requirementCoverage: alexBridgeReport.requirementCoverage?.map((item, index) => index === 0 ? { ...item, evidenceCount: item.evidenceCount + 1 } : item) }), /Requirement coverage must match/);
 });

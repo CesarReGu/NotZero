@@ -15,6 +15,15 @@ export function EvidenceLedgerView({ ledger }: { ledger: EvidenceLedger }) {
         <span className="ledger-mode">{label(ledger.analysisMode)}</span>
       </div>
 
+      {ledger.analysisMode !== "preflight_only" && (
+        <p className="ledger-field" role="note">
+          <span>{ledger.analysisMode === "live_gpt_5_6" ? "Detected field" : "Field"}</span>
+          <strong>{ledger.fieldContext.field}</strong>
+          <em>{ledger.fieldContext.targetTitle}</em>
+          <small>{ledger.fieldContext.location}</small>
+        </p>
+      )}
+
       <div className="ledger-summary" aria-label="Evidence ledger summary">
         <div><strong>{ledger.sources.length}</strong><span>Dated sources</span></div>
         <div><strong>{ledger.claims.length}</strong><span>Supported claims</span></div>
@@ -26,7 +35,7 @@ export function EvidenceLedgerView({ ledger }: { ledger: EvidenceLedger }) {
         <ul>
           {ledger.sources.map((source) => (
             <li key={source.id}>
-              <div><strong>{source.name}</strong><span>{label(source.sourceType)} · {source.date}</span></div>
+              <div><strong>{source.name}</strong><span>{label(source.sourceType)}{source.date ? ` · ${source.date}` : ""}</span></div>
               <small>{source.characterCount.toLocaleString("en-US")} characters{source.pageCount ? ` · ${source.pageCount} pages` : ""}</small>
             </li>
           ))}

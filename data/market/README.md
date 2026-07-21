@@ -17,3 +17,7 @@ NotZero's normalized dataset and software are distributed under the repository's
 - The sample mixes experience levels and is not a statistical labor-market survey.
 
 Refreshes must create a new dataset version, preserve the prior version used for submitted results, and revalidate every source and count.
+
+## Generated references for uncovered fields
+
+This directory holds only human-reviewed packs. When a custom analysis names a field no reviewed pack covers, NotZero synthesizes a current-practice reference for that field at request time with GPT-5.6 (`lib/market/practice-pack-adapter.ts`) and assembles it into the same pack shape, validated by the same rules. Generated packs are marked `generated: true`, are never written to this directory, and are labeled illustrative in the report: their sources are representative role archetypes linked to live job-board searches rather than individually reviewed postings, and no finding drawn against them may claim the verified comparison state. A reviewed pack for a field always takes precedence over generation.

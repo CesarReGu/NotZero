@@ -14,12 +14,12 @@ export default function MethodPage() {
         <h1>Conclusions should be inspectable.</h1>
         <p className="page-lede">NotZero connects academic and prior-work evidence with current professional practice. It keeps the field context, source, inference, relationship, and uncertainty visible.</p>
 
-        <section>
+        <section data-animate="1">
           <h2>Field context comes before comparison</h2>
           <p>The evidence ledger records a field, target, location, and jurisdiction where relevant. A software tool, accounting standard, nursing guideline, and legal authority cannot be updated from the same source set. The current release includes one reviewed software pack. Other fields remain evidence-only until their own source and safety layers exist.</p>
         </section>
 
-        <section>
+        <section data-animate="1">
           <h2>Evidence classes</h2>
           <div className="definition-list">
             <div><h3>Expected exposure</h3><p>A curriculum says the learner was expected to encounter a topic. It does not prove mastery.</p></div>
@@ -30,19 +30,19 @@ export default function MethodPage() {
           </div>
         </section>
 
-        <section>
+        <section data-animate="1">
           <h2>Relationship before equivalence</h2>
           <p>Current tools can automate, standardize, encapsulate, or build on earlier work. Each bridge names the directional relationship, the concepts that transfer, and the concepts that remain new.</p>
-          <div className="method-example"><span>environment configuration</span><strong>foundation for</strong><span>containerization</span></div>
+          <div className="method-example"><span>environment configuration</span><span className="connection-rule"><i aria-hidden="true" /><strong>foundation for</strong></span><span>containerization</span></div>
         </section>
 
-        <section>
+        <section data-animate="1">
           <h2>A dated, controlled market sample</h2>
           <p>The prepared software comparison uses eight employer postings reviewed on July 18, 2026 for Mexico and remote Latin America. NotZero stores normalized factual requirements and source links, not copied job descriptions. Counts show explicit mentions within this sample. They do not establish universal requirements.</p>
           <p>Official Docker, GitHub, and OpenTelemetry documentation supports claims about what current tools automate, standardize, or make observable. Job-posting frequency alone cannot establish a tool relationship.</p>
         </section>
 
-        <section>
+        <section data-animate="1">
           <h2>Comparison states</h2>
           <div className="definition-list">
             <div><h3>Verified</h3><p>The modernized implementation was executed successfully against the submitted project in a controlled environment.</p></div>
@@ -51,12 +51,12 @@ export default function MethodPage() {
           </div>
         </section>
 
-        <section>
+        <section data-animate="1">
           <h2>What every finding must answer</h2>
           <ol className="numbered-prose"><li>What evidence supports it?</li><li>What kind of evidence is it?</li><li>How current is the comparison?</li><li>What inference was made?</li><li>How confident should the reader be?</li><li>What could change the conclusion?</li></ol>
         </section>
 
-        <div className="page-callout"><p>See the method applied to a fictional graduate with exact project references.</p><Link className="button button-primary" href="/demo">Try the prepared demo</Link></div>
+        <div className="page-callout" data-animate="1"><p>See the method applied to a fictional graduate with exact project references.</p><Link className="button button-primary" href="/demo">Try the prepared demo</Link></div>
       </div>
     </main>
   );

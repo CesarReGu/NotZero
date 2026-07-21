@@ -56,7 +56,7 @@ On screen: finish on the Method page or a simple repository architecture view pr
 
 Narration:
 
-> Codex helped build and test the complete product across the interface, typed contracts, evidence pipeline, accessibility, security controls, and deployment. GPT-5.6 powers two schema-constrained server stages: evidence extraction, then the Knowledge Bridge comparison. Independent validation rejects invented claim IDs, excerpts, locators, dates, and market counts before a result reaches the user.
+> Codex helped build and test the complete product across the interface, typed contracts, evidence pipeline, accessibility, security controls, and deployment. GPT-5.6 powers three schema-constrained server stages: evidence extraction, the Knowledge Bridge comparison, and the guided program with its vocabulary, code counterparts, and curriculum. Independent validation rejects invented claim IDs, excerpts, locators, dates, and market counts before a result reaches the user.
 
 ## Recording checklist
 

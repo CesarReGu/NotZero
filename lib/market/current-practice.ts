@@ -1,9 +1,19 @@
 import rawPack from "@/data/market/software-backend-devops-mx-2026.json";
 import { currentPracticePackSchema, type CurrentPracticePack } from "@/lib/domain/schemas";
 
-function validatePack(pack: CurrentPracticePack) {
+export function validatePracticePack(pack: CurrentPracticePack) {
   const sourceIds = new Set(pack.sources.map((source) => source.id));
   const requirementIds = new Set(pack.requirements.map((requirement) => requirement.id));
+
+  const resourceIds = new Set<string>();
+  for (const resource of pack.learningResources) {
+    if (resourceIds.has(resource.id)) throw new Error(`Duplicate learning resource ${resource.id}.`);
+    resourceIds.add(resource.id);
+    // A reading list dated later than the pack itself would misreport when the
+    // comparison was made, so resources may be re-checked but never post-dated
+    // ahead of an unreviewed pack.
+    if (resource.observedAt < pack.observedThrough) throw new Error(`Learning resource ${resource.id} predates the market observation window.`);
+  }
 
   for (const source of pack.sources) {
     for (const requirementId of source.requirementIds) {
@@ -20,10 +30,28 @@ function validatePack(pack: CurrentPracticePack) {
     }
   }
 
+  // A role profile must be a cluster actually observed in the reviewed
+  // postings: every requirement it names has to appear in at least one of the
+  // postings it was derived from.
+  const profileIds = new Set<string>();
+  for (const profile of pack.roleProfiles) {
+    if (profileIds.has(profile.id)) throw new Error(`Duplicate role profile ${profile.id}.`);
+    profileIds.add(profile.id);
+    const observed = new Set<string>();
+    for (const sourceId of profile.sourceIds) {
+      if (!sourceIds.has(sourceId)) throw new Error(`Role profile ${profile.id} cites unknown posting ${sourceId}.`);
+      for (const requirementId of pack.sources.find((item) => item.id === sourceId)?.requirementIds ?? []) observed.add(requirementId);
+    }
+    for (const requirementId of profile.requirementIds) {
+      if (!requirementIds.has(requirementId)) throw new Error(`Role profile ${profile.id} names unknown requirement ${requirementId}.`);
+      if (!observed.has(requirementId)) throw new Error(`Role profile ${profile.id} claims ${requirementId}, which none of its cited postings mention.`);
+    }
+  }
+
   return pack;
 }
 
-export const softwareBackendPracticePack = validatePack(currentPracticePackSchema.parse(rawPack));
+export const softwareBackendPracticePack = validatePracticePack(currentPracticePackSchema.parse(rawPack));
 
 const softwareFields = new Set(["software development", "software engineering", "computer science"]);
 const softwareTargets = ["backend", "back-end", "full stack", "full-stack", "devops", "software engineer"];
@@ -59,4 +87,10 @@ export function technicalSourceById(pack: CurrentPracticePack, id: string) {
   const source = pack.technicalSources.find((item) => item.id === id);
   if (!source) throw new Error(`Technical source ${id} was not found.`);
   return source;
+}
+
+export function learningResourceById(pack: CurrentPracticePack, id: string) {
+  const resource = pack.learningResources.find((item) => item.id === id);
+  if (!resource) throw new Error(`Learning resource ${id} was not found.`);
+  return resource;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { NotZeroMark } from "@/components/notzero-mark";
 
 type UseCaseId = "software" | "law" | "accounting";
 
@@ -133,7 +134,8 @@ export function EvidenceTransform() {
             </div>
 
             <div className="analysis-core" aria-hidden="true">
-              <span>NZ</span>
+              <span className="core-ring" />
+              <span className="core-disc"><NotZeroMark className="core-mark" /></span>
               <i /><i /><i />
             </div>
 
@@ -146,8 +148,6 @@ export function EvidenceTransform() {
                 </div>
               ))}
             </div>
-
-            <div className="transform-burst" aria-hidden="true"><i /><i /><i /><i /></div>
           </div>
         </div>
 

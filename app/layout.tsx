@@ -1,7 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
+import { MotionEffects } from "@/components/motion-effects";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+
+export const viewport: Viewport = {
+  themeColor: "#f6f7fb",
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -33,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: socialImage, width: 1728, height: 907, alt: "NotZero. You are not starting from zero." }],
+      images: [{ url: socialImage, width: 1200, height: 630, alt: "NotZero. You are not starting from zero." }],
     },
     twitter: {
       card: "summary_large_image",
@@ -50,11 +56,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
+        {/* Arms scroll reveals before first paint. Skipped on hash loads so
+            anchored content is never hidden while the page hydrates. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "if(!location.hash)document.documentElement.classList.add('js-motion');",
+          }}
+        />
+        <MotionEffects />
         <a className="skip-link" href="#main-content">Skip to content</a>
         <SiteHeader />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

@@ -1,12 +1,13 @@
 {
   "id": "software-backend-devops-mx-2026",
   "schemaVersion": "current-practice-pack.v1",
-  "datasetVersion": "software-backend-devops-mx.v1.2026-07-18",
+  "datasetVersion": "software-backend-devops-mx.v2.2026-07-18",
   "field": "Software development",
   "targetScope": "Junior backend engineering with DevOps-adjacent responsibilities",
   "locationScope": "Mexico and remote roles open to Latin America",
   "observedFrom": "2026-07-18",
   "observedThrough": "2026-07-18",
+  "reviewIntervalDays": 180,
   "sources": [
     {
       "id": "job-lingaro-backend-mx",
@@ -18,7 +19,13 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["api-design", "relational-databases", "containerization", "ci-cd", "cloud-platform"]
+      "requirementIds": [
+        "api-design",
+        "relational-databases",
+        "containerization",
+        "ci-cd",
+        "cloud-platform"
+      ]
     },
     {
       "id": "job-restaurant365-devops-mx",
@@ -30,7 +37,11 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["containerization", "ci-cd", "cloud-platform"]
+      "requirementIds": [
+        "containerization",
+        "ci-cd",
+        "cloud-platform"
+      ]
     },
     {
       "id": "job-idt-devops-latam",
@@ -42,7 +53,13 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["containerization", "ci-cd", "cloud-platform", "infrastructure-as-code", "observability"]
+      "requirementIds": [
+        "containerization",
+        "ci-cd",
+        "cloud-platform",
+        "infrastructure-as-code",
+        "observability"
+      ]
     },
     {
       "id": "job-nextlink-fde-mx",
@@ -54,7 +71,15 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["api-design", "automated-testing", "containerization", "ci-cd", "cloud-platform", "infrastructure-as-code", "observability"]
+      "requirementIds": [
+        "api-design",
+        "automated-testing",
+        "containerization",
+        "ci-cd",
+        "cloud-platform",
+        "infrastructure-as-code",
+        "observability"
+      ]
     },
     {
       "id": "job-panoptyc-fullstack-latam",
@@ -66,7 +91,14 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["api-design", "relational-databases", "containerization", "ci-cd", "cloud-platform", "infrastructure-as-code"]
+      "requirementIds": [
+        "api-design",
+        "relational-databases",
+        "containerization",
+        "ci-cd",
+        "cloud-platform",
+        "infrastructure-as-code"
+      ]
     },
     {
       "id": "job-hopper-backend-latam",
@@ -78,7 +110,10 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["api-design", "cloud-platform"]
+      "requirementIds": [
+        "api-design",
+        "cloud-platform"
+      ]
     },
     {
       "id": "job-latamcent-deployment-latam",
@@ -90,7 +125,11 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["api-design", "containerization", "observability"]
+      "requirementIds": [
+        "api-design",
+        "containerization",
+        "observability"
+      ]
     },
     {
       "id": "job-devsavant-backend-latam",
@@ -102,7 +141,16 @@
       "observedAt": "2026-07-18",
       "sourceType": "employer_job_posting",
       "usageBasis": "Manual factual extraction from a publicly accessible employer posting. NotZero stores normalized requirement labels and the source URL, not the job description.",
-      "requirementIds": ["api-design", "automated-testing", "relational-databases", "containerization", "ci-cd", "cloud-platform", "infrastructure-as-code", "observability"]
+      "requirementIds": [
+        "api-design",
+        "automated-testing",
+        "relational-databases",
+        "containerization",
+        "ci-cd",
+        "cloud-platform",
+        "infrastructure-as-code",
+        "observability"
+      ]
     }
   ],
   "requirements": [
@@ -110,8 +158,19 @@
       "id": "api-design",
       "name": "Backend and API design",
       "kind": "concept",
-      "aliases": ["REST APIs", "backend services", "API integrations"],
-      "sourceIds": ["job-lingaro-backend-mx", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-hopper-backend-latam", "job-latamcent-deployment-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "REST APIs",
+        "backend services",
+        "API integrations"
+      ],
+      "sourceIds": [
+        "job-lingaro-backend-mx",
+        "job-nextlink-fde-mx",
+        "job-panoptyc-fullstack-latam",
+        "job-hopper-backend-latam",
+        "job-latamcent-deployment-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 6,
       "context": "Six of eight reviewed postings named backend services, APIs, or API integrations. The sample mixes experience levels, so the count signals vocabulary demand rather than a universal entry requirement."
     },
@@ -119,8 +178,14 @@
       "id": "automated-testing",
       "name": "Automated testing",
       "kind": "practice",
-      "aliases": ["tests", "quality gates"],
-      "sourceIds": ["job-nextlink-fde-mx", "job-devsavant-backend-latam"],
+      "aliases": [
+        "tests",
+        "quality gates"
+      ],
+      "sourceIds": [
+        "job-nextlink-fde-mx",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 2,
       "context": "Two of eight postings explicitly named testing. CI/CD postings may also involve tests, but this dataset does not count an implied requirement as an explicit mention."
     },
@@ -128,8 +193,20 @@
       "id": "containerization",
       "name": "Containerization",
       "kind": "tool",
-      "aliases": ["Docker", "containers", "Kubernetes"],
-      "sourceIds": ["job-lingaro-backend-mx", "job-restaurant365-devops-mx", "job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-latamcent-deployment-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "Docker",
+        "containers",
+        "Kubernetes"
+      ],
+      "sourceIds": [
+        "job-lingaro-backend-mx",
+        "job-restaurant365-devops-mx",
+        "job-idt-devops-latam",
+        "job-nextlink-fde-mx",
+        "job-panoptyc-fullstack-latam",
+        "job-latamcent-deployment-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 7,
       "context": "Seven of eight reviewed postings named containers or an orchestration platform. Docker and Kubernetes are not treated as equivalent skills."
     },
@@ -137,8 +214,20 @@
       "id": "ci-cd",
       "name": "Continuous integration and delivery",
       "kind": "practice",
-      "aliases": ["CI/CD", "GitHub Actions", "GitLab CI/CD", "Jenkins"],
-      "sourceIds": ["job-lingaro-backend-mx", "job-restaurant365-devops-mx", "job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "CI/CD",
+        "GitHub Actions",
+        "GitLab CI/CD",
+        "Jenkins"
+      ],
+      "sourceIds": [
+        "job-lingaro-backend-mx",
+        "job-restaurant365-devops-mx",
+        "job-idt-devops-latam",
+        "job-nextlink-fde-mx",
+        "job-panoptyc-fullstack-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 6,
       "context": "Six of eight reviewed postings explicitly named CI/CD or a pipeline tool. Tool choice varied across employers."
     },
@@ -146,8 +235,20 @@
       "id": "cloud-platform",
       "name": "Cloud platform fundamentals",
       "kind": "concept",
-      "aliases": ["AWS", "Azure", "Google Cloud"],
-      "sourceIds": ["job-lingaro-backend-mx", "job-restaurant365-devops-mx", "job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-hopper-backend-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "AWS",
+        "Azure",
+        "Google Cloud"
+      ],
+      "sourceIds": [
+        "job-lingaro-backend-mx",
+        "job-restaurant365-devops-mx",
+        "job-idt-devops-latam",
+        "job-nextlink-fde-mx",
+        "job-panoptyc-fullstack-latam",
+        "job-hopper-backend-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 7,
       "context": "Seven of eight reviewed postings named at least one cloud platform. The dataset does not claim that one provider is universally preferred."
     },
@@ -155,8 +256,18 @@
       "id": "infrastructure-as-code",
       "name": "Infrastructure as code",
       "kind": "practice",
-      "aliases": ["Terraform", "Ansible", "Pulumi", "CDK"],
-      "sourceIds": ["job-idt-devops-latam", "job-nextlink-fde-mx", "job-panoptyc-fullstack-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "Terraform",
+        "Ansible",
+        "Pulumi",
+        "CDK"
+      ],
+      "sourceIds": [
+        "job-idt-devops-latam",
+        "job-nextlink-fde-mx",
+        "job-panoptyc-fullstack-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 4,
       "context": "Four of eight postings named infrastructure as code or a related tool. One mention was presented as desirable rather than mandatory."
     },
@@ -164,8 +275,18 @@
       "id": "observability",
       "name": "Observability",
       "kind": "practice",
-      "aliases": ["monitoring", "logging", "metrics", "tracing"],
-      "sourceIds": ["job-idt-devops-latam", "job-nextlink-fde-mx", "job-latamcent-deployment-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "monitoring",
+        "logging",
+        "metrics",
+        "tracing"
+      ],
+      "sourceIds": [
+        "job-idt-devops-latam",
+        "job-nextlink-fde-mx",
+        "job-latamcent-deployment-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 4,
       "context": "Four of eight reviewed postings named monitoring, logging, or observability. The terms overlap but are not treated as identical."
     },
@@ -173,10 +294,18 @@
       "id": "relational-databases",
       "name": "Relational databases",
       "kind": "concept",
-      "aliases": ["PostgreSQL", "SQL", "schema design"],
-      "sourceIds": ["job-lingaro-backend-mx", "job-panoptyc-fullstack-latam", "job-devsavant-backend-latam"],
+      "aliases": [
+        "PostgreSQL",
+        "SQL",
+        "schema design"
+      ],
+      "sourceIds": [
+        "job-lingaro-backend-mx",
+        "job-panoptyc-fullstack-latam",
+        "job-devsavant-backend-latam"
+      ],
       "mentionCount": 3,
-      "context": "Three of eight reviewed postings explicitly named relational database work. The curriculum supports exposure, but the prepared project does not demonstrate database implementation."
+      "context": "Three of eight reviewed postings explicitly named relational database work, naming PostgreSQL, SQL, or schema design. Employer wording ranged from query writing to schema ownership."
     }
   ],
   "technicalSources": [
@@ -187,7 +316,11 @@
       "url": "https://docs.docker.com/get-started/docker-overview/",
       "observedAt": "2026-07-18",
       "usageBasis": "Official product documentation summarized in NotZero's own words and linked for verification.",
-      "supports": ["standardizes", "encapsulates", "commonly_used_with"]
+      "supports": [
+        "standardizes",
+        "encapsulates",
+        "commonly_used_with"
+      ]
     },
     {
       "id": "docs-github-actions-ci",
@@ -196,7 +329,11 @@
       "url": "https://docs.github.com/en/actions/get-started/continuous-integration",
       "observedAt": "2026-07-18",
       "usageBasis": "Official product documentation summarized in NotZero's own words and linked for verification.",
-      "supports": ["automates", "standardizes", "commonly_used_with"]
+      "supports": [
+        "automates",
+        "standardizes",
+        "commonly_used_with"
+      ]
     },
     {
       "id": "docs-opentelemetry-overview",
@@ -205,11 +342,215 @@
       "url": "https://opentelemetry.io/docs/what-is-opentelemetry/",
       "observedAt": "2026-07-18",
       "usageBasis": "Official project documentation summarized in NotZero's own words and linked for verification.",
-      "supports": ["standardizes", "commonly_used_with", "no_direct_equivalent"]
+      "supports": [
+        "standardizes",
+        "commonly_used_with",
+        "no_direct_equivalent"
+      ]
+    }
+  ],
+  "learningResources": [
+    {
+      "id": "read-dockerfile-reference",
+      "title": "Dockerfile reference",
+      "publisher": "Docker Docs",
+      "url": "https://docs.docker.com/reference/dockerfile/",
+      "kind": "reference",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 45,
+      "covers": "Every instruction a build file can contain, including FROM, WORKDIR, COPY, RUN, ENV, EXPOSE, and CMD."
+    },
+    {
+      "id": "read-docker-build-context",
+      "title": "Build context",
+      "publisher": "Docker Docs",
+      "url": "https://docs.docker.com/build/concepts/context/",
+      "kind": "official_documentation",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 20,
+      "covers": "Which files a build can see, and how .dockerignore keeps the rest out of the image."
+    },
+    {
+      "id": "read-docker-multistage",
+      "title": "Multi-stage builds",
+      "publisher": "Docker Docs",
+      "url": "https://docs.docker.com/build/building/multi-stage/",
+      "kind": "official_documentation",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 25,
+      "covers": "Separating the build environment from the runtime image so build tools do not ship to production."
+    },
+    {
+      "id": "read-docker-network",
+      "title": "Networking overview",
+      "publisher": "Docker Docs",
+      "url": "https://docs.docker.com/engine/network/",
+      "kind": "official_documentation",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 25,
+      "covers": "Container networks, published ports, and how a service inside a container becomes reachable outside it."
+    },
+    {
+      "id": "read-twelve-factor-config",
+      "title": "The Twelve-Factor App: Config",
+      "publisher": "Adam Wiggins",
+      "url": "https://12factor.net/config",
+      "kind": "specification",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 10,
+      "covers": "The argument for keeping configuration in the environment rather than in the code or the image."
+    },
+    {
+      "id": "read-twelve-factor-processes",
+      "title": "The Twelve-Factor App: Processes",
+      "publisher": "Adam Wiggins",
+      "url": "https://12factor.net/processes",
+      "kind": "specification",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 10,
+      "covers": "Why a deployable process keeps no state of its own, and what has to move out of memory before it can be restarted freely."
+    },
+    {
+      "id": "read-twelve-factor-port-binding",
+      "title": "The Twelve-Factor App: Port binding",
+      "publisher": "Adam Wiggins",
+      "url": "https://12factor.net/port-binding",
+      "kind": "specification",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 8,
+      "covers": "A service exporting itself by binding a port, and the routing layer that sits in front of it."
+    },
+    {
+      "id": "read-twelve-factor-backing-services",
+      "title": "The Twelve-Factor App: Backing services",
+      "publisher": "Adam Wiggins",
+      "url": "https://12factor.net/backing-services",
+      "kind": "specification",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 8,
+      "covers": "Treating a database as an attached resource that configuration can swap, local or managed, without touching code."
+    },
+    {
+      "id": "read-actions-workflow-syntax",
+      "title": "Workflow syntax for GitHub Actions",
+      "publisher": "GitHub Docs",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax",
+      "kind": "reference",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 40,
+      "covers": "The YAML keys a workflow file uses: on, jobs, runs-on, steps, and the rest of the schema."
+    },
+    {
+      "id": "read-actions-events",
+      "title": "Events that trigger workflows",
+      "publisher": "GitHub Docs",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows",
+      "kind": "reference",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 25,
+      "covers": "What can start a workflow run, including pull_request and push, and what each event carries with it."
+    },
+    {
+      "id": "read-otel-primer",
+      "title": "Observability primer",
+      "publisher": "OpenTelemetry",
+      "url": "https://opentelemetry.io/docs/concepts/observability-primer/",
+      "kind": "official_documentation",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 20,
+      "covers": "What observability means in practice, and where traces, metrics, and logs each fit."
+    },
+    {
+      "id": "read-otel-logs",
+      "title": "Logs",
+      "publisher": "OpenTelemetry",
+      "url": "https://opentelemetry.io/docs/concepts/signals/logs/",
+      "kind": "official_documentation",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 15,
+      "covers": "Why a structured log with typed fields can be parsed and correlated where a printed line cannot."
+    },
+    {
+      "id": "read-postgres-indexes",
+      "title": "Indexes: Introduction",
+      "publisher": "PostgreSQL Global Development Group",
+      "url": "https://www.postgresql.org/docs/current/indexes-intro.html",
+      "kind": "official_documentation",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 15,
+      "covers": "What an index does to a query, and the cost it adds to every write."
+    },
+    {
+      "id": "read-owasp-sql-injection",
+      "title": "SQL Injection Prevention Cheat Sheet",
+      "publisher": "OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+      "kind": "reference",
+      "observedAt": "2026-07-19",
+      "readingMinutes": 20,
+      "covers": "Why parameterized queries are the primary defense, and which alternatives fall short."
+    }
+  ],
+  "roleProfiles": [
+    {
+      "id": "profile-backend-service",
+      "title": "Backend service developer",
+      "summary": "Builds and maintains HTTP services over a relational database, ships them in containers, and works inside an existing delivery pipeline.",
+      "emphasis": "The work is mostly application code. Infrastructure is something you use rather than something you own.",
+      "sourceIds": [
+        "job-lingaro-backend-mx",
+        "job-hopper-backend-latam",
+        "job-panoptyc-fullstack-latam",
+        "job-devsavant-backend-latam"
+      ],
+      "requirementIds": [
+        "api-design",
+        "relational-databases",
+        "containerization",
+        "ci-cd",
+        "cloud-platform"
+      ]
+    },
+    {
+      "id": "profile-forward-deployed",
+      "title": "Forward deployed and product engineer",
+      "summary": "Builds features close to customers, so the same person writes the endpoint, its tests, and enough operational signal to support it afterwards.",
+      "emphasis": "Breadth over depth. Testing and observability sit next to feature work rather than in another team.",
+      "sourceIds": [
+        "job-nextlink-fde-mx",
+        "job-latamcent-deployment-latam",
+        "job-panoptyc-fullstack-latam"
+      ],
+      "requirementIds": [
+        "api-design",
+        "automated-testing",
+        "containerization",
+        "observability",
+        "cloud-platform"
+      ]
+    },
+    {
+      "id": "profile-devops-platform",
+      "title": "DevOps and platform engineer",
+      "summary": "Owns the path from a commit to a running system: build pipelines, declared infrastructure, and the signals that show the result is healthy.",
+      "emphasis": "The product is the platform. Application code matters, but the deliverables are pipelines and infrastructure.",
+      "sourceIds": [
+        "job-restaurant365-devops-mx",
+        "job-idt-devops-latam",
+        "job-devsavant-backend-latam"
+      ],
+      "requirementIds": [
+        "containerization",
+        "ci-cd",
+        "cloud-platform",
+        "infrastructure-as-code",
+        "observability"
+      ]
     }
   ],
   "methodology": [
     "Eight publicly accessible employer postings were manually reviewed on July 18, 2026. No automated scraping or job-description redistribution is used.",
+    "Learning resources are official documentation or specifications, opened and checked on July 19, 2026. They are linked, never copied, and carry the date they were reviewed.",
     "Requirement counts record explicit mentions only. Similar terms are normalized conservatively and employer-specific tools remain distinct aliases.",
     "The sample is geographically relevant to Mexico or remote Latin America, but it mixes experience levels and is not a statistical labor-market survey.",
     "Official technical documentation supports tool-behavior relationships. Job frequency alone never proves equivalence between an academic practice and a current tool."
@@ -217,6 +558,7 @@
   "limitations": [
     "This small, curated sample can demonstrate the product method but cannot represent every employer or entry-level role.",
     "Postings can change or disappear after the observation date. The dataset version preserves what NotZero reviewed and when.",
-    "Several postings target experienced candidates. Their requirements are used as directional current-practice evidence, not as a claim that a graduate must meet every item."
+    "Several postings target experienced candidates. Their requirements are used as directional current-practice evidence, not as a claim that a graduate must meet every item.",
+    "This pack is scheduled for re-observation every 180 days. A report generated from it carries that date, and the same evidence compared against a later pack can produce a different plan."
   ]
 }

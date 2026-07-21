@@ -14,7 +14,7 @@ export function BridgePreview({ compact = false }: BridgePreviewProps) {
           <span className="bridge-overline">What Alex demonstrated</span>
           <strong>Environment configuration</strong>
         </div>
-        <span className="connection-rule" aria-hidden="true">foundation for</span>
+        <span className="connection-rule" aria-hidden="true"><i /><span>foundation for</span></span>
         <div>
           <span className="bridge-overline">Current practice</span>
           <strong>Containerization</strong>

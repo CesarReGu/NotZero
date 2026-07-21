@@ -34,6 +34,9 @@ export const customSoftwareSources: ExtractedSource[] = [
 ];
 
 export const successfulEvidenceOutput = {
+  field: "Software development",
+  targetTitle: "Junior backend engineer",
+  fieldRationale: "A REST API project with SQL access, configuration, and tests.",
   claims: [
     {
       id: "claim-custom-foundations",
@@ -118,6 +121,9 @@ export function successfulBridgeOutput(claimId = "claim-custom-runtime") {
 }
 
 export const weakEvidenceOutput = {
+  field: "Software development",
+  targetTitle: "Junior backend engineer",
+  fieldRationale: "A short class-project summary that mentions publishing online.",
   claims: [{
     id: "claim-weak-cloud",
     title: "Possible hosted deployment exposure",
@@ -163,6 +169,128 @@ export function weakBridgeOutput() {
     }],
     walkthrough: null,
     walkthroughUnavailableReason: "The submitted summary does not include a stable implementation locator.",
+  };
+}
+
+/**
+ * A valid third-stage output for the successful two-claim scenario above. The
+ * code bridge selects the demonstrated runtime claim, so the server can quote
+ * its verified excerpt as the observed panel.
+ */
+export function successfulSolutionOutput() {
+  return {
+    vocabularyBridges: [
+      {
+        id: "vocab-custom-config",
+        claimId: "claim-custom-runtime",
+        referencePath: "inventory-api/config.ts",
+        yourTerm: "Reading PORT from the environment with a local default",
+        industryTerm: "Externalized configuration",
+        relation: "equivalent",
+        note: "The same practice under its professional name: settings live outside the code so one build runs anywhere.",
+        requirementId: "containerization",
+      },
+      {
+        id: "vocab-custom-port",
+        claimId: "claim-custom-runtime",
+        referencePath: "inventory-api/config.ts",
+        yourTerm: "Choosing the service port at start-up",
+        industryTerm: "Port binding",
+        relation: "narrower",
+        note: "The idea matches, but the industry term also covers the routing layer in front of the service.",
+        requirementId: null,
+      },
+      {
+        id: "vocab-custom-foundations",
+        claimId: "claim-custom-foundations",
+        referencePath: "study-plan.md",
+        yourTerm: "Coursework in web development, databases, operating systems, and networks",
+        industryTerm: "Computer-science fundamentals",
+        relation: "related",
+        note: "A curriculum records expected exposure. The professional term implies applied depth the evidence does not show yet.",
+        requirementId: null,
+      },
+    ],
+    codeBridges: [
+      {
+        id: "code-custom-container",
+        title: "Environment configuration becomes a build file",
+        claimId: "claim-custom-runtime",
+        referencePath: "inventory-api/config.ts",
+        requirementId: "containerization",
+        relationshipType: "standardizes",
+        comparisonState: "illustrative",
+        observedLabel: "What you wrote",
+        observedLanguage: "typescript",
+        demonstrates: "Configuration is read from the environment with a sensible local default, which is the prerequisite for running the same code in more than one place.",
+        modern: {
+          label: "Current practice",
+          language: "dockerfile",
+          code: "FROM node:22-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --omit=dev\nCOPY . .\nENV PORT=4000\nEXPOSE 4000\nCMD [\"node\", \"dist/server.js\"]",
+          caption: "The runtime and startup sequence, written once as build instructions.",
+          filename: "Dockerfile",
+        },
+        whyItMatters: "A build file makes the runtime reproducible across machines instead of a sequence each person repeats.",
+        whatTransfers: ["External configuration", "Port selection"],
+        whatIsNew: ["Image layers", "Container lifecycle"],
+        limitations: ["This Dockerfile was not executed against the project."],
+      },
+    ],
+    roadmap: {
+      title: "Two builds that reuse the configuration you already wrote",
+      premise: "Each step starts from the demonstrated runtime configuration and adds one new idea, ending in an artifact you can show.",
+      phases: [
+        {
+          title: "Package the API so it runs anywhere",
+          goal: "Turn the environment-driven configuration into a container that starts on a clean machine.",
+          startsFromClaimIds: ["claim-custom-runtime"],
+          vocabularyIds: ["vocab-custom-config"],
+          newConcepts: ["Image layers", "Build context"],
+          buildArtifact: "A Dockerfile at the project root.",
+          checkpoint: "The API answers on its configured port from a clean container.",
+          scope: "One new file.",
+          unlocksRequirementIds: ["containerization"],
+          modules: [
+            {
+              id: "module-container",
+              title: "Containers for a service you already run",
+              summary: "What a build file records, and which parts of it your project already answers.",
+              topics: [
+                { id: "topic-config", title: "Externalized configuration", stance: "settled", hours: 0, note: "config.ts already reads PORT from the environment.", claimIds: ["claim-custom-runtime"], resourceIds: [] },
+                { id: "topic-image", title: "Images, layers, and caching", stance: "new", hours: 3, note: "No counterpart in the evidence.", claimIds: [], resourceIds: ["read-dockerfile-reference"] },
+                { id: "topic-context", title: "Build context", stance: "new", hours: 1.5, note: "Which files the build can see.", claimIds: [], resourceIds: ["read-docker-build-context"] },
+              ],
+            },
+          ],
+          exercises: [
+            {
+              id: "exercise-dockerfile",
+              title: "Write and run the Dockerfile",
+              kind: "build",
+              minutes: 60,
+              prompt: "Write a Dockerfile for the inventory API, keeping PORT configurable at run time.",
+              startFrom: "inventory-api/config.ts",
+              acceptance: ["The container starts on a clean machine", "PORT is injected at run time"],
+              stuckHint: "Start from the official Node base image and copy only what the build needs.",
+            },
+          ],
+        },
+        {
+          title: "Run the project's check on every change",
+          goal: "Move the existing verification into a workflow that runs without being remembered.",
+          startsFromClaimIds: ["claim-custom-foundations"],
+          vocabularyIds: [],
+          newConcepts: ["Workflow triggers"],
+          buildArtifact: "A CI workflow file.",
+          checkpoint: "A pull request shows a passing or failing check.",
+          scope: "One new file.",
+          unlocksRequirementIds: ["ci-cd"],
+          modules: [],
+          exercises: [],
+        },
+      ],
+    },
+    limitations: ["The guided program was generated from two validated claims and a small dated market pack."],
   };
 }
 

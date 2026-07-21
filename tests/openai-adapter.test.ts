@@ -23,6 +23,9 @@ function responseFor(output: unknown) {
 }
 
 const validOutput = {
+  field: "Operations management",
+  targetTitle: "Operations analyst",
+  fieldRationale: "The artifact maps a purchasing workflow with approval controls and cycle times.",
   claims: [{
     id: "claim-1",
     title: "Process mapping",
@@ -41,7 +44,7 @@ test("GPT-5.6 adapter sends a strict schema request and validates provenance", a
   const ledger = await extractWithGpt56({
     apiKey: "test-key",
     model: "gpt-5.6",
-    fieldContext: { field: "Business administration", targetTitle: "Operations analyst", location: "Mexico", jurisdiction: "Mexico" },
+    locationContext: { location: "Mexico", jurisdiction: "Mexico" },
     sources: [source],
     inputWarnings: [],
     fetcher: async (_url, init) => {
@@ -53,13 +56,19 @@ test("GPT-5.6 adapter sends a strict schema request and validates provenance", a
   assert.equal(requestBody?.prompt_cache_key, "notzero-evidence-extraction-v1");
   assert.equal(ledger.analysisMode, "live_gpt_5_6");
   assert.equal(ledger.claims[0].references[0].locator.path, "project.md");
+  // The field and target are inferred by the model, not supplied, and flow into
+  // the ledger; the request never contains them.
+  assert.equal(ledger.fieldContext.field, "Operations management");
+  assert.equal(ledger.fieldContext.targetTitle, "Operations analyst");
+  assert.equal(ledger.fieldContext.location, "Mexico");
+  assert.ok(!String(requestBody?.input).includes("Operations analyst"));
 });
 
 test("GPT-5.6 adapter rejects malformed schema output", async () => {
   await assert.rejects(() => extractWithGpt56({
     apiKey: "test-key",
     model: "gpt-5.6",
-    fieldContext: { field: "Business administration", targetTitle: "Operations analyst", location: "Mexico" },
+    locationContext: { location: "Mexico" },
     sources: [source],
     inputWarnings: [],
     fetcher: async () => responseFor({ claims: "not-an-array", warnings: [], limitations: [] }),
@@ -72,7 +81,7 @@ test("GPT-5.6 adapter rejects an invented excerpt", async () => {
   await assert.rejects(() => extractWithGpt56({
     apiKey: "test-key",
     model: "gpt-5.6",
-    fieldContext: { field: "Business administration", targetTitle: "Operations analyst", location: "Mexico" },
+    locationContext: { location: "Mexico" },
     sources: [source],
     inputWarnings: [],
     fetcher: async () => responseFor(invented),

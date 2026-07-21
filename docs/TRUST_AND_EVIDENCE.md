@@ -127,6 +127,17 @@ Never imply that illustrative or conceptual output compiles, runs, preserves beh
 
 The evidence ledger is shared across fields. Current-practice comparison is not. Each supported field needs a reviewed source hierarchy and safety policy. Software may emphasize dated job requirements and official technical documentation. Accounting, nursing, law, and other regulated fields must prioritize applicable standards, regulators, professional bodies, clinical or legal authorities, and jurisdiction before job-posting frequency. A field label alone is never permission to generate regulated professional advice.
 
+### Two tiers of current-practice pack
+
+Only one field has a human-reviewed pack today: the software pack, built from eight manually reviewed postings and official documentation. Its findings can carry the `verified` state.
+
+Every other field is served by a generated pack, and generation itself has two tiers:
+
+- **Web-searched (preferred).** GPT-5.6 uses the web-search tool to locate real, currently open postings for the field, target, and location, recording each posting's employer, role, link, and stated requirements. A second call, with no web search, normalizes those requirements into canonical requirements and role clusters. The server recomputes every mention count from the located postings, so a count is a count over real openings, and the postings are linked so the reader can check them. Requirement counts are the same shape as the curated pack, but no human reviewed the postings, so findings are capped at `illustrative` and the report shows a generated-reference banner.
+- **Representative archetypes (fallback).** When the search finds too few real postings, or web search is unavailable, the pack is built from representative role archetypes the model produces. Their links open live job-board searches, not specific postings. This tier is also capped at `illustrative` and labeled as archetypes rather than located postings.
+
+Both generated tiers run the same structural validators as the curated pack (reciprocal source and requirement mappings, mention counts derived server-side, role profiles observed in their cited sources). The pack records which tier produced it (`grounding`), and the report's provenance copy names the tier honestly. The model is instructed never to invent a URL, employer, or requirement, but the server validates URL format, not that a posting still exists or is correctly attributed, so a generated pack is a labeled starting point, not an authoritative source, and never carries `verified`.
+
 For the MVP:
 
 - use a controlled and dated set of job descriptions or a properly licensed API;

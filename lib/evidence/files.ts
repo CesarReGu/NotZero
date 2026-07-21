@@ -52,7 +52,6 @@ function scanPersonalContent(text: string) {
 export async function extractEvidenceFile(
   file: File,
   sourceType: EvidenceSourceType,
-  date: string,
   index: number,
 ): Promise<{ source: ExtractedSource; warnings: string[] }> {
   const name = file.name.replaceAll("\\", "/");
@@ -114,7 +113,6 @@ export async function extractEvidenceFile(
         id: safeId,
         name,
         sourceType,
-        date,
         mimeType: file.type || (extension === ".pdf" ? "application/pdf" : "text/plain"),
         sizeBytes: file.size,
         contentHash,

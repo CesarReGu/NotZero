@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { extname } from "node:path";
 
 const tracked = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" })
@@ -30,7 +30,12 @@ const secretPatterns = [
 ];
 
 const violations = [];
+let scanned = 0;
 for (const path of tracked) {
+  // A file deleted in the working tree is still listed until the deletion is
+  // staged. It has no content to scan, so skip it rather than crash.
+  if (!existsSync(path)) continue;
+  scanned += 1;
   if (path !== ".env.example" && forbiddenNames.some((pattern) => pattern.test(path))) {
     violations.push(`${path}: forbidden tracked path`);
     continue;
@@ -55,4 +60,4 @@ if (violations.length) {
   throw new Error(`Repository audit failed:\n${violations.join("\n")}`);
 }
 
-console.log(`Audited ${tracked.length} tracked files. No blocked paths or obvious secrets found.`);
+console.log(`Audited ${scanned} of ${tracked.length} tracked files. No blocked paths or obvious secrets found.`);

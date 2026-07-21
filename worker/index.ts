@@ -2,6 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { setOperationalDatabase } from "../lib/operations/database";
+import { setRequestWaitUntil } from "../lib/operations/runtime";
 
 interface Env {
   ASSETS: Fetcher;
@@ -28,7 +29,14 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    setOperationalDatabase(env.DB);
+    // vinext's local prod server can momentarily invoke the worker without
+    // bindings; the operations layer falls back to in-memory state when no
+    // database is provided, so a missing env must not crash the request.
+    setOperationalDatabase(env?.DB);
+    // Expose this invocation's waitUntil so the analysis pipeline can keep a live
+    // job progressing after the response returns. Best-effort only; the
+    // poll-driven job model is what guarantees a job always resumes.
+    setRequestWaitUntil(typeof ctx?.waitUntil === "function" ? ctx.waitUntil.bind(ctx) : undefined);
     const url = new URL(request.url);
 
     if (url.pathname === "/_vinext/image") {

@@ -45,7 +45,7 @@ The evidence mechanism is multidisciplinary, but each profession needs its own r
 
 NotZero uses TypeScript, React, a Next-compatible App Router through Vinext, Vite, Cloudflare Workers, D1-backed operational controls, Zod runtime schemas, and the OpenAI Responses API.
 
-GPT-5.6 is integrated in two typed, server-side stages. The first extracts evidence claims with exact source references. The second compares the validated ledger with a conservatively selected, versioned current-practice pack. Strict JSON Schema output is validated again by deterministic application code. Unknown claim IDs, invented excerpts or locators, unsupported relationship types, and misstated market dates or counts are rejected before display.
+GPT-5.6 is integrated in three typed, server-side stages. The first extracts evidence claims with exact source references. The second compares the validated ledger with a conservatively selected, versioned current-practice pack. The third writes the guided program: the vocabulary translation, code counterparts whose observed side is quoted server-side from verified references, and the phased curriculum. Strict JSON Schema output is validated again by deterministic application code. Unknown claim IDs, invented excerpts or locators, unsupported relationship types, unlisted learning resources, and misstated market dates or counts are rejected before display.
 
 The prepared Alex scenario is deterministic and fictional so judges can complete the full experience without an account, private data, or model availability. The custom live path is bounded by file, token, request, cache, and spending limits and requires server-side deployment credentials.
 
@@ -64,7 +64,7 @@ The second challenge was information hierarchy. Early reports exposed all proven
 ## Accomplishments
 
 - A complete prepared judge path with no login, payment, API key, or private upload.
-- Two schema-constrained GPT-5.6 stages behind typed server adapters.
+- Three schema-constrained GPT-5.6 stages behind typed server adapters, with a visitor-key path that keeps credentials out of the repository.
 - Exact evidence, locator, date, and market-count validation.
 - Evidence review before comparison and priority recomputation without re-uploading.
 - Decision-first reports with citations, a project walkthrough, a PDF path, and a privacy-safe PNG summary card.

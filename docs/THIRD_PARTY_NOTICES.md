@@ -28,7 +28,7 @@ The less-permissive or attribution-sensitive entries are transitive build or pla
 
 ## Fonts, icons, and media
 
-- The interface uses operating-system font stacks. No font files are redistributed.
+- The interface self-hosts two typefaces under `public/fonts/`, both under the SIL Open Font License 1.1: Inter (Copyright The Inter Project Authors, <https://github.com/rsms/inter>) and IBM Plex Mono (Copyright IBM Corp., <https://github.com/IBM/plex>). Each font's OFL text is stored beside the WOFF2 files (`Inter-OFL.txt`, `IBMPlexMono-OFL.txt`). The OFL permits embedding and redistribution; self-hosting also lets the report render consistently on any machine and embed real, selectable text into printed PDFs instead of outlined system-font fallbacks.
 - Production icons are CSS or text-interface details authored for NotZero. No external icon pack is bundled.
 - `public/og.png` was generated specifically for NotZero during the submission build. It contains no third-party photograph, logo, or trademark.
 - The prepared Alex Rivera evidence fixture is fictional and was authored for this project.
