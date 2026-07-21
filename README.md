@@ -6,7 +6,7 @@ NotZero connects academic knowledge and past projects with current professional 
 
 ## Current status
 
-The software-graduate vertical slice now includes the decision-ready report, evidence receipts, dated market comparison, project-grounded code bridges, and print-to-PDF path. The remaining release work is deployment configuration and final submission verification. The runnable application currently includes:
+The software-graduate vertical slice now includes the decision-ready report, evidence receipts, dated market comparison, project-grounded code bridges, and print-to-PDF path. The release candidate is deployed and verified. Only owner-supplied Devpost artifacts remain outside the repository, namely the public video URL and primary `/feedback` Session ID. The runnable application currently includes:
 
 - a public landing page with the approved product message;
 - persistent navigation to Method, Privacy, and the prepared demo;
