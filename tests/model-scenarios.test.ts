@@ -43,10 +43,12 @@ test("summary-only evidence produces no invented code location or walkthrough", 
   assert.equal(report.findings[0].artifactReference, undefined);
 });
 
-test("invented citations are rejected in extraction and comparison", async () => {
+test("invented extraction citations are omitted while unsafe comparison citations remain rejected", async () => {
   const inventedEvidence = structuredClone(successfulEvidenceOutput);
   inventedEvidence.claims[1].references[0].excerpt = "A Dockerfile already exists";
-  await assert.rejects(() => extractWithGpt56({ apiKey: "test-key", model: "gpt-5.6", locationContext: { location: context.location }, sources: customSoftwareSources, inputWarnings: [], fetcher: async () => modelResponse(inventedEvidence) }), /does not resolve/);
+  const sanitizedLedger = await extractWithGpt56({ apiKey: "test-key", model: "gpt-5.6", locationContext: { location: context.location }, sources: customSoftwareSources, inputWarnings: [], fetcher: async () => modelResponse(inventedEvidence) });
+  assert.equal(sanitizedLedger.claims.length, 1);
+  assert.match(sanitizedLedger.warnings.at(-1) ?? "", /could not be verified/);
 
   const ledger = await extractWithGpt56({ apiKey: "test-key", model: "gpt-5.6", locationContext: { location: context.location }, sources: customSoftwareSources, inputWarnings: [], fetcher: async () => modelResponse(successfulEvidenceOutput) });
   const inventedMarket = successfulBridgeOutput();

@@ -101,19 +101,61 @@ function numberedText(text: string) {
   return text.split("\n").map((line, index) => `${index + 1}: ${line}`).join("\n");
 }
 
+function comparableText(value: string) {
+  return value.normalize("NFKC").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function excerptCandidates(value: string) {
+  const withoutLinePrefixes = value.replace(/^[0-9]+\s*:\s?/gmu, "");
+  const candidates = withoutLinePrefixes !== value ? [withoutLinePrefixes, value] : [value];
+  const withoutWrappingQuotes = withoutLinePrefixes.replace(/^(?:["'“”‘’`])([\s\S]*)(?:["'“”‘’`])$/u, "$1").trim();
+  if (withoutWrappingQuotes !== withoutLinePrefixes) candidates.push(withoutWrappingQuotes);
+  return [...new Set(candidates.map((candidate) => candidate.trim()).filter(Boolean))];
+}
+
+function resolveExcerpt(source: ExtractedSource, excerpt: string) {
+  const sourceText = comparableText(source.normalizedText);
+  const candidates = excerptCandidates(excerpt);
+  return candidates.find((candidate) => sourceText.includes(comparableText(candidate))) ?? null;
+}
+
+/**
+ * Keep only model claims whose references can be verified against the uploaded
+ * bytes. An unverifiable reference is an evidence limitation, not a reason to
+ * discard the entire analysis: the remaining claims can still produce an
+ * honest ledger, and zero surviving claims becomes the normal ledger-only
+ * outcome. This also handles the line-number prefixes the model sees in the
+ * extraction prompt but must not include in an excerpt.
+ */
 function validateProvenance(ledger: EvidenceLedger, sources: ExtractedSource[]) {
   const byId = new Map(sources.map((source) => [source.metadata.id, source]));
-  for (const claim of ledger.claims) {
-    for (const reference of claim.references) {
+  const omittedSources = new Set<string>();
+  const sanitizedClaims = ledger.claims.flatMap((claim) => {
+    const references = claim.references.flatMap((reference) => {
       const source = byId.get(reference.sourceId);
-      if (!source) throw new Error(`Model output referenced an unknown source: ${reference.sourceId}`);
-      const normalizedExcerpt = reference.excerpt.normalize("NFKC").replace(/\s+/g, " ").trim().toLowerCase();
-      const normalizedSource = source.normalizedText.replace(/\s+/g, " ").toLowerCase();
-      if (!normalizedSource.includes(normalizedExcerpt)) {
-        throw new Error(`Model output included an excerpt that does not resolve in ${source.metadata.name}.`);
+      if (!source) {
+        omittedSources.add("an unknown source");
+        return [];
       }
-    }
-  }
+      const resolvedExcerpt = resolveExcerpt(source, reference.excerpt);
+      if (!resolvedExcerpt) {
+        omittedSources.add(source.metadata.name);
+        return [];
+      }
+      return [{ ...reference, excerpt: resolvedExcerpt }];
+    });
+    return references.length > 0 ? [{ ...claim, references }] : [];
+  });
+
+  if (omittedSources.size === 0) return { ...ledger, claims: sanitizedClaims };
+  const sourceLabel = [...omittedSources].slice(0, 3).join(", ");
+  const countLabel = omittedSources.size === 1 ? "A model-generated reference" : `${omittedSources.size} model-generated references`;
+  return {
+    ...ledger,
+    claims: sanitizedClaims,
+    warnings: [...ledger.warnings, `${countLabel} could not be verified in ${sourceLabel} and was omitted.`],
+    limitations: [...ledger.limitations, "Some model-generated references could not be verified against the submitted evidence, so affected claims were omitted."],
+  };
 }
 
 export async function extractWithGpt56(args: {
@@ -148,6 +190,7 @@ export async function extractWithGpt56(args: {
         "A curriculum supports expected exposure, not mastery. A project may support demonstrated claims only when an exact excerpt does.",
         "Use inferred only for a cautious implication and name the limitation. Use unknown when the available material cannot support a conclusion.",
         "Every claim must cite an exact verbatim excerpt, source id, path, and stable locator. Never invent a path, symbol, line, law, standard, or professional requirement.",
+        "The contentWithLineNumbers field adds display-only prefixes such as 42: before each line. Do not include those prefixes in excerpt; put line numbers only in locator.startLine and locator.endLine.",
       "Keep each excerpt to a short verbatim snippet, a single line or a few lines (well under 800 characters). Quote the smallest span that supports the claim, never a whole file or a large block.",
         "This stage extracts prior evidence only. Do not compare it with current market practice and do not give professional, medical, legal, or financial advice.",
         "From the evidence alone, deduce the professional field it belongs to and the single closest current target role, and return them as `field` and `targetTitle` with a one-line `fieldRationale`. The visitor has not stated a field, so infer it from the actual work in the material — the concepts, tools, methods, and vocabulary — not from document titles alone.",
@@ -184,6 +227,5 @@ export async function extractWithGpt56(args: {
     limitations: modelOutput.limitations,
     model: args.model,
   });
-  validateProvenance(ledger, args.sources);
-  return ledger;
+  return evidenceLedgerSchema.parse(validateProvenance(ledger, args.sources));
 }

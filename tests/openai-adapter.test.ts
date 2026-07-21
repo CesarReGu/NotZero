@@ -75,17 +75,34 @@ test("GPT-5.6 adapter rejects malformed schema output", async () => {
   }));
 });
 
-test("GPT-5.6 adapter rejects an invented excerpt", async () => {
+test("GPT-5.6 adapter omits an invented excerpt without failing the evidence ledger", async () => {
   const invented = structuredClone(validOutput);
   invented.claims[0].references[0].excerpt = "A sentence that does not exist in the source";
-  await assert.rejects(() => extractWithGpt56({
+  const ledger = await extractWithGpt56({
     apiKey: "test-key",
     model: "gpt-5.6",
     locationContext: { location: "Mexico" },
     sources: [source],
     inputWarnings: [],
     fetcher: async () => responseFor(invented),
-  }), /does not resolve/);
+  });
+  assert.equal(ledger.claims.length, 0);
+  assert.match(ledger.warnings.at(-1) ?? "", /could not be verified/);
+  assert.match(ledger.limitations.at(-1) ?? "", /affected claims were omitted/);
+});
+
+test("line-number prefixes are removed from model excerpts before provenance validation", async () => {
+  const numbered = structuredClone(validOutput);
+  numbered.claims[0].references[0].excerpt = "1: Mapped a purchasing workflow";
+  const ledger = await extractWithGpt56({
+    apiKey: "test-key",
+    model: "gpt-5.6",
+    locationContext: { location: "Mexico" },
+    sources: [source],
+    inputWarnings: [],
+    fetcher: async () => responseFor(numbered),
+  });
+  assert.equal(ledger.claims[0].references[0].excerpt, "Mapped a purchasing workflow");
 });
 
 // The domain schema caps a reference excerpt at 800 characters, but the strict
