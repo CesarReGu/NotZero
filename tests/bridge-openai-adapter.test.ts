@@ -87,7 +87,7 @@ test("the second GPT-5.6 stage hydrates only validated claims and dated pack sou
       return responseFor(modelOutput());
     },
   });
-  assert.equal(requestBody?.prompt_cache_key, "notzero-bridge-comparison-v1");
+  assert.equal(requestBody?.prompt_cache_key, "notzero-bridge-comparison-v2");
   assert.equal(requestBody?.max_output_tokens, BRIDGE_MAX_OUTPUT_TOKENS);
   assert.equal(report.analysisMode, "live_gpt_5_6");
   assert.equal(report.schemaVersion, "knowledge-bridge-report.v2");
@@ -96,6 +96,27 @@ test("the second GPT-5.6 stage hydrates only validated claims and dated pack sou
   assert.equal(report.findings[0].artifactReference?.locator.path, "alex-api/src/config.ts");
   assert.equal(report.walkthrough?.artifactReference.locator.path, "alex-api/src/config.ts");
   assert.deepEqual(report.counts, { current: 0, transferable: 0, smallBridge: 1, genuineGap: 0, insufficientEvidence: 0 });
+});
+
+test("comparison repairs technical-only findings and unsupported relationship sources", async () => {
+  const output = modelOutput();
+  Object.assign(output.findings[0], {
+    relationshipType: "foundation_for",
+    relationshipSourceIds: ["docs-docker-overview"],
+  });
+  const report = await compareWithGpt56({
+    apiKey: "test-key",
+    model: "gpt-5.6",
+    ledger: alexEvidenceLedger,
+    pack: softwareBackendPracticePack,
+    analysisVersion: "phase-6",
+    fetcher: async () => responseFor(output),
+  });
+  assert.equal(report.findings.length, 1);
+  assert.equal(report.findings[0].relationshipType, undefined);
+  assert.equal(report.findings[0].relationshipEvidence[0].sourceKind, "market_dataset");
+  assert.match(report.findings[0].limitations.at(-1) ?? "", /technical source was retained|source did not support/);
+  assert.match(report.limitations.at(-1) ?? "", /dated market source/);
 });
 
 test("bridge validation rejects invented claims, mismatched sources, and misstated market counts", () => {

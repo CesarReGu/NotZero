@@ -43,7 +43,7 @@ test("summary-only evidence produces no invented code location or walkthrough", 
   assert.equal(report.findings[0].artifactReference, undefined);
 });
 
-test("invented extraction citations are omitted while unsafe comparison citations remain rejected", async () => {
+test("invented extraction citations are omitted while unsafe comparison citations are repaired", async () => {
   const inventedEvidence = structuredClone(successfulEvidenceOutput);
   inventedEvidence.claims[1].references[0].excerpt = "A Dockerfile already exists";
   const sanitizedLedger = await extractWithGpt56({ apiKey: "test-key", model: "gpt-5.6", locationContext: { location: context.location }, sources: customSoftwareSources, inputWarnings: [], fetcher: async () => modelResponse(inventedEvidence) });
@@ -53,14 +53,18 @@ test("invented extraction citations are omitted while unsafe comparison citation
   const ledger = await extractWithGpt56({ apiKey: "test-key", model: "gpt-5.6", locationContext: { location: context.location }, sources: customSoftwareSources, inputWarnings: [], fetcher: async () => modelResponse(successfulEvidenceOutput) });
   const inventedMarket = successfulBridgeOutput();
   inventedMarket.findings[0].relationshipSourceIds = ["invented-job-posting"];
-  await assert.rejects(() => compareWithGpt56({ apiKey: "test-key", model: "gpt-5.6", ledger, pack: softwareBackendPracticePack, analysisVersion: "phase-6", fetcher: async () => modelResponse(inventedMarket) }), /was not found/);
+  const report = await compareWithGpt56({ apiKey: "test-key", model: "gpt-5.6", ledger, pack: softwareBackendPracticePack, analysisVersion: "phase-6", fetcher: async () => modelResponse(inventedMarket) });
+  assert.ok(report.findings[0].relationshipEvidence.some((item) => item.sourceKind === "market_dataset"));
+  assert.match(report.limitations.at(-1) ?? "", /dated market source|grounded/);
 });
 
-test("a finding without dated market coverage is rejected", async () => {
+test("a finding without dated market coverage receives a matching market source", async () => {
   const ledger = await extractWithGpt56({ apiKey: "test-key", model: "gpt-5.6", locationContext: { location: context.location }, sources: customSoftwareSources, inputWarnings: [], fetcher: async () => modelResponse(successfulEvidenceOutput) });
   const missingMarket = successfulBridgeOutput();
   missingMarket.findings[0].relationshipSourceIds = ["docs-docker-overview"];
-  await assert.rejects(() => compareWithGpt56({ apiKey: "test-key", model: "gpt-5.6", ledger, pack: softwareBackendPracticePack, analysisVersion: "phase-6", fetcher: async () => modelResponse(missingMarket) }), /requires dated market evidence/);
+  const report = await compareWithGpt56({ apiKey: "test-key", model: "gpt-5.6", ledger, pack: softwareBackendPracticePack, analysisVersion: "phase-6", fetcher: async () => modelResponse(missingMarket) });
+  assert.ok(report.findings[0].relationshipEvidence.some((item) => item.sourceKind === "market_dataset"));
+  assert.match(report.limitations.at(-1) ?? "", /dated market source/);
 });
 
 test("schema failures stop before an unsafe result is returned", async () => {
