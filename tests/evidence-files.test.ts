@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { EvidenceInputError, extractEvidenceFile } from "../lib/evidence/files";
 import { EVIDENCE_LIMITS } from "../lib/evidence/limits";
+import { classifyCombinedFiles } from "../lib/evidence/classify";
+
+test("the combined uploader assigns only provisional routing hints", () => {
+  const result = classifyCombinedFiles([
+    new File(["Courses and learning outcomes"], "study-plan.md"),
+    new File(["A project report"], "capstone-report.md"),
+    new File(["print('hello')"], "train.py"),
+  ]);
+  assert.deepEqual(result.files.map((item) => item.sourceType), ["curriculum", "project_artifact", "source_file"]);
+  assert.ok(result.warnings.some((warning) => /provisional routing hints/i.test(warning)));
+});
 
 test("readable bounded evidence is accepted and normalized", async () => {
   const result = await extractEvidenceFile(

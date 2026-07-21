@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { currentPracticePackSchema, evidenceLedgerSchema, knowledgeBridgeReportSchema, locationContextSchema, type CurrentPracticePack, type EvidenceSourceType } from "@/lib/domain/schemas";
 import { readServerConfig, type ServerConfig } from "@/lib/config/server";
 import { EvidenceInputError, extractEvidenceFile, type ExtractedSource } from "@/lib/evidence/files";
+import { classifyCombinedFiles, type ClassifiedEvidenceFile } from "@/lib/evidence/classify";
 import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 import { extractWithGpt56 } from "@/lib/evidence/openai-adapter";
 import { alexEvidenceLedger } from "@/lib/fixtures/alex-ledger";
@@ -50,6 +51,18 @@ async function extractGroup(inputFiles: File[], sourceType: EvidenceSourceType, 
   const warnings: string[] = [];
   for (let index = 0; index < inputFiles.length; index += 1) {
     const extracted = await extractEvidenceFile(inputFiles[index], sourceType, startIndex + index);
+    sources.push(extracted.source);
+    warnings.push(...extracted.warnings);
+  }
+  return { sources, warnings };
+}
+
+async function extractCombinedGroup(inputFiles: ClassifiedEvidenceFile[], startIndex: number) {
+  const sources: ExtractedSource[] = [];
+  const warnings: string[] = [];
+  for (let index = 0; index < inputFiles.length; index += 1) {
+    const item = inputFiles[index];
+    const extracted = await extractEvidenceFile(item.file, item.sourceType, startIndex + index);
     sources.push(extracted.source);
     warnings.push(...extracted.warnings);
   }
@@ -257,21 +270,39 @@ export async function POST(request: Request) {
       location: text(form, "location"),
       jurisdiction: text(form, "jurisdiction") || undefined,
     });
-    const curriculum = files(form, "curriculum");
-    const supporting = files(form, "supporting");
-    const project = files(form, "project");
-    if (curriculum.length !== EVIDENCE_LIMITS.curriculumFiles) throw new EvidenceInputError("curriculum_count", "Choose exactly one curriculum or study-plan document.");
-    if (supporting.length > EVIDENCE_LIMITS.supportingFiles) throw new EvidenceInputError("supporting_count", "Choose no more than three supporting documents.");
-    if (project.length < 1 || project.length > EVIDENCE_LIMITS.projectFiles) throw new EvidenceInputError("project_count", "Choose between one and five files from one bounded project or professional task.");
-    const allFiles = [...curriculum, ...supporting, ...project];
-    if (allFiles.reduce((total, file) => total + file.size, 0) > EVIDENCE_LIMITS.totalBytes) throw new EvidenceInputError("total_size", "The complete evidence set must be 8 MB or smaller.");
+    const combinedSubmitted = form.getAll("files").length > 0;
+    const legacyFilesSubmitted = ["curriculum", "supporting", "project"].some((key) => form.getAll(key).length > 0);
+    if (combinedSubmitted && legacyFilesSubmitted) throw new EvidenceInputError("mixed_file_input", "Upload your evidence through the single combined file picker.");
 
-    const curriculumResult = await extractGroup(curriculum, "curriculum", 0);
-    const supportingResult = await extractGroup(supporting, "supporting_document", curriculum.length);
-    const projectType: EvidenceSourceType = text(form, "projectType") === "professional_task" ? "professional_task" : "project_artifact";
-    const projectResult = await extractGroup(project, projectType, curriculum.length + supporting.length);
-    const extractedSources = [...curriculumResult.sources, ...supportingResult.sources, ...projectResult.sources];
-    const warnings = [...curriculumResult.warnings, ...supportingResult.warnings, ...projectResult.warnings];
+    let extractedSources: ExtractedSource[];
+    let warnings: string[];
+    let projectType: EvidenceSourceType = "source_file";
+    let allFiles: File[];
+    if (combinedSubmitted) {
+      const combined = files(form, "files");
+      if (combined.length < 1 || combined.length > EVIDENCE_LIMITS.combinedFiles) throw new EvidenceInputError("files_count", `Upload between one and ${EVIDENCE_LIMITS.combinedFiles} readable files.`);
+      const classified = classifyCombinedFiles(combined);
+      const extracted = await extractCombinedGroup(classified.files, 0);
+      extractedSources = extracted.sources;
+      warnings = [...classified.warnings, ...extracted.warnings];
+      allFiles = combined;
+      projectType = classified.files.find((item) => ["project_artifact", "professional_task", "source_file"].includes(item.sourceType))?.sourceType ?? "source_file";
+    } else {
+      const curriculum = files(form, "curriculum");
+      const supporting = files(form, "supporting");
+      const project = files(form, "project");
+      if (curriculum.length !== EVIDENCE_LIMITS.curriculumFiles) throw new EvidenceInputError("curriculum_count", "Choose exactly one curriculum or study-plan document.");
+      if (supporting.length > EVIDENCE_LIMITS.supportingFiles) throw new EvidenceInputError("supporting_count", "Choose no more than three supporting documents.");
+      if (project.length < 1 || project.length > EVIDENCE_LIMITS.projectFiles) throw new EvidenceInputError("project_count", "Choose between one and five files from one bounded project or professional task.");
+      allFiles = [...curriculum, ...supporting, ...project];
+      const curriculumResult = await extractGroup(curriculum, "curriculum", 0);
+      const supportingResult = await extractGroup(supporting, "supporting_document", curriculum.length);
+      projectType = text(form, "projectType") === "professional_task" ? "professional_task" : "project_artifact";
+      const projectResult = await extractGroup(project, projectType, curriculum.length + supporting.length);
+      extractedSources = [...curriculumResult.sources, ...supportingResult.sources, ...projectResult.sources];
+      warnings = [...curriculumResult.warnings, ...supportingResult.warnings, ...projectResult.warnings];
+    }
+    if (allFiles.reduce((total, file) => total + file.size, 0) > EVIDENCE_LIMITS.totalBytes) throw new EvidenceInputError("total_size", "The complete evidence set must be 8 MB or smaller.");
     const totalCharacters = extractedSources.reduce((total, source) => total + source.normalizedText.length, 0);
     if (totalCharacters > EVIDENCE_LIMITS.totalCharacters) throw new EvidenceInputError("total_text", "The extracted evidence exceeds the 240,000 character analysis limit.");
     const hashes = new Set<string>();

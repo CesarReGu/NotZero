@@ -64,6 +64,49 @@ test("GPT-5.6 adapter sends a strict schema request and validates provenance", a
   assert.ok(!String(requestBody?.input).includes("Operations analyst"));
 });
 
+test("combined evidence extraction stays bounded by batching files before the model call", async () => {
+  const sources: ExtractedSource[] = Array.from({ length: 4 }, (_, index) => ({
+    metadata: {
+      id: `source-${index + 1}`,
+      name: `evidence-${index + 1}.md`,
+      sourceType: index === 0 ? "curriculum" : "supporting_document",
+      mimeType: "text/markdown",
+      sizeBytes: 80,
+      contentHash: String(index).repeat(64),
+      normalizedHash: String(index + 1).repeat(64),
+      characterCount: 70,
+    },
+    normalizedText: `Evidence batch ${index + 1} contains a documented workflow and its outcome.`,
+  }));
+  let calls = 0;
+  const ledger = await extractWithGpt56({
+    apiKey: "test-key",
+    model: "gpt-5.4-nano",
+    locationContext: { location: "Mexico" },
+    sources,
+    inputWarnings: [],
+    fetcher: async (_url, init) => {
+      calls += 1;
+      const body = JSON.parse(String(init?.body)) as { input: string };
+      const firstEvidence = JSON.parse(body.input).evidence[0] as { id: string; name: string; contentWithLineNumbers: string };
+      const output = structuredClone(validOutput);
+      output.claims[0].id = "claim-1";
+      output.claims[0].references[0] = {
+        sourceId: firstEvidence.id,
+        excerpt: firstEvidence.contentWithLineNumbers.replace(/^1:\s*/, ""),
+        locator: { path: firstEvidence.name, kind: "line", value: "line 1", startLine: 1, endLine: 1 },
+      };
+      return responseFor(output);
+    },
+  });
+  assert.equal(calls, 2);
+  assert.equal(ledger.sources.length, 4);
+  assert.equal(ledger.claims.length, 2);
+  assert.equal(ledger.claims[0].id, "claim-1");
+  assert.equal(ledger.claims[1].id, "batch-2-claim-1");
+  assert.ok(ledger.limitations.some((limitation) => /bounded batches/i.test(limitation)));
+});
+
 test("GPT-5.6 adapter rejects malformed schema output", async () => {
   await assert.rejects(() => extractWithGpt56({
     apiKey: "test-key",

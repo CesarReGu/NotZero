@@ -8,6 +8,7 @@ import { classifyAnalysisResult, isLimitFailure, type AnalysisState } from "@/li
 import { deriveEvidenceMix } from "@/lib/evidence/mix";
 import { COUNTRIES, DEFAULT_COUNTRY_CODE, OTHER_COUNTRY_CODE, composeLocation, countryByCode } from "@/lib/geo/regions";
 import type { ModelTraceEvent } from "@/lib/openai/trace";
+import { EVIDENCE_LIMITS } from "@/lib/evidence/limits";
 
 type DemoStepperProps = { scenario: PreparedScenario };
 type Mode = "prepared" | "custom";
@@ -83,8 +84,9 @@ const analysisStages = [
 // progress bar; stages that each take their own time read as work being done.
 const stageDurations = [520, 780, 660, 900, 580];
 
-// Mirrors the three upload slots in the custom flow, so the prepared profile
-// reads as an already-completed version of the same form.
+// The prepared profile keeps categories visible because it is a teaching
+// fixture. The custom path below uses one combined uploader and classifies
+// files provisionally on the server.
 const preparedGroups: { key: string; label: string; hint: string; sourceTypes: PreparedEvidenceItem["sourceType"][] }[] = [
   { key: "curriculum", label: "Curriculum or study plan", hint: "1 of 1 allowed", sourceTypes: ["curriculum"] },
   { key: "supporting", label: "Supporting academic documents", hint: "3 of 3 allowed", sourceTypes: ["supporting_document"] },
@@ -195,10 +197,8 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
   const [revealStep, setRevealStep] = useState(-1);
   const [error, setError] = useState("");
   const [openFile, setOpenFile] = useState<OpenFile | null>(null);
-  const [curriculum, setCurriculum] = useState<File[]>([]);
-  const [supporting, setSupporting] = useState<File[]>([]);
-  const [project, setProject] = useState<File[]>([]);
-  const [projectType, setProjectType] = useState<"project_artifact" | "professional_task">("project_artifact");
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
+  const [fileSelectionError, setFileSelectionError] = useState("");
   // Location is a country -> region -> city cascade. The three selections are
   // composed into the plain `location` and `jurisdiction` strings the server
   // already expects, so the API contract is unchanged.
@@ -332,7 +332,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
         setCapability({
           liveAnalysisEnabled: Boolean(body.liveAnalysisEnabled),
           allowUserKeys: body.allowUserKeys !== false,
-          model: typeof body.model === "string" ? body.model : "gpt-5.6-luna",
+          model: typeof body.model === "string" ? body.model : "gpt-5.4-mini",
         });
       })
       .catch(() => { /* The panel copy falls back to the keyless description. */ });
@@ -479,12 +479,24 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     }
   }
 
-  function removeFile(setter: React.Dispatch<React.SetStateAction<File[]>>, index: number) {
-    setter((items) => items.filter((_, itemIndex) => itemIndex !== index));
+  function removeFile(index: number) {
+    setEvidenceFiles((items) => items.filter((_, itemIndex) => itemIndex !== index));
+    setFileSelectionError("");
   }
 
   function customEvidenceComplete() {
-    return curriculum.length === 1 && project.length >= 1 && project.length <= 5 && supporting.length <= 3;
+    return evidenceFiles.length >= 1 && evidenceFiles.length <= EVIDENCE_LIMITS.combinedFiles && !fileSelectionError;
+  }
+
+  function selectEvidenceFiles(list: FileList | null) {
+    const incoming = pickFiles(list);
+    const merged = [...evidenceFiles, ...incoming].filter((file, index, items) => items.findIndex((candidate) => candidate.name === file.name && candidate.size === file.size && candidate.lastModified === file.lastModified) === index);
+    if (merged.length > EVIDENCE_LIMITS.combinedFiles) {
+      setFileSelectionError(`Choose no more than ${EVIDENCE_LIMITS.combinedFiles} files. Remove one before adding another.`);
+      return;
+    }
+    setFileSelectionError("");
+    setEvidenceFiles(merged);
   }
 
   function customContextComplete() {
@@ -663,13 +675,9 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
       mode,
       keyPresent: Boolean(apiKey),
       locationPresent: Boolean(location),
-      fileCounts: { curriculum: curriculum.length, supporting: supporting.length, project: project.length },
-      fileBytes: {
-        curriculum: curriculum.reduce((sum, file) => sum + file.size, 0),
-        supporting: supporting.reduce((sum, file) => sum + file.size, 0),
-        project: project.reduce((sum, file) => sum + file.size, 0),
-      },
-      extensions: [...curriculum, ...supporting, ...project].map((file) => file.name.split(".").pop()?.toLowerCase() ?? "unknown"),
+      fileCount: evidenceFiles.length,
+      totalFileBytes: evidenceFiles.reduce((sum, file) => sum + file.size, 0),
+      extensions: evidenceFiles.map((file) => file.name.split(".").pop()?.toLowerCase() ?? "unknown"),
     });
     try {
       const form = new FormData();
@@ -677,10 +685,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
       if (mode === "custom") {
         form.set("location", location);
         form.set("jurisdiction", jurisdiction);
-        form.set("projectType", projectType);
-        curriculum.forEach((file) => form.append("curriculum", file));
-        supporting.forEach((file) => form.append("supporting", file));
-        project.forEach((file) => form.append("project", file));
+        evidenceFiles.forEach((file) => form.append("files", file));
       }
       const requestStartedAt = debugNow();
       const response = await fetch("/api/evidence-ledger", {
@@ -747,9 +752,8 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
     if (mode === "custom") {
       try { await fetch("/api/evidence-ledger", { method: "DELETE" }); } catch { /* Local state is still cleared below. */ }
     }
-    setCurriculum([]);
-    setSupporting([]);
-    setProject([]);
+    setEvidenceFiles([]);
+    setFileSelectionError("");
     setLedger(null);
     setReport(null);
     setPack(null);
@@ -782,7 +786,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
 
               <div className="mode-choice" aria-label="Evidence source">
                 <button type="button" className={mode === "prepared" ? "is-selected" : ""} aria-pressed={mode === "prepared"} onClick={() => chooseMode("prepared")}><strong>Prepared graduate profile</strong><span>Ready-made fictional evidence, one click to the result</span></button>
-                <button type="button" className={mode === "custom" ? "is-selected" : ""} aria-pressed={mode === "custom"} onClick={() => chooseMode("custom")}><strong>Use my own documents</strong><span>Upload your evidence and run the live GPT-5.6 analysis</span></button>
+                <button type="button" className={mode === "custom" ? "is-selected" : ""} aria-pressed={mode === "custom"} onClick={() => chooseMode("custom")}><strong>Use my own documents</strong><span>Upload your evidence and run the staged live analysis</span></button>
               </div>
 
               {mode === "prepared" ? (
@@ -834,7 +838,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
                     <div className="live-key-copy">
                       <strong>Live analysis</strong>
                       {apiKey ? (
-                        <p>Your OpenAI API key <code>{maskedKey(apiKey)}</code> stays in this browser tab and travels only with your analysis requests. The pipeline uses GPT-5.4 nano for extraction, GPT-5.4 mini for optional posting search, and GPT-5.6 Luna for the comparison and guided bridge.</p>
+                        <p>Your OpenAI API key <code>{maskedKey(apiKey)}</code> stays in this browser tab and travels only with your analysis requests. The pipeline uses GPT-5.4 nano for bounded evidence extraction and GPT-5.4 mini for current-practice search, comparison, and bridge writing.</p>
                       ) : capability?.liveAnalysisEnabled ? (
                         <p>This deployment already runs a staged live analysis with its own server-side key, within daily limits. Adding your own key is optional and moves usage to your OpenAI account.</p>
                       ) : (
@@ -853,14 +857,17 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
                     </div>
                   </div>
                   <div className="upload-ledger-form">
-                    <div className="upload-limit-note"><strong>Accepted evidence set</strong><span>1 curriculum · up to 3 supporting documents · 1 to 5 files from one project or task · 2 MB each · 8 MB total</span></div>
-                    <div className="upload-field"><label htmlFor="curriculum-file"><strong>Curriculum or study plan</strong><span>PDF, TXT, Markdown, CSV, or JSON</span></label><input id="curriculum-file" type="file" accept=".pdf,.txt,.md,.csv,.json" onChange={(event) => setCurriculum(pickFiles(event.target.files).slice(0, 1))} /></div>
-                    <FileRows items={curriculum} onRemove={(index) => removeFile(setCurriculum, index)} />
-                    <div className="upload-field"><label htmlFor="supporting-files"><strong>Supporting documents</strong><span>Optional, up to three academic files</span></label><input id="supporting-files" type="file" multiple accept=".pdf,.txt,.md,.csv,.json" onChange={(event) => setSupporting(pickFiles(event.target.files).slice(0, 3))} /></div>
-                    <FileRows items={supporting} onRemove={(index) => removeFile(setSupporting, index)} />
-                    <div className="project-kind"><label><input type="radio" name="project-kind" checked={projectType === "project_artifact"} onChange={() => setProjectType("project_artifact")} /> Academic project</label><label><input type="radio" name="project-kind" checked={projectType === "professional_task"} onChange={() => setProjectType("professional_task")} /> Professional task</label></div>
-                    <div className="upload-field"><label htmlFor="project-files"><strong>One bounded project or task</strong><span>Description, report, or selected readable source files</span></label><input id="project-files" type="file" multiple accept=".pdf,.txt,.md,.json,.csv,.ts,.tsx,.js,.jsx,.py,.java,.cs,.go,.rs,.rb,.php,.sql,.html,.css,.scss,.xml,.yml,.yaml,.toml,.ini" onChange={(event) => setProject(pickFiles(event.target.files).slice(0, 5))} /></div>
-                    <FileRows items={project} onRemove={(index) => removeFile(setProject, index)} />
+                    <div className="upload-limit-note"><strong>One upload, one evidence set</strong><span>Choose the files you already have. Up to {EVIDENCE_LIMITS.combinedFiles} readable files, 2 MB each, and 8 MB total. NotZero classifies them during validation.</span></div>
+                    <label className="combined-upload-field" htmlFor="evidence-files">
+                      <span className="upload-field-kicker">Add your files</span>
+                      <strong>Curriculum or study plan, academic files, description, report, or selected readable source files</strong>
+                      <span>PDF, TXT, Markdown, CSV, JSON, and common readable source files. Select several at once, or add more later.</span>
+                      <span className="upload-field-meta">No need to label anything first. Filenames provide provisional clues; the model interprets the contents.</span>
+                      <input id="evidence-files" type="file" multiple accept=".pdf,.txt,.md,.csv,.json,.ts,.tsx,.js,.jsx,.py,.java,.cs,.go,.rs,.rb,.php,.sql,.html,.css,.scss,.xml,.yml,.yaml,.toml,.ini" onChange={(event) => { selectEvidenceFiles(event.target.files); event.currentTarget.value = ""; }} />
+                    </label>
+                    {fileSelectionError && <p className="upload-selection-error" role="alert">{fileSelectionError}</p>}
+                    {evidenceFiles.length > 0 && <p className="upload-selection-status" aria-live="polite">{evidenceFiles.length} {evidenceFiles.length === 1 ? "file" : "files"} ready for one staged analysis.</p>}
+                    <FileRows items={evidenceFiles} onRemove={removeFile} />
                   </div>
                   <div className="custom-context">
                     <h3>Where you are</h3>
@@ -949,7 +956,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             <strong>Your files passed validation. No capability conclusion was generated.</strong>
             {mode === "custom" && !apiKey && (capability?.allowUserKeys ?? true) && !capability?.liveAnalysisEnabled ? (
               <>
-                <p>The files are readable and within the documented limits. Add your OpenAI API key to run the full GPT-5.6 Luna analysis on this exact evidence set.</p>
+                <p>The files are readable and within the documented limits. Add your OpenAI API key to run the full staged analysis on this exact evidence set.</p>
                 <button type="button" className="button button-secondary empty-key-action" onClick={(event) => openKeyPanel(event.currentTarget)}>Add your OpenAI API key</button>
               </>
             ) : (
@@ -994,7 +1001,7 @@ export function DemoStepper({ scenario }: DemoStepperProps) {
             <ul>
               <li>It stays in this browser tab and is sent only with your analysis requests over HTTPS. NotZero never writes it to its database or logs.</li>
               <li>While your analysis is running it is held in server memory so the job can keep moving between polls. That copy is dropped when the job finishes or you reset, and within an hour at the latest.</li>
-               <li>The server uses it for schema-constrained calls. GPT-5.4 nano extracts evidence, GPT-5.4 mini can search current postings, and GPT-5.6 Luna handles the comparison and guided program.</li>
+               <li>The server uses it for schema-constrained calls. GPT-5.4 nano extracts evidence, and GPT-5.4 mini handles current-posting search, comparison, and the guided program.</li>
               <li>Closing the tab or selecting Remove forgets the browser copy. The server copy is dropped when the job finishes or you reset.</li>
             </ul>
             <h5>Cost and account</h5>

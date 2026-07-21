@@ -1,4 +1,5 @@
 export const EVIDENCE_LIMITS = {
+  combinedFiles: 9,
   curriculumFiles: 1,
   supportingFiles: 3,
   projectFiles: 5,

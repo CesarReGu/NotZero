@@ -262,7 +262,7 @@ The first choice should be visible immediately:
 - `Try a prepared graduate profile` (recommended and fastest)
 - `Use my own documents`
 
-Uploads should show supported types, limits, privacy behavior, dates, and removable file rows. Missing documents should be accepted and explained rather than treated as failure.
+The custom path should use one combined file picker. Show supported types, limits, privacy behavior, and removable file rows. Explain that NotZero classifies files provisionally during validation, so people do not have to organize their materials before uploading. Missing context should be accepted and explained rather than treated as failure.
 
 For custom evidence, capture field, target role or practice, location, and jurisdiction where relevant. Do not force every profession into software-role terminology.
 

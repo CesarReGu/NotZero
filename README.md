@@ -16,7 +16,7 @@ The software-graduate vertical slice now includes the decision-ready report, evi
 - visible privacy guidance before upload;
 - a deterministic, provenance-aware evidence ledger and complete Knowledge Bridge Graph;
 - a location-only intake: the visitor supplies only where they are (and an optional jurisdiction), and the field and target role are inferred from the evidence itself, so the person never has to already know the name of the field they are moving toward;
-- a custom evidence path for one curriculum, up to three supporting documents, and one bounded project or professional task;
+- a single combined evidence upload for up to nine readable files. The server keeps the upload bounded, assigns provisional source types, and lets the extraction model interpret the contents;
 - server-side PDF and text extraction, normalized hashing, duplicate detection, source allowlists, limits, and secret checks;
 - three typed GPT-5.6 Responses API stages using strict structured output: evidence extraction, bridge comparison, and a guided-program stage that writes the vocabulary translation, code counterparts, and phased curriculum;
 - a bring-your-own-key path: a visitor can add their OpenAI API key in the interface, it travels only with their analysis requests, is never written to the database or logs, and is held in the browser tab and (while a job is running) in process memory only, then dropped when the job finishes or on reset;

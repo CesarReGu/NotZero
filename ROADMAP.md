@@ -65,8 +65,8 @@ The submitted judge path remains the software scenario. The underlying evidence 
 
 **Target:** July 18
 
-- [x] **P0:** Support one curriculum/study-plan document and up to three supporting documents within explicit size/type limits.
-- [x] **P0:** Support one bounded final-project artifact, professional-task description, or selected set of readable source and configuration files.
+- [x] **P0:** Support one combined upload of up to nine readable evidence files within explicit size/type limits.
+- [x] **P0:** Provisional server-side routing identifies likely curriculum, academic, project, professional-task, and source files while the extraction model interprets the contents.
 - [x] **P0:** Apply an explicit source-file allowlist and ignore dependencies, build output, binaries, generated files, and obvious secret-bearing files.
 - [x] **P0:** Capture dates and evidence type for each item.
 - [x] **P0:** Extract and normalize text server-side, including text-based PDFs.

@@ -139,6 +139,17 @@ function customEvidenceForm() {
   return form;
 }
 
+function combinedEvidenceForm() {
+  const form = new FormData();
+  form.set("mode", "custom");
+  form.set("location", "Mexico");
+  form.set("jurisdiction", "Mexico");
+  form.append("files", new File(["Operations management, accounting, statistics, and organizational behavior."], "study-plan.md", { type: "text/markdown" }));
+  form.append("files", new File(["Mapped a purchasing workflow and documented approval controls and cycle times."], "capstone-report.md", { type: "text/markdown" }));
+  form.append("files", new File(["def score(row):\n    return row['risk']"], "model.py", { type: "text/x-python" }));
+  return form;
+}
+
 test("custom evidence is validated without inventing claims when live analysis is disabled", async () => {
   const response = await request("/api/evidence-ledger", { method: "POST", body: customEvidenceForm() });
   assert.equal(response.status, 200);
@@ -166,6 +177,16 @@ test("custom evidence is validated without inventing claims when live analysis i
   assert.equal((await deleteResponse.json()).status, "cleared");
   const afterDelete = await request("/api/evidence-ledger", { method: "POST", body: customEvidenceForm(), headers: { cookie } });
   assert.equal(afterDelete.headers.get("x-notzero-cache"), "miss");
+});
+
+test("combined evidence upload is classified server-side before keyless validation", async () => {
+  const response = await request("/api/evidence-ledger", { method: "POST", body: combinedEvidenceForm() });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.status, "validated");
+  assert.deepEqual(body.ledger.sources.map((source) => source.sourceType), ["curriculum", "project_artifact", "source_file"]);
+  assert.ok(body.ledger.warnings.some((warning) => /combined evidence set/i.test(warning)));
+  assert.equal(body.ledger.sources.length, 3);
 });
 
 test("an unknown live job reports not found so the client can start over", async () => {

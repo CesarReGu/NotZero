@@ -74,7 +74,7 @@ export default function Home() {
           </div>
         </div>
         <ol className="process-list">
-          <li data-animate="1"><span>01</span><h3>Bring what you studied</h3><p>A curriculum, a few supporting documents, and one project are enough for the focused flow.</p></li>
+           <li data-animate="1"><span>01</span><h3>Bring what you have</h3><p>Upload the study plan, academic files, project description, report, or readable source files you already have. NotZero sorts the evidence for you.</p></li>
           <li data-animate="2"><span>02</span><h3>Choose where you are going</h3><p>NotZero compares your evidence with a bounded, dated set of current professional requirements.</p></li>
           <li data-animate="3"><span>03</span><h3>Build the smallest bridge</h3><p>Get three priorities and one project upgrade that reuses what you already know.</p></li>
         </ol>

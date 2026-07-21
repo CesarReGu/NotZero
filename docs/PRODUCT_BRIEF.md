@@ -124,10 +124,8 @@ Areas where the product cannot responsibly reach a conclusion.
 
 ## MVP inputs
 
-- one curriculum or study-plan document;
-- up to three supporting course, assignment, or project documents;
-- one bounded final-project artifact, professional-task description, selected source files, or repository-derived description;
-- dates for each item;
+- one combined upload containing up to nine readable files, such as a curriculum or study plan, academic files, a project description or report, and selected source files;
+- no user-supplied dates. NotZero keeps the evidence set bounded and infers the field and target role from the content;
 - a field, target role or practice, location, and jurisdiction when relevant; and
 - a controlled collection of recent job requirements.
 

@@ -421,6 +421,17 @@ html.is-scrolled .site-header { box-shadow: 0 8px 28px rgba(17,22,42,.09); }
 .upload-field label span { color: var(--muted-ink); font-size: .71rem; }
 .upload-field input[type="file"] { max-width: 270px; color: var(--muted-ink); font-size: .72rem; }
 .upload-field input[type="file"]::file-selector-button { min-height: 38px; margin-right: .55rem; border: 1px solid #aeb5cd; border-radius: 6px; background: #fff; padding: .45rem .65rem; cursor: pointer; color: var(--ink); font-weight: 700; }
+.combined-upload-field { display: grid; gap: .45rem; border: 1px dashed #8ea0bf; border-radius: 8px; background: #f6f8fd; padding: 1.15rem 1.2rem; cursor: pointer; transition: border-color .18s ease, background-color .18s ease; }
+.combined-upload-field:hover { border-color: var(--evergreen); background: var(--evergreen-soft); }
+.combined-upload-field:focus-within { outline: 3px solid rgba(21, 125, 95, .22); outline-offset: 3px; border-color: var(--evergreen); }
+.combined-upload-field strong { max-width: 62ch; font-size: .92rem; line-height: 1.35; }
+.combined-upload-field > span:not(.upload-field-kicker):not(.upload-field-meta) { color: var(--muted-ink); font-size: .76rem; line-height: 1.5; }
+.upload-field-kicker { color: var(--evergreen-dark); font-family: var(--font-mono); font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.upload-field-meta { color: var(--ink); font-size: .7rem; font-weight: 700; }
+.combined-upload-field input[type="file"] { width: fit-content; max-width: 100%; color: var(--muted-ink); font-size: .74rem; }
+.combined-upload-field input[type="file"]::file-selector-button { min-height: 40px; margin-right: .55rem; border: 1px solid #aeb5cd; border-radius: 6px; background: #fff; padding: .45rem .75rem; cursor: pointer; color: var(--ink); font-weight: 800; }
+.upload-selection-status { margin: -.35rem 0 0; color: var(--evergreen-dark); font-family: var(--font-mono); font-size: .68rem; font-weight: 800; }
+.upload-selection-error { margin: -.35rem 0 0; color: #8f1d2c; font-size: .76rem; font-weight: 700; }
 .live-key-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .85rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--evergreen); border-radius: 7px; background: var(--paper-raised); padding: 1rem 1.15rem; }
 .live-key-panel[data-state="ready"] { border-left-color: var(--group-current); }
 .live-key-copy strong { display: block; margin-bottom: .2rem; font-size: .82rem; }
